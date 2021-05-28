@@ -1,7 +1,7 @@
 .vscode
 __pycache__/
-data/mimic_iii/
-data/mnist/
+*/mimic_iii/
+*/mnist/
 mnist_data.py
 mnist_train.py
 model.py
