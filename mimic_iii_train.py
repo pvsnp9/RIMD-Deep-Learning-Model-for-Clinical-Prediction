@@ -16,7 +16,7 @@ args = {
     'epochs':100,
     'batch_size': 64,
     'input_size': 104,
-    'model_type': 'GRU', # type of model  RIM, LSTM, GRU
+    'model_type': 'RIM', # type of model  RIM, LSTM, GRU
     'hidden_size': 100,
     'num_rims': 6,
     'rnn_cell': 'LSTM', # type of cell LSTM, or GRU
@@ -155,7 +155,7 @@ def train_model(model, epochs, data):
             'epochs': epoch,
             'ctr': ctr
         }
-        with open(f'{save_dir}/mimic_iii_model.pt', 'wb') as f:
+        with open(f"{save_dir}/{args['model_type']}_model.pt", 'wb') as f:
             torch.save(model_state, f)
 
         
@@ -165,15 +165,15 @@ def train_model(model, epochs, data):
         train_acc.append((epoch, (t_accuracy/data.train_instances)))
         test_acc.append((epoch, (test_accuracy)))
 
-        with open(log_dir+'/lossstats.pickle','wb') as f:
+        with open(f"{log_dir}/{args['model_type']}_lossstats.pickle",'wb') as f:
             pickle.dump(loss_stats,f)
-        with open(log_dir+'/accstats.pickle','wb') as f:
+        with open(f"{log_dir}/{args['model_type']}_accstats.pickle",'wb') as f:
             pickle.dump(acc,f)
         
-        with open(log_dir+'/train_acc.pickle','wb') as f:
+        with open(f"{log_dir}/{args['model_type']}_train_acc.pickle",'wb') as f:
             pickle.dump(train_acc,f)
         
-        with open(log_dir + '/test_acc.pickle', 'wb') as f:
+        with open(f"{log_dir}/{args['model_type']}_test_acc.pickle", 'wb') as f:
             pickle.dump(test_acc, f)
 
 
