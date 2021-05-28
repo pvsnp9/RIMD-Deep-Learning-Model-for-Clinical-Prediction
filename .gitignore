@@ -1,0 +1,8 @@
+.vscode
+__pycache__/
+data/mimic_iii/
+data/mnist/
+mnist_data.py
+mnist_train.py
+model.py
+mortality_los_data_analysis.ipynb
