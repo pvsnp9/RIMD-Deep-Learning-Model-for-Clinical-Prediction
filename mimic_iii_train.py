@@ -35,7 +35,7 @@ args = {
     'need_data_preprocessing': False,
     'raw_data_file_path' :'data/mimic_iii/test_dump/all_hourly_data.pkl',
     'processed_data_path':'data/mimic_iii/preprocessed/mortality_and_los/test',
-    'input_file_path':'data/mimic_iii/preprocessed/mortality_and_los/x_y_statics_23944.npz'
+    'input_file_path':'data/mimic_iii/preprocessed/mortality_and_los/decay_data_20926.npz'
 }
 
 torch.manual_seed(10)
@@ -43,7 +43,7 @@ np.random.seed(10)
 torch.cuda.manual_seed(10)
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
- 
+
 # Data preprocessing
 if(args['need_data_preprocessing']):
     prep_data = MortalityDataPrep(args['raw_data_file_path'])
@@ -51,7 +51,7 @@ if(args['need_data_preprocessing']):
     del _
 
 # data loader
-data = MIMICIIIData(args['batch_size'], 24, args['input_file_path'])
+data = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], True)
 args['input_size'] = data.input_size()
 args['static_features'] = data.static_features_size()
 
@@ -177,4 +177,5 @@ def train_model(model, epochs, data):
             pickle.dump(test_acc, f)
 
 
-train_model(model, args['epochs'], data)
+# train_model(model, args['epochs'], data)
+

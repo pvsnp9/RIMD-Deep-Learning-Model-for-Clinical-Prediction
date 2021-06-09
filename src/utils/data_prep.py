@@ -84,13 +84,14 @@ class MortalityDataPrep:
             print(f'[Main data]: Variable feature: {x.shape} static feature: {s.shape}, target: {y.shape}')
             print(f'[Additional data]: x_mean:{x_mean.shape}, mask:{mask.shape}, delta:{delta.shape}, last Ob:{variable_last_observed.shape} ')
             
-            np.savez_compressed(f'{destination_dir}/decay_x_y_statics_xmean_mask_delta_lastob_{targets.shape[0]}.npz', x= x, y=y, statics = s, xmean=x_mean, mask=mask, delta=delta,lastob=variable_last_observed)
+            # x_y_statics_xmean_mask_delta_lastob order
+            np.savez_compressed(f'{destination_dir}/decay_data_{targets.shape[0]}.npz', x= x, y=y, statics = s, xmean=x_mean, mask=mask, delta=delta,lastob=variable_last_observed)
             # with open(f'{destination_dir}/all_data_{targets.shape[0]}_npy.pkl', 'wb') as handle:
             #     pickle.dump({'x':x, 'statics':s, 'y':y}, handle, protocol=pickle.HIGHEST_PROTOCOL)
             
         # statics = statics.reset_index()
         # targets = targets.reset_index()
-        saved_file = f'{destination_dir}/decay_x_y_statics_xmean_mask_delta_lastob_{targets.shape[0]}.npz'
+        saved_file = f'{destination_dir}/decay_data_{targets.shape[0]}.npz'
         return saved_file
 
 
