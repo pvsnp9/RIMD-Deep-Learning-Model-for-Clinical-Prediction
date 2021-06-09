@@ -2,11 +2,11 @@ import torch
 from tqdm import tqdm
 import pickle
 import numpy as np
-from mimic_model import MIMICModel
-from mimic_lstm_model import MIMICLSTMModel
-from mimic_gru_model import MIMICGRUModel
-from mimic_iii_data import MIMICIIIData
-from data_prep import MortalityDataPrep
+from src.model.mimic_model import MIMICModel
+from src.model.mimic_lstm_model import MIMICLSTMModel
+from src.model.mimic_gru_model import MIMICGRUModel
+from src.utils.mimic_iii_data import MIMICIIIData
+from src.utils.data_prep import MortalityDataPrep
 
 '''
 !!!! Important !!!!!!!
@@ -15,13 +15,13 @@ Input arguments like model_type and cell type are crucial.
 args = {
     'epochs':100,
     'batch_size': 64,
-    'input_size': 104,
+    'input_size': 1, #automatically picked from data
     'model_type': 'RIM', # type of model  RIM, LSTM, GRU
     'hidden_size': 100,
     'num_rims': 6,
     'rnn_cell': 'LSTM', # type of cell LSTM, or GRU
     'input_key_size': 64,
-    'input_value_size': 200,
+    'input_value_size': 400,
     'input_query_size': 64,
     'num_input_heads': 1,
     'input_dropout': 0.1,
@@ -31,11 +31,11 @@ args = {
     'num_comm_heads': 2,
     'comm_dropout': 0.1,
     'active_rims': 4, 
-    'static_features':17,
+    'static_features':17, #automatically picked from data
     'need_data_preprocessing': False,
-    'raw_data_file_path' :'data/mimic_iii/curated_30k/all_hourly_data_30000.pkl',
-    'processed_data_path':'data/mimic_iii/preprocessed/mortality_and_los',
-    'input_file_path':'data/mimic_iii/preprocessed/mortality_and_los/x_y_statics_20926.npz'
+    'raw_data_file_path' :'data/mimic_iii/test_dump/all_hourly_data.pkl',
+    'processed_data_path':'data/mimic_iii/preprocessed/mortality_and_los/test',
+    'input_file_path':'data/mimic_iii/preprocessed/mortality_and_los/x_y_statics_23944.npz'
 }
 
 torch.manual_seed(10)
