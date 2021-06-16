@@ -1,4 +1,9 @@
-import torch
+'''
+Recurrent Independent Mechanism with Decay 
+'''
+from torch.autograd.variable import Variable
+from src.model.group_gru_cell import GroupGRUCell
+import torch 
 import torch.nn as nn
 import math
 import numpy as np
@@ -6,24 +11,26 @@ from .group_linear import GroupLinear
 from .group_lstm_cell import GroupLSTMCell
 from .blocked_gradients import BlockedGradients
 
-class RIMCell(nn.Module):
-    def __init__(self,
-        input_size, hidden_size, num_rims,
-        active_rims, rnn_cell,
+
+class RIMDCell(nn.Module):
+    def __init__(self, 
+        input_size, hidden_size, num_rims, active_rims, rnn_cell, mask_size, delta_size,
         input_key_size = 64, input_value_size = 400, input_query_size=64,
         num_input_heads=1, input_dropout = 0.1, comm_key_size = 32, 
         comm_value_size = 100, comm_query_size = 32, num_comm_heads = 4,
         comm_dropout = 0.1
-
     ):
+        
         super().__init__()
         assert comm_value_size == hidden_size, "RIM Communication values size must be equal with hidden Size"
-        
+
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_rims = num_rims
         self.active_rims = active_rims
+        self.mask_size = mask_size
+        self.delta_size = delta_size
         self.rnn_cell = rnn_cell
 
         self.input_key_size = input_key_size
@@ -36,23 +43,37 @@ class RIMCell(nn.Module):
         self.comm_value_size = comm_value_size
         self.num_comm_heads = num_comm_heads
 
+        '''
+        gamma layer for decay mechanism
+        '''
+        self.gamma_x_l = nn.Linear(self.delta_size, self.delta_size, bias=False)
+        self.gamma_h_l = nn.Linear(self.delta_size, self.delta_size, bias=False)
+
+        self.zeros = Variable(torch.zeros(self.delta_size).float().to(self.device))
+
         self.input_key_layer = nn.Linear(self.input_size, self.num_input_heads* self.input_query_size).to(self.device)
         self.input_value_layer = nn.Linear(self.input_size, self.num_input_heads * self.input_values_size).to(self.device)
         self.input_dropout = nn.Dropout(p=input_dropout)
 
-        if self.rnn_cell == 'LSTM':
-            self.rnn = GroupLSTMCell(self.input_values_size, self.hidden_size,  self.num_rims)
+        if self.rnn_cell == 'LSTM-D':
+            '''
+            Here we need to add mask size to the hidden state of RNN
+            '''
+            self.rnn = GroupLSTMCell(self.input_values_size + self.mask_size, self.hidden_size,  self.num_rims)
             self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims)
         else:
-            raise Exception("Given RNN cell has not been implemented yet !!")
-        
+            '''
+            GRU-D
+            '''
+            self.rnn = GroupGRUCell(self.input_values_size + self.mask_size, self.hidden_size,  self.num_rims)
+            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims)
+
         self.comm_key_layer = GroupLinear(self.hidden_size,self.comm_key_size * self.num_comm_heads, self.num_rims)
         self.comm_value_layer = GroupLinear(self.hidden_size, self.comm_value_size * self.num_comm_heads, self.num_rims)
         self.comm_query_layer = GroupLinear(self.hidden_size, self.comm_query_size * self.num_comm_heads, self.num_rims)
 
         self.comm_attention_output = GroupLinear(self.num_comm_heads * self.comm_value_size, self.comm_value_size,self.num_rims)
         self.comm_dropout = nn.Dropout(p=comm_dropout)
-
 
     def transpose_for_score(self, x, num_attention_head, attention_head_size):
         new_x_shape = x.size()[:-1] + (num_attention_head, attention_head_size)
@@ -93,7 +114,7 @@ class RIMCell(nn.Module):
         inputs = torch.matmul(attention_probs, value_layer) * mask.unsqueeze(2)
 
         return inputs, mask
-
+    
     def communication_attention(self, input_hidden, mask):
         """
 	    Input : input_hidden (batch_size, num_units, hidden_size)
@@ -126,9 +147,8 @@ class RIMCell(nn.Module):
         context_layer = context_layer + input_hidden
 
         return context_layer
-
-
-    def forward(self, x, hs, cs = None):
+    
+    def forward(self, x, x_mask, delta, x_last_observed, x_mean, hs, cs = None):
         """
 		Input : x (batch_size, 1 , input_size)
 				hs (batch_size, num_units, hidden_size)
@@ -136,6 +156,13 @@ class RIMCell(nn.Module):
 		Output: new hs, cs for LSTM
 				new hs for GRU
 		"""
+
+        delta_x = torch.sigmoid(-torch.max(self.zeros, self.gamma_x_l(delta))).to(self.device)
+        delta_h = torch.sigmoid(-torch.max(self.zeros, self.gamma_h_l(delta))).to(self.device)
+
+        x = x_mask * x + (1 - x_mask) * (delta_x * x_last_observed + (1 - delta_x) * x_mean)
+        hs = delta_h * hs
+
         null_signal_input = torch.zeros(x.size()[0], 1, x.size()[2]).float().to(self.device)
         x = torch.cat((x, null_signal_input), dim=1)
 
@@ -144,14 +171,17 @@ class RIMCell(nn.Module):
         hs_prev = hs * 1.0
         if cs is not None:
             cs_prev = cs * 1.0
-        else:
-            raise Exception("cell state is not provided or other RNN cell type has not been implented yet !!")
-        
+        '''
+        decaying hidden states and mask through hidden state compute
+        '''
+        x_mask = torch.repeat_interleave(x_mask, self.num_rims, dim=1).to(self.device)
+        full_inputs  = torch.cat([inputs, x_mask], dim=-1).to(self.device)
+
         #compute hidden and or cell state for communication attention from N-RNN 
         if cs is not None:
-            hs, cs = self.rnn(inputs, (hs, cs))
+            hs, cs = self.rnn(full_inputs, (hs, cs))
         else:
-            hs = self.rnn(input, hs)
+            hs = self.rnn(full_inputs, hs)
 
         #Block gradient through inactive rim units
         mask = mask.unsqueeze(2)
@@ -166,5 +196,3 @@ class RIMCell(nn.Module):
             return hs, cs
         
         return hs, None
-
-

@@ -22,8 +22,10 @@ class MortalityDataPrep:
         del all_data
     
     def preprocess_decay(self, save_npy = True, destination_dir=''):
+        print('Reading Data frame ... ')
         self.read_file()
 
+        print('Preprocessing for Decay ...')
         # pick targets who has max_hours >= 24 hrs
         targets = self.statics[self.statics.max_hours > self.window_size + self.gap_time][['mort_hosp', 'mort_icu']]
         targets.astype(float)
@@ -46,18 +48,20 @@ class MortalityDataPrep:
 
         self.vital_labs.loc[:, idx[:, 'mean']] = (self.vital_labs.loc[:, idx[:, 'mean']] - means) / stdv
         
-        '''
-        compute icu_stay mean for each patients [24 hrs]
-        '''
-        icu_stay_mean = self.vital_labs.groupby(self.ID_COLS).mean()
-        icu_stay_mean = icu_stay_mean.loc[:, idx[:, 'mean']]
-        x_mean = np.expand_dims(icu_stay_mean, axis=1)
         
-        del icu_stay_mean
 
         self.vital_labs = self.imputer.decay_imputer(self.vital_labs)
         self.statics.isnull().any().any(), 'Null Found in static features'
         self.vital_labs.isnull().any().any(), 'Null found in variable feature'
+
+        '''
+        compute icu_stay mean for each patients [24 hrs]
+        '''
+        icu_stay_mean = self.vital_labs.loc[:, idx[:, 'mean']].groupby(self.ID_COLS).mean() 
+        icu_stay_mean = icu_stay_mean.loc[:, idx[:, 'mean']]
+        x_mean = np.expand_dims(icu_stay_mean, axis=1)
+        
+        del icu_stay_mean
         
 
         if self.type == 'in_icu':
@@ -70,6 +74,9 @@ class MortalityDataPrep:
             mask = self.vital_labs.loc[:,pd.IndexSlice[:, 'mask']].to_numpy()
             delta = self.vital_labs.loc[:,pd.IndexSlice[:, 'time_since_measured']].to_numpy()
 
+            # normalize delta 
+            delta = delta / delta.max()
+            
             missing_idxs = np.where(mask == 0)
 
             variable_data = variable_data.droplevel('Aggregation Function', axis=1)

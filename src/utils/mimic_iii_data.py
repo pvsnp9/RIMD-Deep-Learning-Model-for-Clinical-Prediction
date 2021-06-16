@@ -2,7 +2,7 @@ import numpy as np
 from numpy import random
 
 class MIMICIIIData:
-    def __init__(self, batch_size, window_size, file_path, mask=True, train_frac=0.7, dev_frac= 0.15, test_frac=0.15):
+    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.7, dev_frac= 0.15, test_frac=0.15):
         self.batch_size = batch_size
         self.window_size = window_size
         self.apply_mask = mask
