@@ -13,6 +13,7 @@ from sklearn.metrics import roc_auc_score
 
 output = '../../output/plots'
 
+
 classifires = [ SVC(random_state=3), LogisticRegression(solver="liblinear", random_state=0)]
 X, y = make_classification(random_state=0, n_classes=2,n_samples=1000, weights=[.90],flip_y=0.4)
 X_train, X_test, y_train, y_test = train_test_split( X, y, random_state=3)
@@ -25,9 +26,12 @@ for clf in classifires:
     reports.append(report)
 
 clf_result = {}
+index = 1
 for report in reports:
     res_ = report.get_all_metrics(X_test=X_test)
     clf_result.update(res_)
+    report.plot_calibration_curve(fig_index=index,X_train=X_train, X_test=X_test, y_train=y_train,y_test=y_test)
+
 #convert the results to a dataframe
 df_table = pd.DataFrame(clf_result)
 df_table = df_table.T
@@ -51,3 +55,4 @@ print(df_table.to_markdown())
 
 for report in reports:
         report.save_plots(X_test=X_test, output_dir=output)
+

@@ -190,8 +190,8 @@ class MortalityDataPrep:
         # subject = set(data.)
         pass
         
-# if __name__ == "__main__":
-#     d = MortalityDataPrep('data/mimic_iii/curated_30k/all_hourly_data_30000.pkl')
-#     print('Reading and prepprocessing data .....')
-#     x = d.preprocess_decay(True,  'data/mimic_iii/preprocessed/mortality_and_los')
-#     print(f'Preprocessing Done, and saved .npz files @ {x}')
+if __name__ == "__main__":
+     d = MortalityDataPrep('data/mimic_iii/curated_30k/all_hourly_data_30000.pkl')
+     print('Reading and prepprocessing data .....')
+     x = d.preprocess_decay(True,  'data/mimic_iii/preprocessed/mortality_and_los')
+     print(f'Preprocessing Done, and saved .npz files @ {x}')

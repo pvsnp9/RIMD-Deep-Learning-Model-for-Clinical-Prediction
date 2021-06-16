@@ -1,3 +1,5 @@
+import os.path
+
 import numpy as np
 from numpy import random
 
@@ -90,7 +92,8 @@ class MIMICIIIData:
             self.test_x_mean = [self.test_x_mean[i:i+self.batch_size] for i in range(0, self.test_x_mean.shape[0], self.batch_size)]
             self.test_last_observed = [self.test_last_observed[i:i+self.batch_size] for i in range(0, self.test_last_observed.shape[0], self.batch_size)]
 
-        # batchify 
+        # batchify
+
         self.train_x = [self.train_x[i:i + self.batch_size] for i in range(0, self.train_x.shape[0], self.batch_size)]
         self.train_ys = [self.train_ys[i:i + self.batch_size] for i in range(0, self.train_ys.shape[0], self.batch_size)]
         self.train_statics = [self.train_statics[i:i+self.batch_size] for i in range(0, self.train_statics.shape[0], self.batch_size)]
@@ -121,7 +124,7 @@ class MIMICIIIData:
         if self.apply_mask:
             return self.train_x[i], self.train_ys[i], self.train_statics[i], self.train_mask[i], self.train_delta[i], self.train_x_mean[i], self.train_last_observed[i]
         return self.train_x[i], self.train_ys[i], self.train_statics[i]
-    
+
     def valid_get(self, i):
         if self.apply_mask:
             return self.dev_x[i], self.dev_ys[i], self.dev_statics[i], self.dev_mask[i], self.dev_delta[i], self.dev_x_mean[i], self.dev_last_observed[i]
@@ -137,12 +140,41 @@ class MIMICIIIData:
     
     def input_size(self):
         return self.x.shape[2]
+    """
+    SK-Learn dataset prepartion 
+    concatenated the datasets and returned two train and test set for both input and target features
+    """
+    def get_sk_dataset(self):
+        train_x =  np.concatenate([x for x in self.train_x])
+        train_x = np.reshape(train_x, (self.train_instances,-1 ))
+        dev_x =  np.concatenate([x for x in self.dev_x])
+        dev_x  = np.reshape(dev_x, (self.dev_instances, -1))
+        # train_x =  np.concatenate([train_x,dev_x], axis=0)
 
-        
-# if __name__ == '__main__':
-#     data = MIMICIIIData(25, 24)
-#     x, y, s = data.train_get(1)
-#     print(data.static_features_size())
-#     print(data.train_len())
-#     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-#     x = torch.from_numpy(x).to(device)
+
+        train_ys = np.concatenate([x for x in self.train_ys])
+        dev_ys = np.concatenate([x for x in self.dev_ys])
+        # train_ys = np.concatenate([train_ys, dev_ys], axis=0)
+
+        test_x = np.concatenate([x for x in self.test_x])
+        test_x = np.reshape(test_x, (self.test_instances, -1))
+
+        test_ys = np.concatenate([x for x in self.test_ys])
+
+        return train_x,dev_x,test_x, train_ys,dev_ys, test_ys
+
+
+    def variable_feature_size(self):
+        return self.train_x[0][0].shape[0],self.train_x[0][0].shape[1]
+if __name__ == '__main__':
+    print(os.curdir)
+
+    file_path =  '../../data/x_y_statics_20926.npz'
+    data = MIMICIIIData(10, 24, file_path, mask=False)
+    x, y, s = data.train_get(1)
+    print(data.static_features_size())
+    print(data.train_len())
+    x_train, x_test, y_train, y_test = data.get_sk_dataset()
+
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # x = torch.from_numpy(x).to(device)
