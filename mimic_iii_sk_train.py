@@ -1,181 +1,156 @@
 import torch
+from sklearn.metrics import roc_auc_score, average_precision_score, accuracy_score, f1_score
 from tqdm import tqdm
 import pickle
 import numpy as np
 from src.model.mimic_model import MIMICModel
 from src.model.mimic_lstm_model import MIMICLSTMModel
 from src.model.mimic_gru_model import MIMICGRUModel
+from src.utils.classification_report import ClassificationReport, TablePlot
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.data_prep import MortalityDataPrep
+
+import copy, math, os, time, pandas as pd, scipy.stats as ss
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 '''
 !!!! Important !!!!!!!
 Input arguments like model_type and cell type are crucial.
 '''
 args = {
-    'epochs':100,
     'batch_size': 64,
-    'input_size': 1, #automatically picked from data
-    'model_type': 'RIM', # type of model  RIM, LSTM, GRU
-    'hidden_size': 100,
-    'num_rims': 6,
-    'rnn_cell': 'LSTM', # type of cell LSTM, or GRU
-    'input_key_size': 64,
-    'input_value_size': 400,
-    'input_query_size': 64,
-    'num_input_heads': 1,
-    'input_dropout': 0.1,
-    'comm_key_size': 32,
-    'comm_value_size': 100,
-    'comm_query_size': 32,
-    'num_comm_heads': 2,
-    'comm_dropout': 0.1,
-    'active_rims': 4, 
-    'static_features':17, #automatically picked from data
-    'need_data_preprocessing': True,
-    'raw_data_file_path' :'data/all_hourly_data_30000.pkl',
-    'processed_data_path':'data',
-    'input_file_path':'data/mimic_iii/preprocessed/mortality_and_los/decay_data_20926.npz'
+    'static_features': 17,  # automatically picked from data
+    'need_data_preprocessing': False,
+    'raw_data_file_path': 'data/all_hourly_data_30000.pkl',
+    'processed_data_path': 'data',
+    'input_file_path': 'data/x_y_statics_20926.npz'
 }
+output = 'output/plots'
 
-torch.manual_seed(10)
-np.random.seed(10)
-torch.cuda.manual_seed(10)
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+SEED = 1
+
+np.random.seed(SEED)
+
+
+class DictDist():
+    def __init__(self, dict_of_rvs):
+        self.dict_of_rvs = dict_of_rvs
+
+    def rvs(self, n):
+        a = {k: v.rvs(n) for k, v in self.dict_of_rvs.items()}
+        out = []
+        for i in range(n): out.append({k: vs[i] for k, vs in a.items()})
+        return out
+
+
+class Choice():
+    def __init__(self, options):
+        self.options = options
+
+    def rvs(self, n):
+        return [self.options[i] for i in ss.randint(0, len(self.options)).rvs(n)]
+
+
+def run_basic(model, hyperparams_list, X_flat_train, X_flat_dev, X_flat_test, Ys_train, Ys_dev, Ys_test):
+    best_s, best_hyperparams = -np.Inf, None
+    for i, hyperparams in enumerate(hyperparams_list):
+        print("On sample %d / %d (hyperparams = %s)" % (i + 1, len(hyperparams_list), repr((hyperparams))))
+        M = model(**hyperparams)
+        M.fit(X_flat_train, Ys_train)
+        s = roc_auc_score(Ys_dev, M.predict_proba(X_flat_dev)[:, 1])
+        if s > best_s:
+            best_s, best_hyperparams = s, hyperparams
+            print("New Best Score: %.2f @ hyperparams = %s" % (100 * best_s, repr((best_hyperparams))))
+
+    return run_only_final(model, best_hyperparams, X_flat_train, X_flat_dev, X_flat_test, Ys_train, Ys_dev, Ys_test )
+
+
+def run_only_final(model, best_hyperparams, X_flat_train, X_flat_dev, X_flat_test, Ys_train, Ys_dev, Ys_test):
+    best_M = model(**best_hyperparams)
+    best_M.fit(np.concatenate    ([X_flat_train, X_flat_dev]), np.concatenate([Ys_train, Ys_dev]))
+    y_true = Ys_test
+    y_score = best_M.predict_proba(X_flat_test)[:, 1]
+    y_pred = best_M.predict(X_flat_test)
+
+    report = ClassificationReport(best_M, y_true, y_pred, output_dir=output)
+    res_ = report.get_all_metrics(X_test=X_flat_test)
+    report.save_plots(X_flat_test, output)
+    report.plot_calibration_curve(fig_index=1, X_train=np.concatenate([X_flat_train, X_flat_dev]), X_test=X_flat_test, y_train=np.concatenate([Ys_train, Ys_dev]), y_test=y_true)
+
+    # auc = roc_auc_score(y_true, y_score)
+    # auprc = average_precision_score(y_true, y_score)
+    # acc = accuracy_score(y_true, y_pred)
+    # F1 = f1_score(y_true, y_pred)
+
+    return best_M, best_hyperparams, res_
+
 
 # Data preprocessing
-if(args['need_data_preprocessing']):
+if (args['need_data_preprocessing']):
     prep_data = MortalityDataPrep(args['raw_data_file_path'])
     _, _, _, args['input_file_path'] = prep_data.preprocess(True, args['processed_data_path'])
     del _
 
 # data loader
-data = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], True)
+data = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], False)
 args['input_size'] = data.input_size()
 args['static_features'] = data.static_features_size()
 
-if args['model_type'] == 'LSTM':
-    model = MIMICLSTMModel(args)
-elif args['model_type'] == 'GRU':
-    model = MIMICGRUModel(args)
-else:
-    model = MIMICModel(args)
+train_x, dev_x, test_x, train_y, dev_y, test_y = data.get_sk_dataset()
+# models + hyper parameters
+
+N = 10
+
+LR_dist = DictDist({
+    'C': Choice(np.geomspace(1e-3, 1e3, 10000)),
+    'penalty': Choice(['l1', 'l2']),
+    'solver': Choice(['liblinear', 'lbfgs']),
+    'max_iter': Choice([100, 500])
+})
+np.random.seed(SEED)
+LR_hyperparams_list = LR_dist.rvs(N)
+for i in range(N):
+    if LR_hyperparams_list[i]['solver'] == 'lbfgs': LR_hyperparams_list[i]['penalty'] = 'l2'
+
+RF_dist = DictDist({
+    'n_estimators': ss.randint(50, 500),
+    'max_depth': ss.randint(2, 10),
+    'min_samples_split': ss.randint(2, 75),
+    'min_samples_leaf': ss.randint(1, 50),
+})
+np.random.seed(SEED)
+RF_hyperparams_list = RF_dist.rvs(N)
+
+results = {}
+best_models = {}
+for model_name, model, hyperparams_list in [ ('RF', RandomForestClassifier, RF_hyperparams_list),
+    ('LR', LogisticRegression, LR_hyperparams_list) ]:
+    print("Running model %s on mortality prediction " % model_name)
+    best_model, best_hyperparameter, result = run_basic(model, hyperparams_list, train_x,dev_x, test_x,train_y,dev_y,test_y   )
+    results.update(result)
+    best_models[model_name] = [best_model,best_hyperparameter]
+
+#write the best models into the disk
+with open(output+"classifires_results", mode='wb') as f:
+    pickle.dump(results, f)
 
 
-model.to(device)
-print(f'Model: \n {model}')
-save_dir = 'mimic/models'
-log_dir = 'mimic/logs'
+df_table = pd.DataFrame(results)
+df_table = df_table.T
 
-def eval_model(model, data, data_getter_func):
-    accuracy = 0
-    model.eval()
-    with torch.no_grad():
-        for i in tqdm(range(data.valid_len())):
-            x, y, statics = data_getter_func(i)
-            x = model.to_device(x)
-            y = model.to_device(y).float()
-            statics = model.to_device(statics)
-
-            predictions = model(x, statics)
-            probs = torch.round(torch.sigmoid(predictions))
-            correct = probs.view(-1) == y
-            accuracy += correct.sum().item()
-    
-    accuracy /= data.dev_instances
-    return accuracy
-
-def test_model(model, data, data_getter_func):
-    accuracy = 0
-    model.eval()
-    with torch.no_grad():
-        for i in tqdm(range(data.test_len())):
-            x, y, statics = data_getter_func(i)
-            x = model.to_device(x)
-            y = model.to_device(y).float()
-            statics = model.to_device(statics)
-
-            predictions = model(x, statics)
-            probs = torch.round(torch.sigmoid(predictions))
-            correct = probs.view(-1) == y
-            accuracy += correct.sum().item()
-    
-    accuracy /= data.test_instances
-    return accuracy
+s = df_table.style
+s.highlight_max(axis=1)
+df_table.style.apply(s)
 
 
+# print(df_table.to_latex(float_format="%.3f"))
 
-def train_model(model, epochs, data):
-    acc = []
-    train_acc = []
-    test_acc = []
-    loss_stats = []
-    ctr = 0
-    start_epochs = 0
+table_report = TablePlot(df_table, output_dir=output)
+table_report.save_to_excel()
+table_report.save_to_latex()
+table_report.draw_table()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
-    print(f"Training, Validating, and Testing: {args['model_type']} model with {args['rnn_cell']} cell ")
-    for epoch in range(start_epochs, epochs):
-        print(f'EPOCH: {epoch +1}')
-        epoch_loss = 0.0
-        iter_ctr = 0.0
-        t_accuracy = 0
-        norm = 0
-
-        model.train()
-        for i in tqdm(range(data.train_len())):
-            iter_ctr += 1
-            x, y, static = data.train_get(i)
-            x = model.to_device(x)
-            static = model.to_device(static)
-            y = model.to_device(y)
-
-            output, l = model(x, static, y)
-            optimizer.zero_grad()
-            l.backward()
-            optimizer.step()
-            norm += model.grad_norm()
-
-            epoch_loss += l.item()
-            predictions = torch.round(output)
-            correct = predictions.view(-1) == y.long()
-            t_accuracy += correct.sum().item()
-
-            ctr += 1
-
-        validation_accuracy = eval_model(model, data, data.valid_get)
-        test_accuracy = test_model(model, data, data.test_get)
-
-        print(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/data.train_instances}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}, norm: {norm / iter_ctr}')
-        
-        print("saving the models state...")
-        model_state = {
-            'net': model.state_dict(),
-            'epochs': epoch,
-            'ctr': ctr
-        }
-        with open(f"{save_dir}/{args['model_type']}_model.pt", 'wb') as f:
-            torch.save(model_state, f)
-
-        
-
-        loss_stats.append((ctr,epoch_loss/iter_ctr))
-        acc.append((epoch,(validation_accuracy)))
-        train_acc.append((epoch, (t_accuracy/data.train_instances)))
-        test_acc.append((epoch, (test_accuracy)))
-
-        with open(f"{log_dir}/{args['model_type']}_lossstats.pickle",'wb') as f:
-            pickle.dump(loss_stats,f)
-        with open(f"{log_dir}/{args['model_type']}_accstats.pickle",'wb') as f:
-            pickle.dump(acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_train_acc.pickle",'wb') as f:
-            pickle.dump(train_acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_test_acc.pickle", 'wb') as f:
-            pickle.dump(test_acc, f)
-
-
-# train_model(model, args['epochs'], data)
-
+print(df_table.to_markdown())
