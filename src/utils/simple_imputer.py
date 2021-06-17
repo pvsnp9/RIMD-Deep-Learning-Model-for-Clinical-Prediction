@@ -42,7 +42,7 @@ class SimpleImputer:
         
         df_out = df.loc[:, idx[:, ['mean', 'count']]]
 
-        df_out.loc[:,idx[:,'mean']] = df_out.loc[:,idx[:,'mean']].groupby(self.ID_COLS).fillna(0)
+        df_out.loc[:,idx[:,'mean']] = df_out.loc[:,idx[:,'mean']].groupby(self.ID_COLS).fillna( method='ffill').groupby(self.ID_COLS).fillna(0)
         df_out.loc[:, idx[:, 'count']] = (df.loc[:, idx[:, 'count']] > 0).astype(float)
         df_out.rename(columns={'count': 'mask'}, level='Aggregation Function', inplace=True)
 
