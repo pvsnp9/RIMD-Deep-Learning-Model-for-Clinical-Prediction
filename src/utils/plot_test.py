@@ -5,7 +5,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
-from classification_report import ClassificationReport, TablePlot
+from mimic_class_report import ClassificationReport, TablePlot
 
 
 from sklearn.metrics import roc_auc_score

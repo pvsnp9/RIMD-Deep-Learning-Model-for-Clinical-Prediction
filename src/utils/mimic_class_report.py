@@ -10,67 +10,69 @@ from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 
 
+TIME_STR= time.strftime("%m%d-%H-%M-%S")
 class ClassificationReport:
     weight_default = "witghted"
-    timestr = time.strftime("%m%d-%H-%M-%S")
 
-    def __init__(self, clf, y_true, y_pred, output_dir):
+
+    def __init__(self, clf, y_true, y_pred,y_score, output_dir):
         self.clf = clf
         self.y_pred = y_pred
         self.y_true = y_true
+        self.y_score = y_score
         self.y_max = max(y_true)
         self.output_dir = output_dir
         self.classifire_name = self.clf.__class__.__name__
 
-    def get_precision_recall_fm(self, average="weighted"):
+    def get_precision_recall_fm(self, pos_lable = '1'):
         """
         As the data is imbalanced we use weighted average for calculating the metrics
         output:
-        return a dict for {'precision','recall','f1-score','support'
+        return a dict for {'precision','recall','f1-score','accuracy'}
         """
-        # TODO extract class wise accouracy if needed, add a key_extract filter to do so
-        res = classification_report(self.y_true, self.y_pred, output_dict=True)
-        return res['weighted avg']
 
-    def get_brier(self, X_test):
-        if hasattr(self.clf, "predict_proba"):
-            prob_pos = self.clf.predict_proba(X_test)[:, 1]
-        else:  # use decision function
-            prob_pos = self.clf.decision_function(X_test)
-            prob_pos = \
-                (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
-        clf_score = brier_score_loss(self.y_true, prob_pos, pos_label=self.y_max)
+        res = classification_report(self.y_true, self.y_pred, output_dict=True)
+        res_pos = res[pos_lable]
+        res_pos['accuaracy'] = res["accuracy"]
+
+        return res_pos
+
+    def get_brier(self):
+        if not hasattr(self.clf, "decision_function"):
+            y_score = self.y_score
+        else:
+            y_score = \
+                (self.y_score - self.y_score.min()) / (self.y_score.max() - self.y_score.min())
+        try:
+            clf_score = brier_score_loss(self.y_true, y_score, pos_label=self.y_max)
+        except:
+            print("negative number issue")
         return clf_score
 
-    def get_roc_metrics(self, X_test):
+
+    def get_roc_metrics(self):
         """
         calculate area under the ROC curve and average precision score (AProc) for positive class
 
         output:
         return a dictionary for both scores {'aucroc', 'auprc'}
         """
-        if hasattr(self.clf, "decision_function"):
-            y_score = self.clf.decision_function(X_test)
-        else:
-            y_score = self.clf.predict_proba(X_test)[:, 1]
-
-
-        precision, recall, threashold = precision_recall_curve(self.y_true, y_score)
-        auc_p_r = roc_auc_score(y_true=self.y_true, y_score=y_score, average="weighted")
+        precision, recall, threashold = precision_recall_curve(self.y_true, self.y_score)
+        auc_p_r = roc_auc_score(y_true=self.y_true, y_score=self.y_score, average="weighted")
         # Since the possitive class is more important, and the data is imbalanced, this mettic may fits better to our need
-        prauc = average_precision_score(self.y_true, y_score, )
+        prauc = average_precision_score(self.y_true, self.y_score )
 
         return {'AUROC': auc_p_r, 'PRAUC': prauc}
 
     def get_confusion_matrix(self):
         return confusion_matrix(self.y_true, self.y_pred)
 
-    def get_all_metrics(self, X_test):
+    def get_all_metrics(self):
        #claculate the metrics
         precision_recall_fscore = self.get_precision_recall_fm()
-        roc = self.get_roc_metrics(X_test)
+        roc = self.get_roc_metrics()
         res = dict(precision_recall_fscore)
-        brier = self.get_brier(X_test)
+        brier = self.get_brier()
        #update them
         res.update(roc)
         res.pop('support')
@@ -97,7 +99,7 @@ class ClassificationReport:
     def plot_pr_curve(self, X_test):
         disp = plot_precision_recall_curve(self.clf, X_test, self.y_true)
         disp.ax_.set_title(self.classifire_name + ': 2-class Precision-Recall curve: '
-                                                  'AP={0:0.2f}'.format(self.get_roc_metrics(X_test)["PRAUC"]))
+                                                  'AP={0:0.2f}'.format(self.get_roc_metrics()["PRAUC"]))
         return disp
 
     # TODO need to be re implemented !! regarding
@@ -114,10 +116,10 @@ class ClassificationReport:
 
     def get_file_name(self, file_name):
         try:
-            os.mkdir(self.output_dir + "/" + self.timestr)
+            os.mkdir(self.output_dir + "/" + TIME_STR)
         except OSError as error:
-            print(error)
-        return self.output_dir + "/" + self.timestr + "/" + file_name
+             pass
+        return self.output_dir + "/" + TIME_STR + "/" + file_name
 
     def plot_calibration_curve(self, fig_index, X_train, X_test, y_train, y_test):
         """Plot calibration curve for est w/o and with calibration. """
@@ -186,7 +188,7 @@ import matplotlib.pyplot as plt
 class TablePlot():
     title = 'MIMIC-III Results'
     footer = time.strftime("%Y-%m-%d-%H:%M:%S")
-    timestr = time.strftime("%m%d-%H-%M-%S")
+
 
     def __init__(self, clf_results, output_dir, float_format="%.3f"):
         self.df_clf_results = clf_results
@@ -254,10 +256,10 @@ class TablePlot():
 
     def get_file_name(self, file_name):
         try:
-            os.mkdir(self.output_dir + "/" + self.timestr)
+            os.mkdir(self.output_dir + "/" + TIME_STR)
         except OSError as error:
-            print(error)
-        return self.output_dir + "/" + self.timestr + "/" + file_name
+            pass
+        return self.output_dir + "/" + TIME_STR + "/" + file_name
 
     def print_table(self):
         print(self.clf_results.to_markdown())
