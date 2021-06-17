@@ -9,7 +9,7 @@ class MIMICIIIData:
         self.window_size = window_size
         self.apply_mask = mask
 
-        all_data = np.load(file_path)
+        all_data = np.load(file_path,allow_pickle=True)
         self.x = all_data['x']
         self.y = all_data['y']
         self.statics = all_data['statics']

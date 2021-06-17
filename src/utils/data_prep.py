@@ -51,8 +51,8 @@ class MortalityDataPrep:
         
 
         self.vital_labs = self.imputer.decay_imputer(self.vital_labs)
-        self.statics.isnull().any().any(), 'Null Found in static features'
-        self.vital_labs.isnull().any().any(), 'Null found in variable feature'
+        assert not self.statics.isnull().any().any(), 'Null Found in static features'
+        assert not self.vital_labs.isnull().any().any(), 'Null found in variable feature'
 
         '''
         compute icu_stay mean for each patients [24 hrs]
@@ -60,6 +60,7 @@ class MortalityDataPrep:
         icu_stay_mean = self.vital_labs.loc[:, idx[:, 'mean']].groupby(self.ID_COLS).mean() 
         icu_stay_mean = icu_stay_mean.loc[:, idx[:, 'mean']]
         x_mean = np.expand_dims(icu_stay_mean, axis=1)
+        assert not icu_stay_mean.isnull().any().any(), 'Null found in feature mean '
         
         del icu_stay_mean
         
@@ -162,7 +163,7 @@ class MortalityDataPrep:
         elif age > 50 and age <= 70:
             cat = 3
         else:
-            cat = 2
+            cat = 4
         
         return cat
 
