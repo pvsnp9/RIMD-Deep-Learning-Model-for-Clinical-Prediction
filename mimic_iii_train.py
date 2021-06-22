@@ -1,6 +1,4 @@
 import torch
-from torch.utils.data import dataloader
-from tqdm import tqdm
 import pickle
 import numpy as np
 from src.model.mimic_model import MIMICModel
@@ -10,7 +8,7 @@ from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.data_prep import MortalityDataPrep
 from src.model.mimic_decay_model import MIMICDecayModel
 from src.utils.mimic_iii_decay_data import MIMICDecayData
-from src.utils.mimic_evaluation import MIMICReport
+from src.utils.classification_report import ClassificationReport
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 
 '''
@@ -44,12 +42,12 @@ args = {
     'need_data_preprocessing': False,
     'raw_data_file_path' :'data/mimic_iii/curated_30k/all_hourly_data_30000.pkl',
     'processed_data_path':'data/mimic_iii/test_dump',
-    'input_file_path':'data/decay_data_20926.npz'
+    'input_file_path':'data/mimic_iii/test_dump/decay_data_20926.npz'
 }
 
-torch.manual_seed(10)
-np.random.seed(10)
-torch.cuda.manual_seed(10)
+# torch.manual_seed(10)
+# np.random.seed(10)
+# torch.cuda.manual_seed(10)
 
 
 save_dir = 'mimic/models'
@@ -79,7 +77,6 @@ class TrainModels:
         else:
             print('-------------- Model initiated for prediction ---------------------')
 
-    
     def set_decay_params(self):
         self.data_object = MIMICDecayData(args['batch_size'], 24, args['input_file_path'])
         self.args['input_size'] = self.data_object.input_size
@@ -95,7 +92,6 @@ class TrainModels:
         self.args['static_features'] = self.data_object.statics_size
         if self.args['model_type'] == 'LSTM': self.cell_types.pop(0)
         elif self.args['model_type'] == 'GRU': self.cell_types.pop(1)
-
 
     def train(self):
         acc = []
@@ -299,466 +295,14 @@ class TrainModels:
         
         gt = y.cpu().detach().numpy()
         pt = probs.view(-1).cpu().detach().numpy()
-        y_score = predictions.view(-1)
+        y_score = predictions.view(-1).cpu().detach().numpy()
 
         return gt, pt, y_score
 
-class RIMTrainer:
-    def __init__(self, args, data_obj):
-        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.model = MIMICModel(args).to(self.device)
-        self.epochs = args['epochs']
-        self.data_obj = data_obj
 
-        print(f'Model: \n {self.model}')
 
-
-
-    def eval(self):
-        accuracy = 0
-        self.model.eval()
-        with torch.no_grad():
-            for i in tqdm(range(self.data_obj.valid_len())):
-
-                x, y, statics = self.data_obj.valid_get(i)
-                x = self.model.to_device(x)
-                statics = self.model.to_device(statics)
-                y = self.model.to_device(y)
-
-                predictions = self.model(x, statics)
-
-                probs = torch.round(torch.sigmoid(predictions))
-                correct = probs.view(-1) == y
-                accuracy += correct.sum().item()
-        
-        accuracy /= self.data_obj.dev_instances
-        return accuracy
-
-    def test(self):
-        accuracy = 0
-        self.model.eval()
-        with torch.no_grad():
-            for i in tqdm(range(self.data_obj.test_len())):
-                x, y, statics = self.data_obj.test_get(i)
-                x = self.model.to_device(x)
-                statics = self.model.to_device(statics)
-                y = self.model.to_device(y)
-
-                predictions = self.model(x, statics)
-                
-                probs = torch.round(torch.sigmoid(predictions))
-                correct = probs.view(-1) == y
-                accuracy += correct.sum().item()
-        
-        accuracy /= self.data_obj.test_instances
-        return accuracy
-
-
-
-    def train(self):
-        acc = []
-        train_acc = []
-        test_acc = []
-        loss_stats = []
-        ctr = 0
-        start_epochs = 0
-
-        max_val_accuracy = 0.0
-        epochs_no_improve = 0
-        max_no_improvement = 5
-        improvement_threshold = 0.001
-
-        optimizer = torch.optim.Adam(self.model.parameters(), lr = args['lr'])
-        print(f"RIM Training, Validating, and Testing: {args['model_type']} model with {args['rnn_cell']} cell ")
-        for epoch in range(start_epochs, self.epochs):
-            print(f'EPOCH: {epoch +1}')
-            epoch_loss = 0.0
-            iter_ctr = 0.0
-            t_accuracy = 0
-            norm = 0
-
-            self.model.train()
-            for i in tqdm(range(self.data_obj.train_len())):
-                iter_ctr += 1
-
-                x, y, statics = self.data_obj.train_get(i)
-                x = self.model.to_device(x)
-                statics = self.model.to_device(statics)
-                y = self.model.to_device(y)
-
-                output, l = self.model(x, statics, y)
-
-                optimizer.zero_grad()
-                l.backward()
-                optimizer.step()
-                norm += self.model.grad_norm()
-
-                epoch_loss += l.item()
-                predictions = torch.round(output)
-                correct = predictions.view(-1) == y.long()
-                t_accuracy += correct.sum().item()
-
-                ctr += 1
-
-            validation_accuracy = self.eval()
-            test_accuracy = self.test()
-
-            print(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/self.data_obj.train_instances}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
-            
-            improve = validation_accuracy - max_val_accuracy
-            if improve > improvement_threshold:
-                epochs_no_improve = 0
-                max_val_accuracy = validation_accuracy
-
-                best_model_state = {
-                'net': self.model.state_dict(),
-                'epochs': epoch,
-                'args':args
-                }
-            else:
-                epochs_no_improve += 1
-            
-            if epochs_no_improve == max_no_improvement:
-                print(f"Early Stopping @ EPOCH:[{epoch}]")
-                break
-
-
-        print("saving the models state...")
-        with open(f"{save_dir}/{args['model_type']}_{args['rnn_cell']}_model.pt", 'wb') as f:
-            torch.save(best_model_state, f)
-
-        
-
-        loss_stats.append((ctr,epoch_loss/iter_ctr))
-        acc.append((epoch,(validation_accuracy)))
-        train_acc.append((epoch, (t_accuracy/self.data_obj.train_instances)))
-        test_acc.append((epoch, (test_accuracy)))
-
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_lossstats.pickle",'wb') as f:
-            pickle.dump(loss_stats,f)
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_accstats.pickle",'wb') as f:
-            pickle.dump(acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_train_acc.pickle",'wb') as f:
-            pickle.dump(train_acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_test_acc.pickle", 'wb') as f:
-            pickle.dump(test_acc, f)
-
-
-class RIMDEcayTrainer:
-    def __init__(self, args, data_obj):
-        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.model = MIMICDecayModel(args).to(self.device)
-        self.epochs = args['epochs'] 
-        self.data_obj = data_obj
-        self.train_loader, self.val_loader, self.test_loader = data_obj.data_loader()
-        print(f'Model: \n {self.model}')
-        # self.show_params()
-    
-    def show_params(self):
-        for name, param in self.model.named_parameters():
-            print(f'{name}: \n {param}')
-        
-    def eval(self):
-        accuracy = 0
-        self.model.eval()
-        with torch.no_grad():
-            for x, static, x_mean, y in self.val_loader:
-                # try: 
-                #     x, static, x_mean, y = next(self.val_loader)
-                # except StopIteration:
-                #     self.val_loader = iter(self.val_loader)
-                #     x, static, x_mean, y = next(self.val_loader)
-
-                static = static.to(self.device)
-                x_mask = x[:,1,:,:].to(self.device)
-                delta = x[:,2,:,:].to(self.device)
-                x_mean = x_mean.to(self.device)
-                x_last_ob = x[:,3,:,:].to(self.device)
-                x = x[:,0,:,:].to(self.device)
-
-                y = y.to(self.device)
-
-                predictions = self.model(x, static, x_mask, delta, x_last_ob, x_mean)
-                probs = torch.round(torch.sigmoid(predictions))
-                correct = probs.view(-1) == y
-                accuracy += correct.sum().item()
-        # todo compute accuracy
-        accuracy /= self.data_obj.dev_instances
-        return accuracy
-
-    def test(self):
-        accuracy = 0
-        self.model.eval()
-        with torch.no_grad():
-            for x, static, x_mean, y in self.test_loader:
-                # try: 
-                #     x, static, x_mean, y = next(self.test_loader)
-                # except StopIteration:
-                #     self.test_loader = iter(self.test_loader)
-                #     x, static, x_mean, y = next(self.test_loader)
-
-                static = static.to(self.device)
-                x_mask = x[:,1,:,:].to(self.device)
-                delta = x[:,2,:,:].to(self.device)
-                x_mean = x_mean.to(self.device)
-                x_last_ob = x[:,3,:,:].to(self.device)
-                x = x[:,0,:,:].to(self.device)
-
-                y = y.to(self.device)
-
-                predictions = self.model(x, static, x_mask, delta, x_last_ob, x_mean)
-                probs = torch.round(torch.sigmoid(predictions))
-                correct = probs.view(-1) == y
-                accuracy += correct.sum().item()
-        # todo compute accuracy
-        accuracy /= self.data_obj.test_instances
-        return accuracy
-
-    def train(self):
-        acc = []
-        train_acc = []
-        test_acc = []
-        loss_stats = []
-        ctr = 0
-        start_epochs = 0
-
-        max_val_accuracy = 0.0
-        epochs_no_improve = 0
-        max_no_improvement = 5
-        improvement_threshold = 0.0001 
-
-        optimizer = torch.optim.Adam(self.model.parameters(), lr = args['lr'])
-        print(f"RIM Decay Training, Validating, and Testing: {args['model_type']} model with {args['rnn_cell']} cell ")
-        for epoch in range(start_epochs, self.epochs):
-            print(f' EPOCH: {epoch +1}')
-            epoch_loss = 0.0
-            iter_ctr = 0.0
-            t_accuracy = 0
-            norm = 0
-
-            self.model.train()
-            for x, static, x_mean, y in self.train_loader:
-                iter_ctr += 1
-
-                static = static.to(self.device)
-                x_mask = x[:,1,:,:].to(self.device)
-                delta = x[:,2,:,:].to(self.device)
-                x_mean = x_mean.to(self.device)
-                x_last_ob = x[:,3,:,:].to(self.device)
-                x = x[:,0,:,:].to(self.device)
-
-                y = y.to(self.device)
-
-                output, l = self.model(x, static, x_mask, delta, x_last_ob, x_mean, y)
-            
-                optimizer.zero_grad()
-                l.backward()
-                optimizer.step()
-                norm += self.model.grad_norm()
-
-                epoch_loss += l.item()
-                predictions = torch.round(output)
-                correct = predictions.view(-1) == y.long()
-                t_accuracy += correct.sum().item()
-
-                ctr += 1
-        
-            validation_accuracy = self.eval()
-            test_accuracy = self.test()
-            print(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/self.data_obj.train_instances}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
-            
-            # early stopping code
-            improve = validation_accuracy - max_val_accuracy
-            if improve > improvement_threshold:
-                epochs_no_improve = 0
-                max_val_accuracy = validation_accuracy
-
-                best_model_state = {
-                'net': self.model.state_dict(),
-                'epochs': epoch,
-                'args':args
-                }
-            else:
-                epochs_no_improve += 1
-            
-            if epochs_no_improve == max_no_improvement:
-                print(f"Early Stopping @ EPOCH:[{epoch}]")
-                break
-
-        print("saving the models state...")
-        with open(f"{save_dir}/{args['model_type']}_{args['rnn_cell']}_model.pt", 'wb') as f:
-            torch.save(best_model_state, f)
-
-        
-
-        loss_stats.append((ctr,epoch_loss/iter_ctr))
-        acc.append((epoch,(validation_accuracy)))
-        train_acc.append((epoch, (t_accuracy/data.train_instances)))
-        test_acc.append((epoch, (test_accuracy)))
-
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_lossstats.pickle",'wb') as f:
-            pickle.dump(loss_stats,f)
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_accstats.pickle",'wb') as f:
-            pickle.dump(acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_train_acc.pickle",'wb') as f:
-            pickle.dump(train_acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_{args['rnn_cell']}_test_acc.pickle", 'wb') as f:
-            pickle.dump(test_acc, f)         
-
-
-class RNNTrainer:
-    def __init__(self, args, data_obj, flag=True):
-        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-        if flag:
-            self.model = MIMICLSTMModel(args).to(self.device)
-        else:
-            self.model = MIMICGRUModel(args).to(self.device)
-
-        self.epochs = args['epochs']
-        self.data_obj = data_obj
-
-        print(f'Model: \n {self.model}')
-
-
-
-    def eval(self):
-        accuracy = 0
-        self.model.eval()
-        with torch.no_grad():
-            for i in tqdm(range(self.data_obj.valid_len())):
-
-                x, y, statics = self.data_obj.valid_get(i)
-                x = self.model.to_device(x)
-                statics = self.model.to_device(statics)
-                y = self.model.to_device(y)
-
-                predictions = self.model(x, statics)
-
-                probs = torch.round(torch.sigmoid(predictions))
-                correct = probs.view(-1) == y
-                accuracy += correct.sum().item()
-        
-        accuracy /= self.data_obj.dev_instances
-        return accuracy
-
-    def test(self):
-        accuracy = 0
-        self.model.eval()
-        with torch.no_grad():
-            for i in tqdm(range(self.data_obj.test_len())):
-                x, y, statics = self.data_obj.test_get(i)
-                x = self.model.to_device(x)
-                statics = self.model.to_device(statics)
-                y = self.model.to_device(y)
-
-                predictions = self.model(x, statics)
-                
-                probs = torch.round(torch.sigmoid(predictions))
-                correct = probs.view(-1) == y
-                accuracy += correct.sum().item()
-        
-        accuracy /= self.data_obj.test_instances
-        return accuracy
-
-
-
-    def train(self):
-        acc = []
-        train_acc = []
-        test_acc = []
-        loss_stats = []
-        ctr = 0
-        start_epochs = 0
-
-        max_val_accuracy = 0.0
-        epochs_no_improve = 0
-        max_no_improvement = 5
-        improvement_threshold = 0.001
-
-        optimizer = torch.optim.Adam(self.model.parameters(), lr = args['lr'])
-        print(f"RIM Training, Validating, and Testing: {args['model_type']} ")
-        for epoch in range(start_epochs, self.epochs):
-            print(f'EPOCH: {epoch +1}')
-            epoch_loss = 0.0
-            iter_ctr = 0.0
-            t_accuracy = 0
-            norm = 0
-
-            self.model.train()
-            for i in tqdm(range(self.data_obj.train_len())):
-                iter_ctr += 1
-
-                x, y, statics = self.data_obj.train_get(i)
-                x = self.model.to_device(x)
-                statics = self.model.to_device(statics)
-                y = self.model.to_device(y)
-
-                output, l = self.model(x, statics, y)
-
-                optimizer.zero_grad()
-                l.backward()
-                optimizer.step()
-                norm += self.model.grad_norm()
-
-                epoch_loss += l.item()
-                predictions = torch.round(output)
-                correct = predictions.view(-1) == y.long()
-                t_accuracy += correct.sum().item()
-
-                ctr += 1
-
-            validation_accuracy = self.eval()
-            test_accuracy = self.test()
-
-            print(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/self.data_obj.train_instances}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
-            
-            improve = validation_accuracy - max_val_accuracy
-            if improve > improvement_threshold:
-                epochs_no_improve = 0
-                max_val_accuracy = validation_accuracy
-
-                best_model_state = {
-                'net': self.model.state_dict(),
-                'epochs': epoch,
-                'args':args
-                }
-            else:
-                epochs_no_improve += 1
-            
-            if epochs_no_improve == max_no_improvement:
-                print(f"Early Stopping @ EPOCH:[{epoch}]")
-                break
-
-
-        print("saving the models state...")
-        with open(f"{save_dir}/{args['model_type']}_model.pt", 'wb') as f:
-            torch.save(best_model_state, f)
-
-        
-
-        loss_stats.append((ctr,epoch_loss/iter_ctr))
-        acc.append((epoch,(validation_accuracy)))
-        train_acc.append((epoch, (t_accuracy/self.data_obj.train_instances)))
-        test_acc.append((epoch, (test_accuracy)))
-
-        with open(f"{log_dir}/{args['model_type']}_lossstats.pickle",'wb') as f:
-            pickle.dump(loss_stats,f)
-        with open(f"{log_dir}/{args['model_type']}_accstats.pickle",'wb') as f:
-            pickle.dump(acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_train_acc.pickle",'wb') as f:
-            pickle.dump(train_acc,f)
-        
-        with open(f"{log_dir}/{args['model_type']}_test_acc.pickle", 'wb') as f:
-            pickle.dump(test_acc, f)
-
-# 'LSTM', 'GRU', 'RIMDecay-G', 'RIMDecay-L', 
-model_type = [ 'LSTM', 'GRU']
+''' Training '''
+model_type = ['RIMDecay','RIM', 'LSTM', 'GRU']
 cell_type= ['LSTM', 'GRU']
 for model in model_type:
     args['model_type'] = model
@@ -766,60 +310,24 @@ for model in model_type:
     model_trainer.train()
         
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-def make_report(args):
-    data  = MIMICIIIData(64, 24, args['input_file_path'])  #MIMICDecayData(64, 24, args['input_file_path'])
-    x, static, y = data.get_test_data()
-    # _, _, _ = data.data_loader()
-    checkpoint = torch.load('./mimic/models/{}_model.pt'.format("model_type"))
-    args = checkpoint['args']
-    model = MIMICLSTMModel(args).to(device)
-    model.load_state_dict(checkpoint['net'])
 
-    # print(f'args: \n {args}')
-    print(f'model: \n {model}')
+# def make_report():
+#     data  = MIMICIIIData(64, 24, args['input_file_path'])  #MIMICDecayData(64, 24, args['input_file_path'])
+#     test_data = data.get_test_data()
+#     model_path = f'./mimic/models/RIM_LSTM_model.pt'
+#     trainer = TrainModels()
+#     y_truth, y_pred, y_score = trainer.test(model_path, test_data)
 
-    # test dat
+#     clf = ClassificationReport(None, y_truth, y_pred, y_score, 'RIM - LSTM','./figures')
 
-    x, static, x_mean, y = data.test_data
-    static = static.to(device)
-    x_mask = x[:,1,:,:].to(device)
-    delta = x[:,2,:,:].to(device)
-    x_mean = x_mean.to(device)
-    x_last_ob = x[:,3,:,:].to(device)
-    x = x[:,0,:,:].to(device)
+#     results = clf.get_all_metrics()
+#     cf_m = clf.get_confusion_matrix()
+#     print(results)
+#     print(cf_m)
+#     print(classification_report(y_truth, y_pred))
 
-    y = y.to(device)
 
-    predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
-
-    x = model.to_device(x)
-    statics = model.to_device(static)
-    y = model.to_device(y)
-    predictions = model(x, statics)
-    
-    probs = torch.round(torch.sigmoid(predictions))
-
-    probs = torch.round(torch.sigmoid(predictions))
-
-    gt = y.cpu().detach().numpy()
-    pt = probs.view(-1).cpu().detach().numpy()
-    y_score = predictions.view(-1).cpu().detach().numpy()
-
-    return gt, pt, y_score
-
-for model in model_type:
-    print("*** Classifier Reports:    *******************************************************************")
-    y_truth, y_pred, y_score = make_report(args)
-
-    report = MIMICReport(model, y_truth, y_pred, y_score, './figures')
-
-    results = report.get_all_metrics()
-    cf_m = report.get_confusion_matrix()
-    print(results)
-    print(cf_m)
-    print(report.get_sk_report())
-
+# make_report()
 
 
 # train_model(model, args['epochs'], data)
