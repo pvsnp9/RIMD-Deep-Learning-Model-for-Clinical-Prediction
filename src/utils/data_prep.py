@@ -75,8 +75,6 @@ class MortalityDataPrep:
             mask = self.vital_labs.loc[:,pd.IndexSlice[:, 'mask']].to_numpy()
             delta = self.vital_labs.loc[:,pd.IndexSlice[:, 'time_since_measured']].to_numpy()
 
-            # normalize delta 
-            delta = delta / delta.max()
             
             missing_idxs = np.where(mask == 0)
 

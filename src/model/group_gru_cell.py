@@ -11,16 +11,17 @@ class GroupGRUCell(nn.Module):
         super(GroupGRUCell, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.x2h = GroupLinear(input_size, 3 * hidden_size, num_grus)
-        self.h2h = GroupLinear(hidden_size, 3 * hidden_size, num_grus)
-        self.reset_parameters()
-
+        self.num_grus = num_grus
+        self.input_hidden = GroupLinear(input_size, 3 * hidden_size, num_grus)
+        self.hidden_hidden = GroupLinear(hidden_size, 3 * hidden_size, num_grus)
+        #self.reset_parameters()
 
 
     def reset_parameters(self):
-        std = 1.0 / math.sqrt(self.hidden_size)
-        for w in self.parameters():
-            w.data = torch.ones(w.data.size())#.uniform_(-std, std)
+        stdv = 1.0 / math.sqrt(self.hidden_size)
+        for weight in self.parameters():
+            weight.data.uniform_(-stdv, stdv)
+    
     
     def forward(self, x, hidden):
         """
@@ -28,8 +29,8 @@ class GroupGRUCell(nn.Module):
 			   hidden (batch_size, num_grus, hidden_size)
 		output: hidden (batch_size, num_grus, hidden_size)
         """
-        gate_x = self.x2h(x) 
-        gate_h = self.h2h(hidden)
+        gate_x = self.input_hidden(x) 
+        gate_h = self.hidden_hidden(hidden)
         
         i_r, i_i, i_n = gate_x.chunk(3, 2)
         h_r, h_i, h_n = gate_h.chunk(3, 2)

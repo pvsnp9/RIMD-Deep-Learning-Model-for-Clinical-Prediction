@@ -1,8 +1,9 @@
+from src.model.group_gru_cell import GroupGRUCell
 import torch
 import torch.nn as nn
 import math
 import numpy as np
-from .group_linear import GroupLinear
+from .group_linear import GroupLinear, CustomLinear
 from .group_lstm_cell import GroupLSTMCell
 from .blocked_gradients import BlockedGradients
 
@@ -36,21 +37,23 @@ class RIMCell(nn.Module):
         self.comm_value_size = comm_value_size
         self.num_comm_heads = num_comm_heads
 
-        self.input_key_layer = nn.Linear(self.input_size, self.num_input_heads* self.input_query_size).to(self.device)
-        self.input_value_layer = nn.Linear(self.input_size, self.num_input_heads * self.input_values_size).to(self.device)
+        self.input_key_layer = CustomLinear(self.input_size, self.num_input_heads* self.input_query_size, bias=False)
+        self.input_value_layer = CustomLinear(self.input_size, self.num_input_heads * self.input_values_size, bias=False)
         self.input_dropout = nn.Dropout(p=input_dropout)
 
         if self.rnn_cell == 'LSTM':
             self.rnn = GroupLSTMCell(self.input_values_size, self.hidden_size,  self.num_rims)
-            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims)
+            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims, bias=False)
         else:
-            raise Exception("Given RNN cell has not been implemented yet !!")
+            # GRU
+            self.rnn = GroupGRUCell(self.input_values_size, self.hidden_size,  self.num_rims)
+            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims, bias=False)
         
-        self.comm_key_layer = GroupLinear(self.hidden_size,self.comm_key_size * self.num_comm_heads, self.num_rims)
-        self.comm_value_layer = GroupLinear(self.hidden_size, self.comm_value_size * self.num_comm_heads, self.num_rims)
-        self.comm_query_layer = GroupLinear(self.hidden_size, self.comm_query_size * self.num_comm_heads, self.num_rims)
+        self.comm_key_layer = GroupLinear(self.hidden_size,self.comm_key_size * self.num_comm_heads, self.num_rims, bias=False)
+        self.comm_value_layer = GroupLinear(self.hidden_size, self.comm_value_size * self.num_comm_heads, self.num_rims, bias=False)
+        self.comm_query_layer = GroupLinear(self.hidden_size, self.comm_query_size * self.num_comm_heads, self.num_rims, bias=False)
 
-        self.comm_attention_output = GroupLinear(self.num_comm_heads * self.comm_value_size, self.comm_value_size,self.num_rims)
+        self.comm_attention_output = GroupLinear(self.num_comm_heads * self.comm_value_size, self.comm_value_size,self.num_rims, bias=False)
         self.comm_dropout = nn.Dropout(p=comm_dropout)
 
 
@@ -141,17 +144,16 @@ class RIMCell(nn.Module):
 
         #compute input attention for each RIM input
         inputs, mask = self.input_attention_mask(x, hs)
-        hs_prev = hs * 1.0
-        if cs is not None:
-            cs_prev = cs * 1.0
-        else:
-            raise Exception("cell state is not provided or other RNN cell type has not been implented yet !!")
+
+        hs_prev = hs
+        if cs is not None: cs_prev = cs
+
         
         #compute hidden and or cell state for communication attention from N-RNN 
         if cs is not None:
             hs, cs = self.rnn(inputs, (hs, cs))
         else:
-            hs = self.rnn(input, hs)
+            hs = self.rnn(inputs, hs)
 
         #Block gradient through inactive rim units
         mask = mask.unsqueeze(2)

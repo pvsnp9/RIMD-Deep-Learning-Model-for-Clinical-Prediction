@@ -23,17 +23,21 @@ class MIMICDecayData:
 
         self.statics_size = self.statics.shape[-1]
         self.input_size  = self.x.shape[-1]
-        # self.test_instances = 0
-
-        del all_data
-    
-    def data_loader(self):
+        
         self.x = np.reshape(self.x, (self.y.shape[0], self.window_size, -1))
         self.y = np.squeeze(self.y, axis=1)
         
         self.mask = np.reshape(self.mask, (self.y.shape[0], self.window_size, -1))
         self.delta = np.reshape(self.delta, (self.y.shape[0], self.window_size, -1))
         self.last_observed = np.reshape(self.last_observed, (self.y.shape[0], self.window_size, -1))
+
+        # delta normalization for each patients
+        delta_mean = np.amax(self.delta, axis=1)
+        for i in range(self.delta.shape[0]):
+            self.delta[i] = np.divide(self.delta[i], delta_mean[i], out=np.zeros_like(self.delta[i]), where=delta_mean[i]!=0)
+        
+
+        del all_data, delta_mean
 
         index_ = np.arange(self.x.shape[0], dtype = int)
         np.random.seed(1024)
@@ -71,32 +75,41 @@ class MIMICDecayData:
         self.valid_x_mean = self.x_mean[self.train_instances: self.train_instances +self.dev_instances]
         self.test_x_mean = self.x_mean[-self.test_instances:]
 
-        self.train_data, self.train_label = torch.from_numpy(self.train_data), torch.from_numpy(self.train_label)
-        self.valid_data, self.valid_label = torch.from_numpy(self.valid_data), torch.from_numpy(self.valid_label)
-        self.test_data, self.test_label =torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
+    def get_test_data(self):
+        test_data, test_label =torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
+        test_static = torch.from_numpy(self.test_static)
+        test_x_mean = torch.from_numpy(self.test_x_mean)
 
-        self.train_static = torch.from_numpy(self.train_static)
-        self.valid_static = torch.from_numpy(self.valid_static)
-        self.test_static = torch.from_numpy(self.test_static)
+        return (test_data, test_static, test_x_mean, test_label)
+    
+    def data_loader(self):
+        train_data,train_label = torch.from_numpy(self.train_data), torch.from_numpy(self.train_label)
+        valid_data,valid_label = torch.from_numpy(self.valid_data), torch.from_numpy(self.valid_label)
+        test_data,test_label = torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
 
-        self.train_x_mean = torch.from_numpy(self.train_x_mean)
-        self.test_x_mean = torch.from_numpy(self.test_x_mean)
-        self.valid_x_mean = torch.from_numpy(self.valid_x_mean)
+        train_static = torch.from_numpy(self.train_static)
+        valid_static = torch.from_numpy(self.valid_static)
+        test_static = torch.from_numpy(self.test_static)
 
-        train_dataset = TensorDataset(self.train_data, self.train_static, self.train_x_mean, self.train_label)
-        val_dataset = TensorDataset(self.valid_data, self.valid_static, self.valid_x_mean, self.valid_label)
-        test_dataset = TensorDataset(self.test_data, self.test_static, self.test_x_mean, self.test_label)
+        train_x_mean = torch.from_numpy(self.train_x_mean)
+        test_x_mean = torch.from_numpy(self.test_x_mean)
+        valid_x_mean = torch.from_numpy(self.valid_x_mean)
 
+        train_dataset = TensorDataset(train_data, train_static, train_x_mean, train_label)
+        val_dataset = TensorDataset(valid_data, valid_static, valid_x_mean, valid_label)
+        test_dataset = TensorDataset(test_data, test_static, test_x_mean, test_label)
+
+        
+        
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True)
 
         return train_loader, val_loader, test_loader
 
-
 # if __name__ =='__main__':
 #     d = MIMICDecayData(64, 24 , './data/mimic_iii/test_dump/decay_data_20926.npz')
-#     t, v, ts = d.data_loader()
-#     print(len(t))
-#     for i, x,s, m,y in tqdm(ran(t)):
-#         print(f'x:{x.size()},s:{s.size()}, m:{m.size()}, y:{y.size()}')
+#     x,y,z,t = d.get_test_data()
+#     print(x)
+    # for i, x,s, m,y in tqdm(ran(t)):
+    #     print(f'x:{x.size()},s:{s.size()}, m:{m.size()}, y:{y.size()}')

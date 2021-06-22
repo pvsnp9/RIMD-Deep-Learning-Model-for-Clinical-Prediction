@@ -14,7 +14,7 @@ class GroupLSTMCell(nn.Module):
 
         self.input_hidden = GroupLinear(self.input_size, 4 * self.hidden_size, self.num_lstms )
         self.hidden_hidden = GroupLinear(self.hidden_size, 4 * self.hidden_size, self.num_lstms)
-        self.reset_parameters()
+        #self.reset_parameters()
     
     def forward(self, x, hidden_states):
         hs, cs = hidden_states
@@ -33,6 +33,7 @@ class GroupLSTMCell(nn.Module):
         next_hidden_state = torch.mul(out_gate, torch.tanh(next_cell_state))
 
         return next_hidden_state, next_cell_state
+
 
     def reset_parameters(self):
         stdv = 1.0 / math.sqrt(self.hidden_size)

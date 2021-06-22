@@ -1,103 +1,204 @@
-from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve, \
+    brier_score_loss, precision_score, recall_score, f1_score, plot_roc_curve
 import time
+import os
 import numpy as np
 from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 
 
+TIME_STR= time.strftime("%m%d-%H-%M-%S")
 class ClassificationReport:
     weight_default = "witghted"
-    timestr = time.strftime("%m%d-%H-%M-%S")
-    def __init__(self, clf, y_true, y_pred, output_dir):
+
+
+    def __init__(self, clf, y_true, y_pred,y_score,model_name, output_dir):
         self.clf = clf
         self.y_pred = y_pred
         self.y_true = y_true
-        self.output_dir=output_dir
-        self.classifire_name = self.clf.__class__.__name__
+        self.y_score = y_score
+        self.y_max = max(y_true)
+        self.output_dir = output_dir
+        self.classifire_name = model_name
 
-    def get_precision_recall_fm(self, average="weighted"):
+    def get_precision_recall_fm(self, pos_lable = '1'):
         """
         As the data is imbalanced we use weighted average for calculating the metrics
         output:
-        return a dict for {'precision','recall','f1-score','support'
+        return a dict for {'precision','recall','f1-score','accuracy'}
         """
-        # TODO extract class wise accouracy if needed, add a key_extract filter to do so
-        res = classification_report(self.y_true, self.y_pred, output_dict=True)
-        return res['weighted avg']
 
-    def get_roc_metrics(self, X_test):
+        res = classification_report(self.y_true, self.y_pred, output_dict=True)
+        res_pos = res[pos_lable]
+        res_pos['accuaracy'] = res["accuracy"]
+
+        return res_pos
+
+    def get_brier(self):
+        if not hasattr(self.clf, "decision_function"):
+            y_score = self.y_score
+        else:
+            y_score = \
+                (self.y_score - self.y_score.min()) / (self.y_score.max() - self.y_score.min())
+        try:
+            clf_score = brier_score_loss(self.y_true, y_score, pos_label=self.y_max)
+        except:
+            print("negative number issue")
+        return clf_score
+
+    def get_brier_for_dl(self):
+        self.y_score = \
+                (self.y_score - self.y_score.min()) / (self.y_score.max() - self.y_score.min())
+        clf_score = brier_score_loss(self.y_true, self.y_score, pos_label=self.y_max)
+        return clf_score
+
+    def get_roc_metrics(self):
         """
         calculate area under the ROC curve and average precision score (AProc) for positive class
 
         output:
         return a dictionary for both scores {'aucroc', 'auprc'}
         """
-        y_score = self.clf.decision_function(X_test)
-
-        precision, recall, threashold = precision_recall_curve(self.y_true, y_score)
-        auc_p_r = roc_auc_score(y_true=self.y_true,y_score=y_score, average="weighted")
+        precision, recall, threashold = precision_recall_curve(self.y_true, self.y_score)
+        auc_p_r = roc_auc_score(y_true=self.y_true, y_score=self.y_score, average="weighted")
         # Since the possitive class is more important, and the data is imbalanced, this mettic may fits better to our need
-        prauc = average_precision_score(self.y_true, y_score,)
+        prauc = average_precision_score(self.y_true, self.y_score )
 
-        return {'aucroc': auc_p_r, 'prauc': prauc}
+        return {'AUROC': auc_p_r, 'PRAUC': prauc}
 
     def get_confusion_matrix(self):
         return confusion_matrix(self.y_true, self.y_pred)
 
-    def get_all_metrics(self, X_test):
+    def get_all_metrics(self):
+       #claculate the metrics
         precision_recall_fscore = self.get_precision_recall_fm()
-        roc = self.get_roc_metrics(X_test)
+        roc = self.get_roc_metrics()
         res = dict(precision_recall_fscore)
+        brier = self.get_brier_for_dl()
+       #update them
         res.update(roc)
         res.pop('support')
-        clf_name = self.clf.__class__.__name__
-        return {clf_name:res}
+        res['Brier'] = brier
+
+        # clf_name = self.clf.__class__.__name__
+        return {self.classifire_name : res}
 
     def plot_cm(self, X_test, file_address=None):
         plot_confusion_matrix(self.clf, X_test, self.y_true)
 
-        plt.title("Confusion Matrix for "+ self.classifire_name)
+        plt.title("Confusion Matrix for " + self.classifire_name)
         if file_address:
-
             plt.savefig(file_address)
         else:
             return plt
 
-    def plot_roc_curve(self, X_test):
+    def plot_roc(self, X_test):
+        plot_roc_curve(self.clf, X_test, self.y_true)
+        plt.title("ROC Curve for " + self.classifire_name)
+        file_name = self.get_file_name(self.classifire_name + "-roc-curve.png")
+        plt.savefig(file_name)
 
+    def plot_pr_curve(self, X_test):
         disp = plot_precision_recall_curve(self.clf, X_test, self.y_true)
-        disp.ax_.set_title(self.classifire_name+': 2-class Precision-Recall curve: '
-                           'AP={0:0.2f}'.format(self.get_roc_metrics(X_test)["prauc"]))
+        disp.ax_.set_title(self.classifire_name + ': 2-class Precision-Recall curve: '
+                                                  'AP={0:0.2f}'.format(self.get_roc_metrics()["PRAUC"]))
         return disp
 
-
-
-    def save_plots(self,X_test,output_dir):
+    # TODO need to be re implemented !! regarding
+    def save_plots(self, X_test, output_dir):
         timestr = time.strftime("%m%d-%H%M%S")
 
         cm_plot = self.plot_cm(X_test=X_test)
-        file_name = self.get_file_name(self.classifire_name+"-confusion_matrix.png")
+        file_name = self.get_file_name(self.classifire_name + "-confusion_matrix.png")
         cm_plot.savefig(file_name)
-        roc_disp = self.plot_roc_curve(X_test=X_test)
-        file_name  = self.get_file_name(self.classifire_name+"-roc_prauc.png")
+        roc_disp = self.plot_pr_curve(X_test=X_test)
+        file_name = self.get_file_name(self.classifire_name + "-roc_prauc.png")
         plt.savefig(file_name)
+        self.plot_roc(X_test)
 
     def get_file_name(self, file_name):
-        return self.output_dir + "/" + self.timestr + "-" + file_name
+        try:
+            os.mkdir(self.output_dir + "/" + TIME_STR)
+        except OSError as error:
+             pass
+        return self.output_dir + "/" + TIME_STR + "/" + file_name
+
+    def plot_calibration_curve(self, fig_index, X_train, X_test, y_train, y_test):
+        """Plot calibration curve for est w/o and with calibration. """
+        # Calibrated with isotonic calibration
+        name = self.classifire_name
+        est = self.clf
+        isotonic = CalibratedClassifierCV(est, cv=2, method='isotonic')
+
+        # Calibrated with sigmoid calibration
+        sigmoid = CalibratedClassifierCV(est, cv=2, method='sigmoid')
+
+        # Logistic regression with no calibration as baseline
+        lr = LogisticRegression(C=1.)
+
+        fig = plt.figure(fig_index, figsize=(10, 10))
+        ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
+        ax2 = plt.subplot2grid((3, 1), (2, 0))
+
+        ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+        for clf, name in [(lr, 'Logistic'),
+                          (est, name),
+                          (isotonic, name + ' + Isotonic'),
+                          (sigmoid, name + ' + Sigmoid')]:
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+            if hasattr(clf, "predict_proba"):
+                prob_pos = clf.predict_proba(X_test)[:, 1]
+            else:  # use decision function
+                prob_pos = clf.decision_function(X_test)
+                prob_pos = \
+                    (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
+
+            clf_score = brier_score_loss(y_test, prob_pos, pos_label=y_train.max())
+            print("%s:" % name)
+            print("\tBrier: %1.3f" % (clf_score))
+            print("\tPrecision: %1.3f" % precision_score(y_test, y_pred))
+            print("\tRecall: %1.3f" % recall_score(y_test, y_pred))
+            print("\tF1: %1.3f\n" % f1_score(y_test, y_pred))
+
+            fraction_of_positives, mean_predicted_value = \
+                calibration_curve(y_test, prob_pos, n_bins=10)
+
+            ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
+                     label="%s (%1.3f)" % (name, clf_score))
+
+            ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
+                     histtype="step", lw=2)
+
+        ax1.set_ylabel("Fraction of positives")
+        ax1.set_ylim([-0.05, 1.05])
+        ax1.legend(loc="lower right")
+        ax1.set_title('Calibration plots  (reliability curve)')
+
+        ax2.set_xlabel("Mean predicted value")
+        ax2.set_ylabel("Count")
+        ax2.legend(loc="upper center", ncol=2)
+
+        plt.tight_layout()
+        file_name = self.get_file_name(self.classifire_name + "-calibration-plot.png")
+        plt.savefig(file_name, dpi=150)
 
 
 import matplotlib.pyplot as plt
-class TablePlot():
 
+
+class TablePlot():
     title = 'MIMIC-III Results'
     footer = time.strftime("%Y-%m-%d-%H:%M:%S")
-    timestr = time.strftime("%m%d-%H-%M-%S")
+
+
     def __init__(self, clf_results, output_dir, float_format="%.3f"):
         self.df_clf_results = clf_results
         self.output_dir = output_dir
         self.float_format = float_format
-
 
     def draw_table(self):
         """
@@ -158,8 +259,12 @@ class TablePlot():
                     )
         print(row_title)
 
-    def get_file_name (self,file_name):
-        return self.output_dir+"/"+self.timestr+"-"+file_name
+    def get_file_name(self, file_name):
+        try:
+            os.mkdir(self.output_dir + "/" + TIME_STR)
+        except OSError as error:
+            pass
+        return self.output_dir + "/" + TIME_STR + "/" + file_name
 
     def print_table(self):
         print(self.clf_results.to_markdown())
@@ -169,12 +274,9 @@ class TablePlot():
         with open(file_name, 'w') as tf:
             tf.write(self.df_clf_results.to_latex(float_format=self.float_format))
 
-
     def save_to_excel(self):
         file_name = self.get_file_name("excel.xlsx")
-        self.df_clf_results.to_excel(file_name,float_format=self.float_format)
-
-
+        self.df_clf_results.to_excel(file_name, float_format=self.float_format)
 
     # df_table.style.apply(highlight_max)
     def highlight_max(s):
@@ -183,5 +285,3 @@ class TablePlot():
         '''
         is_max = s == s.max()
         return ['background-color: yellow' if v else '' for v in is_max]
-
-

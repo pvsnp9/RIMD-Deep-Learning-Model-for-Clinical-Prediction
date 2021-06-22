@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import math
 import numpy as np
-from .group_linear import GroupLinear
+from .group_linear import GroupLinear, CustomLinear
 from .group_lstm_cell import GroupLSTMCell
 from .blocked_gradients import BlockedGradients
 
@@ -46,33 +46,33 @@ class RIMDCell(nn.Module):
         '''
         gamma layer for decay mechanism
         '''
-        self.gamma_x_l = nn.Linear(self.delta_size, self.delta_size, bias=False)
-        self.gamma_h_l = nn.Linear(self.delta_size, self.delta_size, bias=False)
+        self.gamma_x_l = CustomLinear(self.delta_size, self.delta_size)
+        self.gamma_h_l = CustomLinear(self.delta_size, self.delta_size)
 
-        self.zeros = Variable(torch.zeros(self.delta_size).float().to(self.device))
+        self.zeros = torch.zeros(self.delta_size).float().to(self.device)
 
-        self.input_key_layer = nn.Linear(self.input_size, self.num_input_heads* self.input_query_size).to(self.device)
-        self.input_value_layer = nn.Linear(self.input_size, self.num_input_heads * self.input_values_size).to(self.device)
+        self.input_key_layer = CustomLinear(self.input_size, self.num_input_heads* self.input_query_size, bias=False)
+        self.input_value_layer = CustomLinear(self.input_size, self.num_input_heads * self.input_values_size, bias=False)
         self.input_dropout = nn.Dropout(p=input_dropout)
 
-        if self.rnn_cell == 'LSTM-D':
+        if self.rnn_cell == 'LSTM':
             '''
             Here we need to add mask size to the hidden state of RNN
             '''
             self.rnn = GroupLSTMCell(self.input_values_size + self.mask_size, self.hidden_size,  self.num_rims)
-            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims)
+            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims, bias=False)
         else:
             '''
-            GRU-D
+            GRU
             '''
             self.rnn = GroupGRUCell(self.input_values_size + self.mask_size, self.hidden_size,  self.num_rims)
-            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims)
+            self.input_query_layer = GroupLinear(self.hidden_size, self.input_key_size * self.num_input_heads, self.num_rims, bias=False)
 
-        self.comm_key_layer = GroupLinear(self.hidden_size,self.comm_key_size * self.num_comm_heads, self.num_rims)
-        self.comm_value_layer = GroupLinear(self.hidden_size, self.comm_value_size * self.num_comm_heads, self.num_rims)
-        self.comm_query_layer = GroupLinear(self.hidden_size, self.comm_query_size * self.num_comm_heads, self.num_rims)
+        self.comm_key_layer = GroupLinear(self.hidden_size,self.comm_key_size * self.num_comm_heads, self.num_rims, bias=False)
+        self.comm_value_layer = GroupLinear(self.hidden_size, self.comm_value_size * self.num_comm_heads, self.num_rims, bias=False)
+        self.comm_query_layer = GroupLinear(self.hidden_size, self.comm_query_size * self.num_comm_heads, self.num_rims, bias=False)
 
-        self.comm_attention_output = GroupLinear(self.num_comm_heads * self.comm_value_size, self.comm_value_size,self.num_rims)
+        self.comm_attention_output = GroupLinear(self.num_comm_heads * self.comm_value_size, self.comm_value_size,self.num_rims, bias=False)
         self.comm_dropout = nn.Dropout(p=comm_dropout)
 
     def transpose_for_score(self, x, num_attention_head, attention_head_size):
@@ -156,9 +156,11 @@ class RIMDCell(nn.Module):
 		Output: new hs, cs for LSTM
 				new hs for GRU
 		"""
+        hs_prev = hs
+        if cs is not None: cs_prev = cs
 
-        delta_x = torch.sigmoid(-torch.max(self.zeros, self.gamma_x_l(delta))).to(self.device)
-        delta_h = torch.sigmoid(-torch.max(self.zeros, self.gamma_h_l(delta))).to(self.device)
+        delta_x = torch.exp(-torch.max(self.zeros, self.gamma_x_l(delta))).to(self.device)
+        delta_h = torch.exp(-torch.max(self.zeros, self.gamma_h_l(delta))).to(self.device)
 
         x = x_mask * x + (1 - x_mask) * (delta_x * x_last_observed + (1 - delta_x) * x_mean)
         hs = delta_h * hs
@@ -168,13 +170,11 @@ class RIMDCell(nn.Module):
 
         #compute input attention for each RIM input
         inputs, mask = self.input_attention_mask(x, hs)
-        hs_prev = hs * 1.0
-        if cs is not None:
-            cs_prev = cs * 1.0
+        
         '''
         decaying hidden states and mask through hidden state compute
         '''
-        x_mask = torch.repeat_interleave(x_mask, self.num_rims, dim=1).to(self.device)
+        x_mask = torch.repeat_interleave(x_mask, self.num_rims, dim=1)
         full_inputs  = torch.cat([inputs, x_mask], dim=-1).to(self.device)
 
         #compute hidden and or cell state for communication attention from N-RNN 
@@ -191,6 +191,7 @@ class RIMDCell(nn.Module):
         hidden_comm = self.communication_attention(h_new, mask.squeeze(2))
 
         hs = mask * hidden_comm + (1-mask) * hs_prev
+        
         if cs is not None:
             cs = mask * cs + (1-mask) * cs_prev
             return hs, cs
