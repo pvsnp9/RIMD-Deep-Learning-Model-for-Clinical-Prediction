@@ -10,7 +10,7 @@ from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.data_prep import MortalityDataPrep
 from src.model.mimic_decay_model import MIMICDecayModel
 from src.utils.mimic_iii_decay_data import MIMICDecayData
-from src.utils.classification_report import ClassificationReport
+from src.utils.mimic_evaluation import MIMICReport
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 
 '''
@@ -44,7 +44,7 @@ args = {
     'need_data_preprocessing': False,
     'raw_data_file_path' :'data/mimic_iii/curated_30k/all_hourly_data_30000.pkl',
     'processed_data_path':'data/mimic_iii/test_dump',
-    'input_file_path':'data/mimic_iii/test_dump/decay_data_20926.npz'
+    'input_file_path':'data/decay_data_20926.npz'
 }
 
 torch.manual_seed(10)
@@ -758,7 +758,7 @@ class RNNTrainer:
             pickle.dump(test_acc, f)
 
 # 'LSTM', 'GRU', 'RIMDecay-G', 'RIMDecay-L', 
-model_type = ['RIMDecay','RIM', 'LSTM', 'GRU']
+model_type = [ 'LSTM', 'GRU']
 cell_type= ['LSTM', 'GRU']
 for model in model_type:
     args['model_type'] = model
@@ -766,58 +766,59 @@ for model in model_type:
     model_trainer.train()
         
 
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+def make_report(args):
+    data  = MIMICIIIData(64, 24, args['input_file_path'])  #MIMICDecayData(64, 24, args['input_file_path'])
+    x, static, y = data.get_test_data()
+    # _, _, _ = data.data_loader()
+    checkpoint = torch.load('./mimic/models/{}_model.pt'.format("model_type"))
+    args = checkpoint['args']
+    model = MIMICLSTMModel(args).to(device)
+    model.load_state_dict(checkpoint['net'])
 
-# def make_report(args):
-#     data  = MIMICIIIData(64, 24, args['input_file_path'])  #MIMICDecayData(64, 24, args['input_file_path'])
-#     x, static, y = data.get_test_data()
-#     # _, _, _ = data.data_loader()
-#     checkpoint = torch.load('./mimic/models/LSTM_model.pt')
-#     args = checkpoint['args']
-#     model = MIMICLSTMModel(args).to(device)
-#     model.load_state_dict(checkpoint['net'])
+    # print(f'args: \n {args}')
+    print(f'model: \n {model}')
 
-#     # print(f'args: \n {args}')
-#     print(f'model: \n {model}')
+    # test dat
 
-    # # test dat 
+    x, static, x_mean, y = data.test_data
+    static = static.to(device)
+    x_mask = x[:,1,:,:].to(device)
+    delta = x[:,2,:,:].to(device)
+    x_mean = x_mean.to(device)
+    x_last_ob = x[:,3,:,:].to(device)
+    x = x[:,0,:,:].to(device)
 
-    # x, static, x_mean, y = data.test_data
-    # static = static.to(device)
-    # x_mask = x[:,1,:,:].to(device)
-    # delta = x[:,2,:,:].to(device)
-    # x_mean = x_mean.to(device)
-    # x_last_ob = x[:,3,:,:].to(device)
-    # x = x[:,0,:,:].to(device)
+    y = y.to(device)
 
-    # y = y.to(device)
+    predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
 
-    # predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
-
-    # x = model.to_device(x)
-    # statics = model.to_device(static)
-    # y = model.to_device(y)
-    # predictions = model(x, statics)
+    x = model.to_device(x)
+    statics = model.to_device(static)
+    y = model.to_device(y)
+    predictions = model(x, statics)
     
-    # probs = torch.round(torch.sigmoid(predictions))
+    probs = torch.round(torch.sigmoid(predictions))
 
-    # probs = torch.round(torch.sigmoid(predictions))
+    probs = torch.round(torch.sigmoid(predictions))
 
-    # gt = y.cpu().detach().numpy()
-    # pt = probs.view(-1).cpu().detach().numpy()
-    # y_score = predictions.view(-1).cpu().detach().numpy()
+    gt = y.cpu().detach().numpy()
+    pt = probs.view(-1).cpu().detach().numpy()
+    y_score = predictions.view(-1).cpu().detach().numpy()
 
-    # return gt, pt, y_score
+    return gt, pt, y_score
 
+for model in model_type:
+    print("*** Classifier Reports:    *******************************************************************")
+    y_truth, y_pred, y_score = make_report(args)
 
-# y_truth, y_pred, y_score = make_report(args)
-# print(y_pred.shape)
-# clf = ClassificationReport(None, y_truth, y_pred, y_score, 'LSTM','./figures')
+    report = MIMICReport(model, y_truth, y_pred, y_score, './figures')
 
-# results = clf.get_all_metrics()
-# cf_m = clf.get_confusion_matrix()
-# print(results)
-# print(cf_m)
-# print(classification_report(y_truth, y_pred))
+    results = report.get_all_metrics()
+    cf_m = report.get_confusion_matrix()
+    print(results)
+    print(cf_m)
+    print(report.get_sk_report())
 
 
 

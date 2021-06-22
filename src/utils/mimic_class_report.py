@@ -106,7 +106,7 @@ class ClassificationReport:
     def save_plots(self, X_test, output_dir):
         timestr = time.strftime("%m%d-%H%M%S")
 
-        cm_plot = self.plot_cm(X_test=X_test)
+        cm_plot = self  .plot_cm(X_test=X_test)
         file_name = self.get_file_name(self.classifire_name + "-confusion_matrix.png")
         cm_plot.savefig(file_name)
         roc_disp = self.plot_pr_curve(X_test=X_test)

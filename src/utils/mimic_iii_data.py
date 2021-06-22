@@ -140,6 +140,9 @@ class MIMICIIIData:
     
     def input_size(self):
         return self.x.shape[2]
+    def statics_size(self):
+        return self.statics.shape[2]
+
     """
     SK-Learn dataset prepartion 
     concatenated the datasets and returned two train and test set for both input and target features
@@ -158,7 +161,6 @@ class MIMICIIIData:
 
         test_x = np.concatenate([x for x in self.test_x])
         test_x = np.reshape(test_x, (self.test_instances, -1))
-
         test_ys = np.concatenate([x for x in self.test_ys])
 
         return train_x,dev_x,test_x, train_ys,dev_ys, test_ys

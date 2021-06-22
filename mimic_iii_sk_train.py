@@ -7,7 +7,7 @@ import numpy as np
 from src.model.mimic_model import MIMICModel
 from src.model.mimic_lstm_model import MIMICLSTMModel
 from src.model.mimic_gru_model import MIMICGRUModel
-from src.utils.mimic_class_report import ClassificationReport, TablePlot
+from src.utils.mimic_evaluation import MIMICReport
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.data_prep import MortalityDataPrep
 
@@ -26,7 +26,7 @@ args = {
     'need_data_preprocessing': False,
     'raw_data_file_path': 'data/all_hourly_data_30000.pkl',
     'processed_data_path': 'data',
-    'input_file_path': 'data/x_y_statics_20926.npz'
+    'input_file_path': 'data/decay_data_20926.npz'
 }
 output = 'output/plots'
 
@@ -74,18 +74,19 @@ def run_only_final(model, best_hyperparams, X_flat_train, X_flat_dev, X_flat_tes
     best_M.fit(np.concatenate    ([X_flat_train, X_flat_dev]), np.concatenate([Ys_train, Ys_dev]))
     y_true = Ys_test
     # y_score = best_M.predict_proba(X_flat_test)[:, 1]
-    if hasattr(best_M, "decision_function"):
-        y_score = best_M.decision_function(X_flat_test)
-    else:
-        y_score = best_M.predict_proba(X_flat_test)[:, 1]
+    # if hasattr(best_M, "decision_function"):
+    #     y_score = best_M.decision_function(X_flat_test)
+    # else:
+    y_score = best_M.predict_proba(X_flat_test)[:, 1]
+
     y_pred = best_M.predict(X_flat_test)
 
-    report = ClassificationReport(best_M, y_true, y_pred,y_score, output_dir=output)
-    res_ = report.get_all_metrics()
-    report.save_plots(X_flat_test, output)
-    report.plot_calibration_curve(fig_index=1, X_train=np.concatenate([X_flat_train, X_flat_dev]), X_test=X_flat_test, y_train=np.concatenate([Ys_train, Ys_dev]), y_test=y_true)
+    report = MIMICReport(best_M.__class__.__name__, y_true, y_pred,y_score, output_dir=output)
 
-    return best_M, best_hyperparams, res_, classification_report(y_true,y_pred)
+    # report.save_plots(X_flat_test, output)
+    # report.plot_calibration_curve(fig_index=1, X_train=np.concatenate([X_flat_train, X_flat_dev]), X_test=X_flat_test, y_train=np.concatenate([Ys_train, Ys_dev]), y_test=y_true)
+
+    return best_M, best_hyperparams, report
 
 
 # Data preprocessing
@@ -101,8 +102,7 @@ args['static_features'] = data.static_features_size()
 
 train_x, dev_x, test_x, train_y, dev_y, test_y = data.get_sk_dataset()
 # models + hyper parameters
-
-N = 15
+N = 1
 
 LR_dist = DictDist({
     'C': Choice(np.geomspace(1e-3, 1e3, 10000)),
@@ -124,39 +124,37 @@ RF_dist = DictDist({
 np.random.seed(SEED)
 RF_hyperparams_list = RF_dist.rvs(N)
 
+
 results = {}
 best_models = {}
 c_reports= {}
 for model_name, model, hyperparams_list in [ ('RF', RandomForestClassifier, RF_hyperparams_list),
     ('LR', LogisticRegression, LR_hyperparams_list) ]:
     print("Running model %s on mortality prediction " % model_name)
-    best_model, best_hyperparameter, result, rep= run_basic(model, hyperparams_list, train_x,dev_x, test_x,train_y,dev_y,test_y   )
-    results.update(result)
+    best_model, best_hyperparameter, report = run_basic(model, hyperparams_list, train_x,dev_x, test_x,train_y,dev_y,test_y   )
+    results[model_name] = report
     best_models[model_name] = [best_model,best_hyperparameter]
-    c_reports[model_name] = rep
 
+for cn, rep in results.items():
+    print("Report for {}:" )
+    print(rep.get_all_metrics())
+    print(rep.get_sk_report())
+    print(rep.get_confusion_matrix())
 
 #write the best models into the disk
 with open(output+"classifires_results", mode='wb') as f:
     pickle.dump(results, f)
 
 
-df_table = pd.DataFrame(results)
-df_table = df_table.T
 
-s = df_table.style
-s.highlight_max(axis=1)
-df_table.style.apply(s)
 
 
 # print(df_table.to_latex(float_format="%.3f"))
 
-table_report = TablePlot(df_table, output_dir=output)
-table_report.save_to_excel()
-table_report.save_to_latex()
-table_report.draw_table()
+# table_report = TablePlot(df_table, output_dir=output)
+# table_report.save_to_excel()
+# table_report.save_to_latex()
+# table_report.draw_table()
 
-print(df_table.to_markdown())
+# print(df_table.to_markdown())
 
-for cn, rep in c_reports.items():
-    print("{} : \n {}".format(cn,rep))
