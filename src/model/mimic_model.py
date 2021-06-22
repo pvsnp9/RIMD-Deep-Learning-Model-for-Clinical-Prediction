@@ -20,8 +20,8 @@ class MIMICModel(nn.Module):
         )
 
         # TODO: Add more statice variables to linear layer
-        self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 64)
-        self.linear_two = nn.Linear(64, 1)
+        self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 10)
+        self.linear_two = nn.Linear(10, 1)
 
         self.loss = nn.BCELoss()
 
@@ -30,10 +30,10 @@ class MIMICModel(nn.Module):
         static = static.float()
 
         # initialize hidden state
-        hs = torch.randn(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
+        hs = torch.zeros(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
 
         if self.args['rnn_cell'] == 'LSTM':
-            cs = torch.randn(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
+            cs = torch.zeros(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
         else:
             cs = None
         # split data [batch, 1 X timestamp, static_features] 

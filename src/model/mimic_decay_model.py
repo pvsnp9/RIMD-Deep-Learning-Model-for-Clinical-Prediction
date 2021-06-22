@@ -19,8 +19,8 @@ class MIMICDecayModel(nn.Module):
             args['num_comm_heads'], args['comm_dropout']
         )
 
-        self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 64)
-        self.linear_two = nn.Linear(64, 1)
+        self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 10)
+        self.linear_two = nn.Linear(10, 1)
 
         self.loss = nn.BCELoss()
 
@@ -32,10 +32,10 @@ class MIMICDecayModel(nn.Module):
         x_last_observed = x_last_observed.float()
         x_mean = x_mean.float()
 
-        hs = torch.randn(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
+        hs = torch.zeros(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
 
-        if self.args['rnn_cell'] == 'LSTM-D':
-            cs = torch.randn(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
+        if self.args['rnn_cell'] == 'LSTM':
+            cs = torch.zeros(x.size(0), self.args['num_rims'], self.args['hidden_size']).to(self.device)
         else:
             cs = None
         
@@ -44,9 +44,12 @@ class MIMICDecayModel(nn.Module):
         mask_s = torch.split(mask, 1, 1)
         delta_s = torch.split(delta, 1, 1)
         x_last_observed_s = torch.split(x_last_observed, 1, 1)
+        i = 0
         for xs, ms, ds, xl_s in zip(x_s, mask_s, delta_s, x_last_observed_s):
             hs, cs = self.rim_decay_cell(xs, ms, ds, xl_s, x_mean, hs, cs)
-        
+            if torch.isnan(hs).any():
+                print(f'[{i}]: {hs}')
+                i += 1
         hs = hs.contiguous().view(x.size(0), -1)
 
         # concatenate static features
