@@ -47,13 +47,15 @@ class MIMICDecayModel(nn.Module):
         i = 0
         for xs, ms, ds, xl_s in zip(x_s, mask_s, delta_s, x_last_observed_s):
             hs, cs = self.rim_decay_cell(xs, ms, ds, xl_s, x_mean, hs, cs)
-            if torch.isnan(hs).any():
-                print(f'[{i}]: {hs}')
-                i += 1
+            
         hs = hs.contiguous().view(x.size(0), -1)
 
         # concatenate static features
-        full_data = torch.cat([hs, statics], dim=1)
+        if statics is not None:
+            full_data = torch.cat([hs, statics], dim=1)
+        else:
+            full_data = hs
+            
         linear_1 = self.linear_one(full_data)
         predictions = self.linear_two(linear_1)
 
