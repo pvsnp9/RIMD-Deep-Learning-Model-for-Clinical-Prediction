@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import sklearn.metrics
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
-
+from sklearn.metrics import roc_curve
 
 class MIMICReport():
 
@@ -85,3 +85,23 @@ class MIMICReport():
             plt.savefig(file_address)
         else:
             return plt
+    
+    def get_roc_curve(self):
+       return roc_curve(self.y_true, self.y_score)
+
+    def get_prc_curve(self):
+        precision, recall, _ = precision_recall_curve(self.y_true, self.y_score,
+                                                  pos_label=self.y_max)
+        average_precision =  average_precision_score(self.y_true, self.y_score )
+
+        name =  self.classifire_name
+
+        # viz = PrecisionRecallDisplay(
+        #     precision=precision,
+        #     recall=recall,
+        #     average_precision=average_precision,
+        #     estimator_name=name,
+        #     pos_label=pos_label,
+        # )
+
+        return precision, recall, average_precision, name #viz.plot(ax=ax, name=name, **kwargs)

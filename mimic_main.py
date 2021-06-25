@@ -12,7 +12,9 @@ from src.utils.data_prep import MortalityDataPrep
 from src.utils.mimic_evaluation import MIMICReport
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
+from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
+
 
 OUTPUT = 'output/plots'
 N_HYPER_PARAM_SET = 1
@@ -70,12 +72,12 @@ def mimic_main(run_type):
     if run_type == "train":
         #ML models first
         ml_trainer = MimicMlTrain(data_object, './mimic/models', OUTPUT, N_HYPER_PARAM_SET)
-        ml_trainer.run()
+        # ml_trainer.run()
 
         model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = [  'RIMDecay','LSTM', 'GRU','RIM']
+        model_type = ['LSTM','GRU', 'RIMDecay', 'RIM']
         for model in model_type:
             if model.startswith('RIM'):
                 cell_type = ['LSTM', 'GRU']
@@ -127,35 +129,92 @@ def mimic_main(run_type):
     # plot CMs and AUROC, AUPRC and...
     #Save the results to excel or latex 
     # plot the training curve for DL models 
-
+    with open(f'./mimic/model_reports/reports.pickle', 'wb') as f:
+        pickle.dump(model_reports, f)
+    
     df_results =  pd.DataFrame(results)
     df_results = df_results.T
     print(df_results.to_markdown())
+    plot_confusion_matrixes(model_reports)
+    
+
+def plot_prauc():
+    with open(f'./mimic/model_reports/reports.pickle', 'rb') as f:
+        reports = pickle.load(f)
+    
+    flag = True
+    for model_name, report in reports.items():
+        
+        precision, recall, avg, name = report.get_prc_curve()
+       
+        plt.plot(precision, recall, label=model_name)
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+    plt.legend()
+    plt.show()
+
+def plot_roc():
+    with open(f'./mimic/model_reports/reports.pickle', 'rb') as f:
+        reports = pickle.load(f)
+    
+    flag = True
+    for model_name, report in reports.items():
+        if flag:
+           ns_fpr, ns_tpr = no_skil(report.y_true) 
+           plt.plot(ns_fpr, ns_tpr, marker='.', label='no_skill')
+           flag=False
+        fpr, tpr, _ = report.get_roc_curve()
+        plt.plot(fpr, tpr, marker='.', label=model_name)
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+    plt.legend()
+    plt.show()
+    
+def no_skil(y_true):
+    
+    ns_probs = [0 for _ in range(len(y_true))]
+    ns_fpr, ns_tpr, _ = roc_curve(y_true, ns_probs)
+    return ns_fpr, ns_tpr
 
 
-def plot_loss_stats():
+
+def plo_training_stats():
     from os import walk
     epocs = range(1,3)
     f = []
     losstats = []
+    all_logs = {}
     for (_, _, filenames) in walk('./mimic/logs'):
         f.extend(filenames)
+    
     for file in f:
-        if file.endswith('lossstats.pickle'):
-            losstats.append(file)
-            with open(f'./mimic/logs/{file}', 'rb') as pickle_file:
-                content = pickle.load(pickle_file)
-                y = [i[-1] for i in content]
-                epocs = range(1,len(content)+1)
-                file_name = file.split('_')
-                plt.plot(epocs,y, label = f'{file_name[0]}-{file_name[1]}' )
+        tmp = file.split(".")[0].split("_")[-2:]
+        key = '_'.join(tmp)
+        
+        if key not in all_logs.keys():
+            all_logs[key] = [file]
+        else:
+            all_logs[key].append(file)
+
+    for key in all_logs.keys():
+        plot_stats(key.split("_"),all_logs[key])
+
+def plot_stats(key,stats):
+    plt.figure()
+    for file in stats:    
+        with open(f'./mimic/logs/{file}', 'rb') as pickle_file:
+            content = pickle.load(pickle_file)
+            y = [i[-1] for i in content]
+            epocs = range(1,len(content)+1)
+            file_name = file.split('_')
+            plt.plot(epocs,y, label = f'{file_name[0]}-{file_name[1]}' )
         
             plt.xlabel('Epocs')
-            plt.ylabel('Loss')
-            plt.title('Loss stats for training')  
+            plt.ylabel(key[1])
+            plt.title(f'{key[1]} stats for {key[0]}')  
     plt.legend()
     plt.show()
-     
+        
 
 def plot_confusion_matrixes(reports):
        
@@ -174,6 +233,8 @@ def plot_confusion_matrixes(reports):
     fig.tight_layout()
     
 
-plot_loss_stats()
 
-# mimic_main("train")
+mimic_main("train")
+plo_training_stats()
+# plot_roc()
+# plot_prauc()

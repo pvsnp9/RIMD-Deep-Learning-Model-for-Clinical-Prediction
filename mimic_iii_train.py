@@ -65,9 +65,13 @@ class TrainModels:
         acc = []
         train_acc =[]
         test_acc =[]
+        valid_f1 = []
+        train_f1 =[]
+        test_f1 =[]
+
         max_val_accuracy = 0.0
         epochs_no_improve = 0
-        max_no_improvement = 5
+        max_no_improvement = 100
         improvement_threshold = 0.0001 
         reports = {}
         # for cell in self.cell_types:
@@ -142,11 +146,16 @@ class TrainModels:
 
                     ctr += 1
 
-            
-            validation_accuracy = self.eval(val_loader)
-            test_accuracy = self.eval(test_loader)
+            train_f1_report = classification_report(y.cpu().detach().numpy(), predictions.view(-1).cpu().detach().numpy(), output_dict= True)
+            validation_accuracy, val_f1 = self.eval(val_loader)
+            test_accuracy, t_f1 = self.eval(test_loader)
             print(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/self.data_object.train_instances}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
             
+            #append f1 score
+            train_f1.append((epoch, train_f1_report['1']['f1-score']))
+            valid_f1.append((epoch, val_f1))
+            test_f1.append((epoch, t_f1))
+
             loss_stats.append((ctr,epoch_loss/iter_ctr))
             acc.append((epoch,(validation_accuracy)))
             train_acc.append((epoch, (t_accuracy/self.data_object.train_instances)))
@@ -174,20 +183,28 @@ class TrainModels:
         self.model_saved_fname = f"{save_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_model.pt"
         with open(self.model_saved_fname, 'wb') as f:
             torch.save(best_model_state, f)
-
         
 
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_lossstats.pickle",'wb') as f:
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Epoch_Loss.pickle",'wb') as f:
             pickle.dump(loss_stats,f)
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_accstats.pickle",'wb') as f:
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_Accuracy.pickle",'wb') as f:
             pickle.dump(acc,f)
         
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_train_acc.pickle",'wb') as f:
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_Accuracy.pickle",'wb') as f:
             pickle.dump(train_acc,f)
         
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_test_acc.pickle", 'wb') as f:
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_Accuracy.pickle", 'wb') as f:
             pickle.dump(test_acc, f)
-
+        
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle",'wb') as f:
+            pickle.dump(train_f1, f)
+        
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_f1.pickle",'wb') as f:
+            pickle.dump(valid_f1, f)
+        
+        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_f1.pickle",'wb') as f:
+            pickle.dump(test_f1, f)
+        
         #right after training do the test step
         reports.update({f'{self.args["model_type"]}_{self.args["rnn_cell"]}':
                             self.test(self.model_saved_fname,self.data_object.get_test_data())})
@@ -211,6 +228,7 @@ class TrainModels:
                     probs = torch.round(torch.sigmoid(predictions))
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
+
             else:
                 for x, statics, y in data_loader:
                     x = x.to(self.device)
@@ -222,10 +240,12 @@ class TrainModels:
                     probs = torch.round(torch.sigmoid(predictions))
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
-
+        #compute the f-1 measure 
+        report = classification_report(y.cpu().detach().numpy(), probs.view(-1).cpu().detach().numpy(), output_dict=True)
+        f1_score = report['1']['f1-score']
         # todo compute accuracy
         accuracy /= self.data_object.dev_instances
-        return accuracy
+        return accuracy, f1_score
 
     def test(self, model_path, test_data):
         checkpoint = torch.load(model_path)

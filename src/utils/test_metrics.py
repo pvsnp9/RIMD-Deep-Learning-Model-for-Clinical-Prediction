@@ -21,9 +21,11 @@ rf = RandomForestClassifier()
 rf.fit(trainX,trainy)
 # predict probabilities
 lr_probs2 = model.predict_proba(testX)
-lr_decision = model.decision_function(testX)
+lr_decision = model.predict_proba(testX)[:1]
+
 rf_props3 =  rf.predict_proba(testX)
-rf_decision = model.decision_function(testX)
+rf_decision = rf.predict_proba(testX)[:1]
+
 # keep probabilities for the positive outcome only
 lr_probs = lr_probs2[:, 1]
 # calculate scores
@@ -34,7 +36,7 @@ print('No Skill: ROC AUC=%.3f' % (ns_auc))
 print('Logistic: ROC AUC=%.3f' % (lr_auc))
 
 # calculate roc curves
-ns_fpr, ns_tpr, _ = roc_curve(testy, ns_probs)
+ns_fpr, ns_tpr, _ = prc(testy, ns_probs)
 lr_fpr, lr_tpr, _ = roc_curve(testy, lr_probs)
 # plot the roc curve for the model
 pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')

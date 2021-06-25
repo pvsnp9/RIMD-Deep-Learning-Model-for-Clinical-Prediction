@@ -1,4 +1,6 @@
+from operator import index
 import numpy as np
+from numpy.core.numeric import zeros_like
 import torch
 import tqdm
 from torch.utils.data import DataLoader, TensorDataset
@@ -39,6 +41,25 @@ class MIMICDecayData:
 
         del all_data, delta_mean
 
+        '''
+        Undersampling
+        '''
+
+        zero_index = np.squeeze(np.where(self.y == 0) )
+        np.random.shuffle(zero_index)
+        ones_index = np.squeeze(np.where(self.y == 1) )
+        zero_index = zero_index[:len(ones_index)]  
+        new_index = np.concatenate((ones_index,zero_index))
+        self.x = self.x[new_index]
+         
+        self.y = self.y[new_index]
+        self.statics = self.statics[new_index]
+        self.mask = self.mask[new_index]
+        self.delta = self.delta[new_index]
+        self.last_observed = self.last_observed[new_index]
+        self.x_mean = self.x_mean[new_index]
+        
+
         index_ = np.arange(self.x.shape[0], dtype = int)
         np.random.seed(1024)
         np.random.shuffle(index_)
@@ -58,6 +79,8 @@ class MIMICDecayData:
         self.last_observed = np.expand_dims(self.last_observed, axis=1)
 
         self.data_agg = np.concatenate((self.x, self.mask, self.delta, self.last_observed), axis=1)
+
+        
 
         self.train_instances = int(self.x.shape[0] *  self.train_frac)
         self.dev_instances = int(self.x.shape[0] * self.dev_frac)
