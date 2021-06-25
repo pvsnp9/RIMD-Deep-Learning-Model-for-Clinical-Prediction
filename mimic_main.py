@@ -5,13 +5,14 @@
 Input arguments like model_type and cell type are crucial.
 """
 import pandas as pd
-
+import pickle
 from mimic_iii_train import TrainModels
 from src.model.mimic_ml_models import MimicMlTrain
 from src.utils.data_prep import MortalityDataPrep
 from src.utils.mimic_evaluation import MIMICReport
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
+import matplotlib.pyplot as plt
 
 OUTPUT = 'output/plots'
 N_HYPER_PARAM_SET = 1
@@ -20,7 +21,7 @@ save_dir = 'mimic/models'
 log_dir = 'mimic/logs'
 
 args = {
-    'epochs':10,
+    'epochs':100,
     'batch_size': 128,
     'input_size': 1, #automatically picked from data
     'model_type': 'RNN', # type of model  RIM, LSTM, GRU
@@ -46,7 +47,7 @@ args = {
     'need_data_preprocessing': False,
     'raw_data_file_path' :'data/mimic_iii/curated_30k/all_hourly_data_30000.pkl',
     'processed_data_path':'data/mimic_iii/test_dump',
-    'input_file_path':'data/mimic_iii/test_dump/x_y_statics_20926.npz',
+    'input_file_path':'data/mimic_iii/test_dump/decay_data_20926.npz',
     'decay_input_file_path':'data/mimic_iii/test_dump/decay_data_20926.npz'
 }
 
@@ -63,7 +64,9 @@ def mimic_main(run_type):
     #load datasets
     decay_data_object = MIMICDecayData(args['batch_size'], 24, args['decay_input_file_path'])
     data_object = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], args['mask'])
+    
     model_reports = {}
+
     if run_type == "train":
         #ML models first
         ml_trainer = MimicMlTrain(data_object, './mimic/models', OUTPUT, N_HYPER_PARAM_SET)
@@ -73,26 +76,35 @@ def mimic_main(run_type):
 
         #DL Models
         model_type = [  'RIMDecay','LSTM', 'GRU','RIM']
-        cell_type = ['LSTM', 'GRU']
         for model in model_type:
-            args['model_type'] = model
-            if args['model_type'] == 'RIMDecay':
-                dl_trainer = TrainModels(args,decay_data_object)
+            if model.startswith('RIM'):
+                cell_type = ['LSTM', 'GRU']
+            elif model == 'LSTM':
+                cell_type = ['LSTM']
             else:
-                dl_trainer = TrainModels(args,data_object)
+                cell_type = ['GRU']
 
-            train_res =  dl_trainer.train()
-            for model, res_sets in train_res.items():
-                y_truth, y_pred, y_score = res_sets
-                report = MIMICReport(model, y_truth, y_pred, y_score, './figures')
-                model_reports.update({model:report})
+            for cell in cell_type:
+                args['rnn_cell'] = cell
+                args['model_type'] = model
+                if args['model_type'] == 'RIMDecay':
+                    dl_trainer = TrainModels(args,decay_data_object)
+                else:
+                    dl_trainer = TrainModels(args,data_object)
+
+                train_res =  dl_trainer.train()
+                for model_1, res_sets in train_res.items():
+                    y_truth, y_pred, y_score = res_sets
+                    report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
+                    model_reports.update({model_1:report})
     else:
         #ML Test
         ml_trainer = MimicMlTrain(data_object, './mimic/models', OUTPUT)
         model_reports.update(ml_trainer.test())
 
         #DL Test
-        model_type = ['RIM_GRU', 'RIMDecay_GRU','RIM_LSTM', 'RIMDecay_LSTM','LSTM_GRU', 'GRU_LSTM']
+        # model_type = ['RIM_GRU', 'RIMDecay_GRU','RIM_LSTM', 'RIMDecay_LSTM','LSTM_GRU', 'GRU_LSTM']
+        model_type = ['RIMDecay_GRU','RIMDecay_LSTM']
         cell_type = ['LSTM', 'GRU']
 
         for model in model_type:
@@ -111,9 +123,57 @@ def mimic_main(run_type):
     for model, report in model_reports.items():
         results.update(report.get_all_metrics())
         cms.update({model:report.get_confusion_matrix()})
+    
+    # plot CMs and AUROC, AUPRC and...
+    #Save the results to excel or latex 
+    # plot the training curve for DL models 
 
     df_results =  pd.DataFrame(results)
     df_results = df_results.T
     print(df_results.to_markdown())
 
-mimic_main("train")
+
+def plot_loss_stats():
+    from os import walk
+    epocs = range(1,3)
+    f = []
+    losstats = []
+    for (_, _, filenames) in walk('./mimic/logs'):
+        f.extend(filenames)
+    for file in f:
+        if file.endswith('lossstats.pickle'):
+            losstats.append(file)
+            with open(f'./mimic/logs/{file}', 'rb') as pickle_file:
+                content = pickle.load(pickle_file)
+                y = [i[-1] for i in content]
+                epocs = range(1,len(content)+1)
+                file_name = file.split('_')
+                plt.plot(epocs,y, label = f'{file_name[0]}-{file_name[1]}' )
+        
+            plt.xlabel('Epocs')
+            plt.ylabel('Loss')
+            plt.title('Loss stats for training')  
+    plt.legend()
+    plt.show()
+     
+
+def plot_confusion_matrixes(reports):
+       
+    fig = plt.figure()
+    gs = fig.add_gridspec(3, 3, hspace=10, wspace=10)
+    axs = gs.subplots(sharex='col', sharey='row')
+    fig.suptitle('Confusion matrix !')
+    i = 0
+    count = 0
+    for model_name , report in reports.items():
+        if count > 2:
+            i +=1
+            count =0
+        axs[i,count % 3] = report.plot_cm().plot()
+        count +=1
+    fig.tight_layout()
+    
+
+plot_loss_stats()
+
+# mimic_main("train")
