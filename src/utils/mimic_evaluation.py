@@ -82,9 +82,8 @@ class MIMICReport():
         disp.plot()
         plt.title("Confusion Matrix for " + self.classifire_name)
         if file_address:
-            plt.savefig(file_address)
-        else:
-            return plt
+            plt.savefig(file_address, dpi=300)
+        return plt
     
     def get_roc_curve(self):
        return roc_curve(self.y_true, self.y_score)

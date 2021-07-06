@@ -45,19 +45,19 @@ class MIMICDecayData:
         Undersampling
         '''
 
-        zero_index = np.squeeze(np.where(self.y == 0) )
-        np.random.shuffle(zero_index)
-        ones_index = np.squeeze(np.where(self.y == 1) )
-        zero_index = zero_index[:len(ones_index)]  
-        new_index = np.concatenate((ones_index,zero_index))
-        self.x = self.x[new_index]
-         
-        self.y = self.y[new_index]
-        self.statics = self.statics[new_index]
-        self.mask = self.mask[new_index]
-        self.delta = self.delta[new_index]
-        self.last_observed = self.last_observed[new_index]
-        self.x_mean = self.x_mean[new_index]
+        # zero_index = np.squeeze(np.where(self.y == 0) )
+        # np.random.shuffle(zero_index)
+        # ones_index = np.squeeze(np.where(self.y == 1) )
+        # zero_index = zero_index[:len(ones_index)]
+        # new_index = np.concatenate((ones_index,zero_index))
+        #
+        # self.x = self.x[new_index]
+        # self.y = self.y[new_index]
+        # self.statics = self.statics[new_index]
+        # self.mask = self.mask[new_index]
+        # self.delta = self.delta[new_index]
+        # self.last_observed = self.last_observed[new_index]
+        # self.x_mean = self.x_mean[new_index]
         
 
         index_ = np.arange(self.x.shape[0], dtype = int)
@@ -124,9 +124,9 @@ class MIMICDecayData:
 
         
         
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True, drop_last=True)
 
         return train_loader, val_loader, test_loader
 

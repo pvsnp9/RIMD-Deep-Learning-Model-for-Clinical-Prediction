@@ -26,7 +26,8 @@ log_dir = 'mimic/logs'
 
 
 class TrainModels:
-    def __init__(self, args=None, data_object=None):
+    def __init__(self, args=None, data_object=None, logger=None):
+        self.logger = logger
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         if args is not None:
             self.args = args
@@ -39,7 +40,7 @@ class TrainModels:
             else:
                 self.set_default_params()
         else:
-            print('-------------- Model initiated for prediction ---------------------')
+           self.logger.info('-------------- Model initiated for prediction ---------------------')
 
     def set_decay_params(self):
         # self.data_object = MIMICDecayData(args['batch_size'], 24, args['input_file_path'])
@@ -71,7 +72,7 @@ class TrainModels:
 
         max_val_accuracy = 0.0
         epochs_no_improve = 0
-        max_no_improvement = 100
+        max_no_improvement = 15
         improvement_threshold = 0.0001 
         reports = {}
         # for cell in self.cell_types:
@@ -86,12 +87,13 @@ class TrainModels:
         else:
             self.model = MIMICGRUModel(self.args).to(self.device)
         
-        print(f'Model Arch: \n {self.model}')    
-        print(f"Training, Validating, and Testing: {self.args['model_type']} model with {self.args['rnn_cell']} cell ")
+        self.logger.info(f'Model Arch: \n {self.model}')
+        self.logger.info(f"Training, Validating, and Testing: {self.args['model_type']} model with {self.args['rnn_cell']} cell ")
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr = self.args['lr'])
         for epoch in range(start_epochs, self.args['epochs']):
-            print(f' EPOCH: {epoch +1}')
+            self.logger.info("***********************************************************")
+            self.logger.info(f'**************** EPOCH: {epoch +1} ***********************')
             epoch_loss = 0.0
             iter_ctr = 0.0
             t_accuracy = 0
@@ -149,10 +151,13 @@ class TrainModels:
             train_f1_report = classification_report(y.cpu().detach().numpy(), predictions.view(-1).cpu().detach().numpy(), output_dict= True)
             validation_accuracy, val_f1 = self.eval(val_loader)
             test_accuracy, t_f1 = self.eval(test_loader)
-            print(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/self.data_object.train_instances}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
+            self.logger.info(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/len(train_loader.dataset)}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
             
             #append f1 score
-            train_f1.append((epoch, train_f1_report['1']['f1-score']))
+            try:
+                train_f1.append((epoch, train_f1_report['1']['f1-score']))
+            except:
+                self.logger.info("Error : there is no sample with class label '1' !!!!")
             valid_f1.append((epoch, val_f1))
             test_f1.append((epoch, t_f1))
 
@@ -160,13 +165,13 @@ class TrainModels:
             acc.append((epoch,(validation_accuracy)))
             train_acc.append((epoch, (t_accuracy/self.data_object.train_instances)))
             test_acc.append((epoch, (test_accuracy)))
-
+            #TODO  Sensetive loss function
             # early stopping code
             improve = validation_accuracy - max_val_accuracy
             if improve > improvement_threshold:
                 epochs_no_improve = 0
                 max_val_accuracy = validation_accuracy
-
+                #TODO chose the best model !?
                 best_model_state = {
                 'net': self.model.state_dict(),
                 'epochs': epoch,
@@ -176,10 +181,10 @@ class TrainModels:
                 epochs_no_improve += 1
             
             if epochs_no_improve == max_no_improvement:
-                print(f"Early Stopping @ EPOCH:[{epoch}]")
+                self.logger.info(f"Early Stopping @ EPOCH:[{epoch}]")
                 break
 
-        print("saving the models state...")
+        self.logger.info("saving the models state...")
         self.model_saved_fname = f"{save_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_model.pt"
         with open(self.model_saved_fname, 'wb') as f:
             torch.save(best_model_state, f)
@@ -214,6 +219,7 @@ class TrainModels:
         self.model.eval()
         with torch.no_grad():
             if self.args['model_type'] == 'RIMDecay':
+                #TODO there is a bug in number of samples for test and val data sets
                 for x, static, x_mean, y in data_loader:
                     static = static.to(self.device)
                     x_mask = x[:,1,:,:].to(self.device)
@@ -241,10 +247,16 @@ class TrainModels:
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
         #compute the f-1 measure 
-        report = classification_report(y.cpu().detach().numpy(), probs.view(-1).cpu().detach().numpy(), output_dict=True)
-        f1_score = report['1']['f1-score']
+        report = classification_report(y.cpu().detach().numpy(), probs.view(-1).cpu().detach().numpy(), output_dict=True, zero_division=0)
+        try:
+            f1_score = report['1']['f1-score']
+        except Exception as e:
+            f1_score = 0
+            print(report)
+            print(e)
+
         # todo compute accuracy
-        accuracy /= self.data_object.dev_instances
+        accuracy /= len(data_loader.dataset)
         return accuracy, f1_score
 
     def test(self, model_path, test_data):
@@ -262,7 +274,7 @@ class TrainModels:
             raise Exception('No model type found: {}'.format(model_path))
 
         model.load_state_dict(checkpoint['net'])
-        print(f'Loaded model arch: \n {model}')
+        self.logger.info(f'Loaded model arch: \n {model}')
 
         if args['model_type'] == 'RIMDecay':
             x, static, x_mean, y = test_data

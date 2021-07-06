@@ -4,6 +4,8 @@
 !!!! Important !!!!!!!
 Input arguments like model_type and cell type are crucial.
 """
+from datetime import datetime
+from ray import tune
 import pandas as pd
 import pickle
 from mimic_iii_train import TrainModels
@@ -14,21 +16,23 @@ from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
-
+import json
+from src.utils.save_utils import MimicSave
+import logging
 
 OUTPUT = 'output/plots'
 N_HYPER_PARAM_SET = 1
 
 save_dir = 'mimic/models'
-log_dir = 'mimic/logs'
+log_dir = 'mimic/logs/None Balanced'
 
 args = {
     'epochs':100,
-    'batch_size': 128,
+    'batch_size': 64,
     'input_size': 1, #automatically picked from data
     'model_type': 'RNN', # type of model  RIM, LSTM, GRU
     'hidden_size': 100,
-    'num_rims': 4,
+    'num_rims': 6,
     'lr': 0.0001,
     'rnn_cell': 'GRU_D', # type of cell LSTM, or GRU
     'input_key_size': 64,
@@ -40,20 +44,20 @@ args = {
     'comm_value_size': 100,
     'comm_query_size': 64,
     'num_comm_heads': 2,
-    'comm_dropout': 0.2,
-    'active_rims': 2,
-    'mask': False,
+    'comm_dropout': 0.1,
+    'active_rims': 4,
+    'mask': True,
     'mask_size': 104,
     'delta_size': 104,
     'static_features':17, #automatically picked from data
     'need_data_preprocessing': False,
-    'raw_data_file_path' :'data/mimic_iii/curated_30k/all_hourly_data_30000.pkl',
-    'processed_data_path':'data/mimic_iii/test_dump',
-    'input_file_path':'data/mimic_iii/test_dump/decay_data_20926.npz',
-    'decay_input_file_path':'data/mimic_iii/test_dump/decay_data_20926.npz'
+    'raw_data_file_path' :'data/10_percent/all_hourly_data.pkl',
+    'processed_data_path':'data/50_percent/',
+    'input_file_path':'data/10_percent/x_y_statics_23944.npz',
+    'decay_input_file_path':'data/10_percent/decay_data_23944.npz'
 }
 
-def mimic_main(run_type):
+def mimic_main(run_type, run_description):
     # Data preprocessing
     if (args['need_data_preprocessing']):
         prep_data = MortalityDataPrep(args['raw_data_file_path'])
@@ -63,6 +67,32 @@ def mimic_main(run_type):
             _, _, _, args['input_file_path'] = prep_data.preprocess(True, args['processed_data_path'])
             del _
 
+    # https://github.com/manashty/lifemodel/blob/master/LifeModelForecasting/FallDetection.ipynb
+    #
+    ## Craet a directory for saving the results
+
+    out_dir = MimicSave.get_instance().create_get_output_dir(OUTPUT)
+
+    # Save the args used in this experiment
+    with open(f'{out_dir}/_experiment_args.txt','w') as f:
+        json.dump(args,f)
+
+    #config logging
+    logging.basicConfig(filename=out_dir + '/' + 'log.txt', format='%(message)s', level=logging.DEBUG)
+    # Adding log to console as well
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logging.Formatter('*\t%(message)s'))
+    logging.getLogger().addHandler(consoleHandler)
+    dateformat = "%Y/%m/%d  %H:%M:%S"
+    logging.info("Run Description: " + run_description)
+    logging.info("Log file created at " + datetime.now().strftime("%Y/%m/%d  %H:%M:%S"))
+    logging.info("Directory: {0}".format(out_dir))
+
+    startTime = datetime.now()
+    logging.info('Start time: ' + str(startTime))
+
+
+
     #load datasets
     decay_data_object = MIMICDecayData(args['batch_size'], 24, args['decay_input_file_path'])
     data_object = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], args['mask'])
@@ -71,13 +101,13 @@ def mimic_main(run_type):
 
     if run_type == "train":
         #ML models first
-        ml_trainer = MimicMlTrain(data_object, './mimic/models', OUTPUT, N_HYPER_PARAM_SET)
-        # ml_trainer.run()
+        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
+        ml_trainer.run()
 
         model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = ['LSTM','GRU', 'RIMDecay', 'RIM']
+        model_type = ['GRU', 'LSTM','RIM','RIMDecay' ]
         for model in model_type:
             if model.startswith('RIM'):
                 cell_type = ['LSTM', 'GRU']
@@ -90,18 +120,19 @@ def mimic_main(run_type):
                 args['rnn_cell'] = cell
                 args['model_type'] = model
                 if args['model_type'] == 'RIMDecay':
-                    dl_trainer = TrainModels(args,decay_data_object)
+                    dl_trainer = TrainModels(args,decay_data_object, logging)
                 else:
-                    dl_trainer = TrainModels(args,data_object)
+                    dl_trainer = TrainModels(args,data_object, logging)
 
                 train_res =  dl_trainer.train()
                 for model_1, res_sets in train_res.items():
                     y_truth, y_pred, y_score = res_sets
                     report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
                     model_reports.update({model_1:report})
+
     else:
         #ML Test
-        ml_trainer = MimicMlTrain(data_object, './mimic/models', OUTPUT)
+        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir)
         model_reports.update(ml_trainer.test())
 
         #DL Test
@@ -114,7 +145,7 @@ def mimic_main(run_type):
                 test_data = decay_data_object.get_test_data()
             else:
                 test_data = data_object.get_test_data()
-            trainer = TrainModels()
+            trainer = TrainModels(logger= logging)
             model_path = f"{save_dir}/{model}_model.pt"
             y_truth, y_pred, y_score = trainer.test(model_path, test_data)
             report = MIMICReport(model, y_truth, y_pred, y_score, './figures')
@@ -129,17 +160,24 @@ def mimic_main(run_type):
     # plot CMs and AUROC, AUPRC and...
     #Save the results to excel or latex 
     # plot the training curve for DL models 
-    with open(f'./mimic/model_reports/reports.pickle', 'wb') as f:
-        pickle.dump(model_reports, f)
-    
+
     df_results =  pd.DataFrame(results)
     df_results = df_results.T
+    # save to excel file
     print(df_results.to_markdown())
-    plot_confusion_matrixes(model_reports)
-    
+    plot_confusion_matrixes(out_dir,model_reports)
+
+    """
+    Saving the results
+    """
+    df_results.to_excel(f'{out_dir}/report.xlsx')
+    df_results.to_latex(f'{out_dir}/report.tex')
+    with open(f'{out_dir}/reports.pickle', 'wb') as f:
+        pickle.dump(model_reports, f)
+
 
 def plot_prauc():
-    with open(f'./mimic/model_reports/reports.pickle', 'rb') as f:
+    with open(f'{MimicSave.get_instance().get_directory()}/reports.pickle', 'rb') as f:
         reports = pickle.load(f)
     
     flag = True
@@ -151,10 +189,11 @@ def plot_prauc():
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
     plt.legend()
+    plt.savefig(f'{MimicSave.get_instance().get_directory()}/PRAUC_plot.png')
     plt.show()
 
 def plot_roc():
-    with open(f'./mimic/model_reports/reports.pickle', 'rb') as f:
+    with open(f'{MimicSave.get_instance().get_directory()}/reports.pickle', 'rb') as f:
         reports = pickle.load(f)
     
     flag = True
@@ -168,6 +207,7 @@ def plot_roc():
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
     plt.legend()
+    plt.savefig(f'{MimicSave.get_instance().get_directory()}/ROC_plot.png')
     plt.show()
     
 def no_skil(y_true):
@@ -213,10 +253,14 @@ def plot_stats(key,stats):
             plt.ylabel(key[1])
             plt.title(f'{key[1]} stats for {key[0]}')  
     plt.legend()
+    # plt.show()
+    plt.savefig(f'{MimicSave.get_instance().get_directory()}/{file.split("_")[0]}_{key[0]}_{key[1]}', dpi = 300)
+    plt.plot()
     plt.show()
+
         
 
-def plot_confusion_matrixes(reports):
+def plot_confusion_matrixes(out_dir,reports):
        
     fig = plt.figure()
     gs = fig.add_gridspec(3, 3, hspace=10, wspace=10)
@@ -228,13 +272,16 @@ def plot_confusion_matrixes(reports):
         if count > 2:
             i +=1
             count =0
-        axs[i,count % 3] = report.plot_cm().plot()
+        axs[i,count % 3] = report.plot_cm(f'{out_dir}/CM_{model_name}.png').plot()
         count +=1
     fig.tight_layout()
-    
 
 
-mimic_main("train")
+MimicSave.get_instance()
+
+description = "Experiment # 1: logging feature test"
+mimic_main("train",description)
 plo_training_stats()
-# plot_roc()
-# plot_prauc()
+plot_roc()
+plot_prauc()
+
