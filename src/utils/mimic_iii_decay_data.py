@@ -26,10 +26,10 @@ class MIMICDecayData:
 
         self.statics_size = self.statics.shape[-1]
         self.input_size  = self.x.shape[-1]
-        
+
         self.x = np.reshape(self.x, (self.y.shape[0], self.window_size, -1))
         self.y = np.squeeze(self.y, axis=1)
-        
+
         self.mask = np.reshape(self.mask, (self.y.shape[0], self.window_size, -1))
         self.delta = np.reshape(self.delta, (self.y.shape[0], self.window_size, -1))
         self.last_observed = np.reshape(self.last_observed, (self.y.shape[0], self.window_size, -1))
@@ -38,13 +38,14 @@ class MIMICDecayData:
         delta_mean = np.amax(self.delta, axis=1)
         for i in range(self.delta.shape[0]):
             self.delta[i] = np.divide(self.delta[i], delta_mean[i], out=np.zeros_like(self.delta[i]), where=delta_mean[i]!=0)
-        
+
 
         del all_data, delta_mean
 
         '''
         Undersampling
         '''
+        np.random.seed(1024)
 
         zero_index = np.squeeze(np.where(self.y == 0) )
         #ToDO we may need to set Seed !
@@ -61,12 +62,11 @@ class MIMICDecayData:
             self.delta = self.delta[new_index]
             self.last_observed = self.last_observed[new_index]
             self.x_mean = self.x_mean[new_index]
-        
+
 
         index_ = np.arange(self.x.shape[0], dtype = int)
-        np.random.seed(1024)
         np.random.shuffle(index_)
-        
+
         self.x = self.x[index_]
         self.y = self.y[index_]
         self.statics = self.statics[index_]
@@ -83,7 +83,7 @@ class MIMICDecayData:
 
         self.data_agg = np.concatenate((self.x, self.mask, self.delta, self.last_observed), axis=1)
 
-        
+
 
         self.train_instances = int(self.x.shape[0] *  self.train_frac)
         self.dev_instances = int(self.x.shape[0] * self.dev_frac)

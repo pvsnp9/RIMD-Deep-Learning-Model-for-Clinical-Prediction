@@ -251,6 +251,7 @@ class TrainModels:
         else:
             self.model_name = f"{self.args['model_type']}_{self.args['rnn_cell']}"
 
+
     def eval(self, data_loader):
         accuracy = 0
         self.model.eval()
@@ -284,6 +285,8 @@ class TrainModels:
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
         #compute the f-1 measure 
+        #TODO the below code is not correct !!, need to pass all the data from test set to calculate the f1,
+        # now it is only for the last batch inside the loader !
         report = classification_report(y.cpu().detach().numpy(), probs.view(-1).cpu().detach().numpy(), output_dict=True, zero_division=0)
         try:
             f1_score = report['1']['f1-score']

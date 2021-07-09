@@ -15,7 +15,7 @@ class MIMICRF():
         self.N =N
         self.model_name = "RandomForest"
         RF_dist = DictDist({
-            'n_estimators': ss.randint(50, 500),
+            'n_estimators': ss.randint(50, 350),
             'max_depth': ss.randint(2, 10),
             'min_samples_split': ss.randint(2, 75),
             'min_samples_leaf': ss.randint(1, 50),
@@ -35,7 +35,7 @@ class MIMICLR():
             'C': Choice(np.geomspace(1e-3, 1e3, 10000)),
             'penalty': Choice(['l1', 'l2']),
             'solver': Choice(['liblinear', 'lbfgs']),
-            'max_iter': Choice([100, 500])
+            'max_iter': Choice([100, 350])
         })
         np.random.seed(SEED)
         self.LR_hyperparams_list = LR_dist.rvs(self.N)

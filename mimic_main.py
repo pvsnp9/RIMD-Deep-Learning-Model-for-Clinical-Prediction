@@ -22,7 +22,7 @@ from src.utils.save_utils import MimicSave
 import logging
 
 OUTPUT = 'output/plots'
-N_HYPER_PARAM_SET = 1
+N_HYPER_PARAM_SET = 10
 
 save_dir = 'mimic/models'
 log_dir = 'mimic/logs/None Balanced'
@@ -75,15 +75,15 @@ def mimic_main(run_type, run_description):
     if run_type == "train":
         #ML models first
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
-        ml_trainer.run()
+        # ml_trainer.run()
 
-        model_reports.update(ml_trainer.get_reports())
+        # model_reports.update(ml_trainer.get_reports())
 
         #DL Models
         model_type = [ 'RIMDecay' ]
         for model in model_type:
             if model.startswith('RIM'):
-                cell_type = ['LSTM', 'GRU']
+                cell_type = [ 'GRU']
             elif model == 'LSTM':
                 cell_type = ['LSTM']
             else:
@@ -252,7 +252,7 @@ def plot_confusion_matrixes(out_dir,reports):
 
 MimicSave.get_instance()
 
-description = "Experiment # 1: RIMDecay tuned "
+description = "Experiment # 1.2: RIMDecay tuned "
 mimic_main("train",description)
 plo_training_stats()
 plot_roc()
