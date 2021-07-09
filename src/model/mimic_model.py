@@ -22,7 +22,7 @@ class MIMICModel(nn.Module):
         # TODO: Add more statice variables to linear layer
         self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 10)
         self.linear_two = nn.Linear(10, 1)
-
+        self.relu = nn.ReLU()
         self.loss = nn.BCELoss()
 
     def forward(self, x, static, y = None):
@@ -48,7 +48,9 @@ class MIMICModel(nn.Module):
         full_data = torch.cat([hs, static], dim=1)
         # FCN 
         l1 = self.linear_one(full_data)
-        predictions = self.linear_two(l1)
+
+        relu_out = self.relu(l1)
+        predictions = self.linear_two(relu_out)
 
         if y is not None:
             y = y.float()

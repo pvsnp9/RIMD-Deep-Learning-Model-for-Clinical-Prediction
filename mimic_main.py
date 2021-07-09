@@ -5,10 +5,11 @@
 Input arguments like model_type and cell type are crucial.
 """
 from datetime import datetime
-from ray import tune
+
 import pandas as pd
 import pickle
 from mimic_iii_train import TrainModels
+from src.mimic_args import args
 from src.model.mimic_ml_models import MimicMlTrain
 from src.utils.data_prep import MortalityDataPrep
 from src.utils.mimic_evaluation import MIMICReport
@@ -26,38 +27,10 @@ N_HYPER_PARAM_SET = 1
 save_dir = 'mimic/models'
 log_dir = 'mimic/logs/None Balanced'
 
-args = {
-    'epochs':100,
-    'batch_size': 64,
-    'input_size': 1, #automatically picked from data
-    'model_type': 'RNN', # type of model  RIM, LSTM, GRU
-    'hidden_size': 100,
-    'num_rims': 6,
-    'lr': 0.0001,
-    'rnn_cell': 'GRU_D', # type of cell LSTM, or GRU
-    'input_key_size': 64,
-    'input_value_size': 128,
-    'input_query_size': 64,
-    'num_input_heads': 2,
-    'input_dropout': 0.2,
-    'comm_key_size': 64,
-    'comm_value_size': 100,
-    'comm_query_size': 64,
-    'num_comm_heads': 2,
-    'comm_dropout': 0.1,
-    'active_rims': 4,
-    'mask': True,
-    'mask_size': 104,
-    'delta_size': 104,
-    'static_features':17, #automatically picked from data
-    'need_data_preprocessing': False,
-    'raw_data_file_path' :'data/10_percent/all_hourly_data.pkl',
-    'processed_data_path':'data/50_percent/',
-    'input_file_path':'data/10_percent/x_y_statics_23944.npz',
-    'decay_input_file_path':'data/10_percent/decay_data_23944.npz'
-}
+
 
 def mimic_main(run_type, run_description):
+
     # Data preprocessing
     if (args['need_data_preprocessing']):
         prep_data = MortalityDataPrep(args['raw_data_file_path'])
@@ -107,7 +80,7 @@ def mimic_main(run_type, run_description):
         model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = ['GRU', 'LSTM','RIM','RIMDecay' ]
+        model_type = [ 'RIMDecay' ]
         for model in model_type:
             if model.startswith('RIM'):
                 cell_type = ['LSTM', 'GRU']
@@ -117,6 +90,7 @@ def mimic_main(run_type, run_description):
                 cell_type = ['GRU']
 
             for cell in cell_type:
+                #TODO calculate execution time and log it
                 args['rnn_cell'] = cell
                 args['model_type'] = model
                 if args['model_type'] == 'RIMDecay':
@@ -217,7 +191,6 @@ def no_skil(y_true):
     return ns_fpr, ns_tpr
 
 
-
 def plo_training_stats():
     from os import walk
     epocs = range(1,3)
@@ -279,7 +252,7 @@ def plot_confusion_matrixes(out_dir,reports):
 
 MimicSave.get_instance()
 
-description = "Experiment # 1: logging feature test"
+description = "Experiment # 1: RIMDecay tuned "
 mimic_main("train",description)
 plo_training_stats()
 plot_roc()

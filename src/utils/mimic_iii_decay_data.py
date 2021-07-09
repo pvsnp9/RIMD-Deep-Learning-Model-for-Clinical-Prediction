@@ -1,3 +1,4 @@
+import math
 from operator import index
 import numpy as np
 from numpy.core.numeric import zeros_like
@@ -6,7 +7,7 @@ import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICDecayData:
-    def __init__(self, batch_size, window_size, file_path, train_frac=0.7, dev_frac= 0.15, test_frac=0.15):
+    def __init__(self, batch_size, window_size, file_path, train_frac=0.7, dev_frac= 0.15, test_frac=0.15, balance=False):
         self.batch_size = batch_size
         self.window_size = window_size
         self.train_frac = train_frac
@@ -45,19 +46,21 @@ class MIMICDecayData:
         Undersampling
         '''
 
-        # zero_index = np.squeeze(np.where(self.y == 0) )
-        # np.random.shuffle(zero_index)
-        # ones_index = np.squeeze(np.where(self.y == 1) )
-        # zero_index = zero_index[:len(ones_index)]
-        # new_index = np.concatenate((ones_index,zero_index))
-        #
-        # self.x = self.x[new_index]
-        # self.y = self.y[new_index]
-        # self.statics = self.statics[new_index]
-        # self.mask = self.mask[new_index]
-        # self.delta = self.delta[new_index]
-        # self.last_observed = self.last_observed[new_index]
-        # self.x_mean = self.x_mean[new_index]
+        zero_index = np.squeeze(np.where(self.y == 0) )
+        #ToDO we may need to set Seed !
+        if balance:
+            np.random.shuffle(zero_index)
+            ones_index = np.squeeze(np.where(self.y == 1) )
+            zero_index = zero_index[:math.ceil(0.5 * len(zero_index))]
+            new_index = np.concatenate((ones_index,zero_index))
+
+            self.x = self.x[new_index]
+            self.y = self.y[new_index]
+            self.statics = self.statics[new_index]
+            self.mask = self.mask[new_index]
+            self.delta = self.delta[new_index]
+            self.last_observed = self.last_observed[new_index]
+            self.x_mean = self.x_mean[new_index]
         
 
         index_ = np.arange(self.x.shape[0], dtype = int)

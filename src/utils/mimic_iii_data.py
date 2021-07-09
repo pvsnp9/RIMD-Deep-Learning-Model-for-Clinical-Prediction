@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -26,15 +28,16 @@ class MIMICIIIData:
         '''
         Undersampling
         '''
-        # zero_index = np.squeeze(np.where(self.y == 0) )
-        # np.random.shuffle(zero_index)
-        # ones_index = np.squeeze(np.where(self.y == 1) )
+        zero_index = np.squeeze(np.where(self.y == 0) )
+        np.random.shuffle(zero_index)
+        ones_index = np.squeeze(np.where(self.y == 1) )
         # zero_index = zero_index[:len(ones_index)]
-        # new_index = np.concatenate((ones_index,zero_index))
-        # self.x = self.x[new_index]
-        #
-        # self.y = self.y[new_index]
-        # self.statics = self.statics[new_index]
+        zero_index = zero_index[:math.ceil(0.6 * len(zero_index))]
+        new_index = np.concatenate((ones_index,zero_index))
+        self.x = self.x[new_index]
+
+        self.y = self.y[new_index]
+        self.statics = self.statics[new_index]
         # self.mask = self.mask[new_index]
         # self.delta = self.delta[new_index]
         # self.last_observed = self.last_observed[new_index]
@@ -166,14 +169,14 @@ class MIMICIIIData:
 #     # x = torch.from_numpy(x).to(device)
 
 #
-# if __name__ =='__main__':
-#     d = MIMICIIIData(64, 24 , '../../data/10_percent/x_y_statics_23944.npz',)
-#     t_l,v_l,ts_l = d.data_loader()
-#
-#     for x, s,y in v_l:
-#         if y.shape[0] <= 40:
-#             print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
-#             break
-#         print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
-#
-#     print(len(v_l.dataset))
+if __name__ =='__main__':
+    d = MIMICIIIData(64, 24 , '../../data/mimic_iii/test_dump/decay_data_20926.npz',)
+    t_l,v_l,ts_l = d.data_loader()
+
+    for x, s,y in v_l:
+        if y.shape[0] <= 40:
+            print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
+            break
+        print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
+
+    print(len(v_l.dataset))

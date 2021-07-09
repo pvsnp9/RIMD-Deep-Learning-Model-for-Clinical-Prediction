@@ -27,6 +27,8 @@ log_dir = 'mimic/logs'
 
 class TrainModels:
     def __init__(self, args=None, data_object=None, logger=None):
+
+        self.reports = {}
         self.logger = logger
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         if args is not None:
@@ -39,6 +41,9 @@ class TrainModels:
                 self.set_decay_params()
             else:
                 self.set_default_params()
+            self.set_model_name()
+
+            self.logger.info(args)
         else:
            self.logger.info('-------------- Model initiated for prediction ---------------------')
 
@@ -58,6 +63,22 @@ class TrainModels:
         if self.args['model_type'] == 'LSTM': self.cell_types.pop(1)
         elif self.args['model_type'] == 'GRU': self.cell_types.pop(0)
 
+
+    def tune_train(self):
+        """
+        Objective function for tuning the models, at this time PRAUC has been selected which can be modified latter based
+        on the results and discussions
+        """
+
+        res = self.train()
+        if res ==0:
+            return 0
+
+        y_truth, y_pred, y_score = res[self.model_name]
+        report = MIMICReport(self.model_name, y_truth, y_pred, y_score, './figures')
+
+        return report.get_roc_metrics()['PRAUC']
+
     def train(self):
         
         ctr = 0
@@ -72,9 +93,9 @@ class TrainModels:
 
         max_val_accuracy = 0.0
         epochs_no_improve = 0
-        max_no_improvement = 15
-        improvement_threshold = 0.0001 
-        reports = {}
+        max_no_improvement = self.args['max_no_improvement']
+        improvement_threshold = self.args['improvement_threshold']
+
         # for cell in self.cell_types:
         train_loader, val_loader, test_loader = self.data_object.data_loader()
         # self.args['rnn_cell'] = cell
@@ -152,7 +173,12 @@ class TrainModels:
             validation_accuracy, val_f1 = self.eval(val_loader)
             test_accuracy, t_f1 = self.eval(test_loader)
             self.logger.info(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/len(train_loader.dataset)}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
-            
+
+            #TODO - Warning!!! the below code has been added to stop bad parameters which cause large loss and continuing
+            # Training is not desired !
+            if epoch_loss > 1000:
+                self.logger.warn("Un acceptable loss")
+                return 0
             #append f1 score
             try:
                 train_f1.append((epoch, train_f1_report['1']['f1-score']))
@@ -167,11 +193,13 @@ class TrainModels:
             test_acc.append((epoch, (test_accuracy)))
             #TODO  Sensetive loss function
             # early stopping code
+
             improve = validation_accuracy - max_val_accuracy
             if improve > improvement_threshold:
                 epochs_no_improve = 0
                 max_val_accuracy = validation_accuracy
                 #TODO chose the best model !?
+                #TODO set the best_epoch and report it (epoch with best results)
                 best_model_state = {
                 'net': self.model.state_dict(),
                 'epochs': epoch,
@@ -182,38 +210,47 @@ class TrainModels:
             
             if epochs_no_improve == max_no_improvement:
                 self.logger.info(f"Early Stopping @ EPOCH:[{epoch}]")
-                break
+
 
         self.logger.info("saving the models state...")
         self.model_saved_fname = f"{save_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_model.pt"
         with open(self.model_saved_fname, 'wb') as f:
             torch.save(best_model_state, f)
-        
 
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Epoch_Loss.pickle",'wb') as f:
-            pickle.dump(loss_stats,f)
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_Accuracy.pickle",'wb') as f:
-            pickle.dump(acc,f)
-        
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_Accuracy.pickle",'wb') as f:
-            pickle.dump(train_acc,f)
-        
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_Accuracy.pickle", 'wb') as f:
-            pickle.dump(test_acc, f)
-        
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle",'wb') as f:
-            pickle.dump(train_f1, f)
-        
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_f1.pickle",'wb') as f:
-            pickle.dump(valid_f1, f)
-        
-        with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_f1.pickle",'wb') as f:
-            pickle.dump(test_f1, f)
-        
+        if not self.args['is_tuning']:
+
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Epoch_Loss.pickle",'wb') as f:
+                pickle.dump(loss_stats,f)
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_Accuracy.pickle",'wb') as f:
+                pickle.dump(acc,f)
+
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_Accuracy.pickle",'wb') as f:
+                pickle.dump(train_acc,f)
+
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_Accuracy.pickle", 'wb') as f:
+                pickle.dump(test_acc, f)
+
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle",'wb') as f:
+                pickle.dump(train_f1, f)
+
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_f1.pickle",'wb') as f:
+                pickle.dump(valid_f1, f)
+
+            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_f1.pickle",'wb') as f:
+                pickle.dump(test_f1, f)
+
         #right after training do the test step
-        reports.update({f'{self.args["model_type"]}_{self.args["rnn_cell"]}':
+
+        self.reports.update({self.model_name:
                             self.test(self.model_saved_fname,self.data_object.get_test_data())})
-        return reports
+        return self.reports
+
+    def set_model_name(self):
+        if self.args['model_type'] in ['LSTM','GRU']:
+            self.model_name = self.args['model_type']
+        else:
+            self.model_name = f"{self.args['model_type']}_{self.args['rnn_cell']}"
+
     def eval(self, data_loader):
         accuracy = 0
         self.model.eval()
@@ -273,6 +310,9 @@ class TrainModels:
         else:
             raise Exception('No model type found: {}'.format(model_path))
 
+        self.args = args
+        self.set_model_name()
+
         model.load_state_dict(checkpoint['net'])
         self.logger.info(f'Loaded model arch: \n {model}')
 
@@ -300,6 +340,8 @@ class TrainModels:
         y_score = torch.sigmoid(predictions).view(-1).cpu().detach().numpy()
 
         return gt, pt, y_score
+
+
 
 # def make_report(model):
 #     # data = MIMICIIIData(64, 24, args['input_file_path'])  # MIMICDecayData(64, 24, args['input_file_path'])

@@ -21,7 +21,7 @@ class MIMICDecayModel(nn.Module):
 
         self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 10)
         self.linear_two = nn.Linear(10, 1)
-
+        self.relu = nn.ReLU()
         self.loss = nn.BCELoss()
 
     def forward(self, x, statics, mask, delta, x_last_observed, x_mean, y=None):
@@ -57,7 +57,8 @@ class MIMICDecayModel(nn.Module):
             full_data = hs
             
         linear_1 = self.linear_one(full_data)
-        predictions = self.linear_two(linear_1)
+        relu_out = self.relu(linear_1)
+        predictions = self.linear_two(relu_out)
 
         if y is not None:
             y = y.float()
