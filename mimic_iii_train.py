@@ -11,6 +11,8 @@ from src.model.mimic_decay_model import MIMICDecayModel
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 
+from src.utils.save_utils import MimicSave
+
 '''
 !!!! Important !!!!!!!
 Input arguments like model_type and cell type are crucial.
@@ -21,12 +23,14 @@ Input arguments like model_type and cell type are crucial.
 # torch.cuda.manual_seed(10)
 
 
-save_dir = 'mimic/models'
-log_dir = 'mimic/logs'
+
 
 
 class TrainModels:
     def __init__(self, args=None, data_object=None, logger=None):
+
+        self.save_dir = MimicSave.get_instance().get_model_directory()
+        self.log_dir = MimicSave.get_instance().get_log_directory()
 
         self.reports = {}
         self.logger = logger
@@ -172,7 +176,8 @@ class TrainModels:
             train_f1_report = classification_report(y.cpu().detach().numpy(), predictions.view(-1).cpu().detach().numpy(), output_dict= True)
             validation_accuracy, val_f1 = self.eval(val_loader)
             test_accuracy, t_f1 = self.eval(test_loader)
-            self.logger.info(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/len(train_loader.dataset)}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy}')
+
+            self.logger.info(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/len(train_loader.dataset)}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy} , F1-score: {val_f1}')
 
             #TODO - Warning!!! the below code has been added to stop bad parameters which cause large loss and continuing
             # Training is not desired !
@@ -213,30 +218,30 @@ class TrainModels:
 
 
         self.logger.info("saving the models state...")
-        self.model_saved_fname = f"{save_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_model.pt"
+        self.model_saved_fname = f"{self.save_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_model.pt"
         with open(self.model_saved_fname, 'wb') as f:
             torch.save(best_model_state, f)
 
         if not self.args['is_tuning']:
 
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Epoch_Loss.pickle",'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Epoch_Loss.pickle",'wb') as f:
                 pickle.dump(loss_stats,f)
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_Accuracy.pickle",'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_Accuracy.pickle",'wb') as f:
                 pickle.dump(acc,f)
 
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_Accuracy.pickle",'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_Accuracy.pickle",'wb') as f:
                 pickle.dump(train_acc,f)
 
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_Accuracy.pickle", 'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_Accuracy.pickle", 'wb') as f:
                 pickle.dump(test_acc, f)
 
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle",'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle",'wb') as f:
                 pickle.dump(train_f1, f)
 
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_f1.pickle",'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_f1.pickle",'wb') as f:
                 pickle.dump(valid_f1, f)
 
-            with open(f"{log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_f1.pickle",'wb') as f:
+            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Test_f1.pickle",'wb') as f:
                 pickle.dump(test_f1, f)
 
         #right after training do the test step
@@ -255,6 +260,8 @@ class TrainModels:
     def eval(self, data_loader):
         accuracy = 0
         self.model.eval()
+        y_truth = []
+        y_pred = []
         with torch.no_grad():
             if self.args['model_type'] == 'RIMDecay':
                 #TODO there is a bug in number of samples for test and val data sets
@@ -272,6 +279,10 @@ class TrainModels:
                     probs = torch.round(torch.sigmoid(predictions))
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
+                    # add them to a list to calculate f1 score later on
+                    y_truth.append(y.cpu().detach().numpy())
+                    y_pred.append(probs.view(-1).cpu().detach().numpy())
+
 
             else:
                 for x, statics, y in data_loader:
@@ -284,10 +295,15 @@ class TrainModels:
                     probs = torch.round(torch.sigmoid(predictions))
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
+
+                    # add them to a list to calculate f1 score later on
+                    y_truth.append(y.cpu().detach().numpy())
+                    y_pred.append(probs.view(-1).cpu().detach().numpy())
+
         #compute the f-1 measure 
         #TODO the below code is not correct !!, need to pass all the data from test set to calculate the f1,
         # now it is only for the last batch inside the loader !
-        report = classification_report(y.cpu().detach().numpy(), probs.view(-1).cpu().detach().numpy(), output_dict=True, zero_division=0)
+        report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
         try:
             f1_score = report['1']['f1-score']
         except Exception as e:

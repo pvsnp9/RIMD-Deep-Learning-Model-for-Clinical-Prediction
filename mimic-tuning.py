@@ -22,7 +22,7 @@ def draw_args(trial):
     """
     Here we will randomly generate args values before each model training
     """
-    args['batch_size'] =  trial.suggest_int('batch_size',low=32,high=96,step=16) #48
+    args['batch_size'] = 48 #trial.suggest_int('batch_size',low=32,high=96,step=16)
 
     # args['hidden_size'] =  trial.suggest_int('hidden_size', low=30,high=100,step=10)
     # args['comm_value_size'] = args['hidden_size']

@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICIIIData:
-    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.7, dev_frac= 0.15, test_frac=0.15):
+    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.7, dev_frac= 0.15, test_frac=0.15, balance=False):
         self.batch_size = batch_size
         self.window_size = window_size
         self.apply_mask = mask
@@ -28,16 +28,17 @@ class MIMICIIIData:
         '''
         Undersampling
         '''
-        zero_index = np.squeeze(np.where(self.y == 0) )
-        np.random.shuffle(zero_index)
-        ones_index = np.squeeze(np.where(self.y == 1) )
-        # zero_index = zero_index[:len(ones_index)]
-        zero_index = zero_index[:math.ceil(0.6 * len(zero_index))]
-        new_index = np.concatenate((ones_index,zero_index))
-        self.x = self.x[new_index]
+        if balance:
+            zero_index = np.squeeze(np.where(self.y == 0) )
+            np.random.shuffle(zero_index)
+            ones_index = np.squeeze(np.where(self.y == 1) )
+            # zero_index = zero_index[:len(ones_index)]
+            zero_index = zero_index[:math.ceil(0.6 * len(zero_index))]
+            new_index = np.concatenate((ones_index,zero_index))
+            self.x = self.x[new_index]
 
-        self.y = self.y[new_index]
-        self.statics = self.statics[new_index]
+            self.y = self.y[new_index]
+            self.statics = self.statics[new_index]
         # self.mask = self.mask[new_index]
         # self.delta = self.delta[new_index]
         # self.last_observed = self.last_observed[new_index]
@@ -85,9 +86,9 @@ class MIMICIIIData:
         val_dataset = TensorDataset(val_data, val_static, val_label)
         test_dataset = TensorDataset(test_data, test_static, test_label)
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True, drop_last=True)
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=False, drop_last=True)
 
         return train_loader, val_loader, test_loader
 
