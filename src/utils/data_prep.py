@@ -21,6 +21,18 @@ class MortalityDataPrep:
         self.statics = all_data['patients']
         del all_data
     
+    ''' Data preprocessing for non-iid prediction'''
+    def preprocess_hourly_data(self, destination_dir, hours):
+        print("Reading raw data frames")
+        self.read_file()
+        print('Preprocessing for hourly data')
+        max_hours = max(hours)
+        targets = self.statics[self.statics.max_hours > max_hours + self.gap_time][['mort_hosp', 'mort_icu']]
+        targets.astype(float)
+
+        self.vital_labs = self.vital_labs[(self.vital_labs.index.get_level_values('icustay_id').isin(set(targets.index.get_level_values('icustay_id')))) & (self.vital_labs.index.get_level_values('hours_in') < self.window_size)]
+        self.statics = self.statics[(self.statics.index.get_level_values('icustay_id').isin(set(targets.index.get_level_values('icustay_id'))))]
+
     def preprocess_decay(self, save_npy = True, destination_dir=''):
         print('Reading Data frame ... ')
         self.read_file()
@@ -102,8 +114,6 @@ class MortalityDataPrep:
 
 
 
-
-    
     def preprocess(self, save_npy = True, destination_dir=''):
         self.read_file()
 
