@@ -280,8 +280,8 @@ class TrainModels:
                     correct = probs.view(-1) == y
                     accuracy += correct.sum().item()
                     # add them to a list to calculate f1 score later on
-                    y_truth.append(y.cpu().detach().numpy())
-                    y_pred.append(probs.view(-1).cpu().detach().numpy())
+                    y_truth.extend(y.cpu().detach().numpy())
+                    y_pred.extend(probs.view(-1).cpu().detach().numpy())
 
 
             else:
@@ -297,12 +297,10 @@ class TrainModels:
                     accuracy += correct.sum().item()
 
                     # add them to a list to calculate f1 score later on
-                    y_truth.append(y.cpu().detach().numpy())
-                    y_pred.append(probs.view(-1).cpu().detach().numpy())
+                    y_truth.extend(y.cpu().detach().numpy())
+                    y_pred.extend(probs.view(-1).cpu().detach().numpy())
 
-        #compute the f-1 measure 
-        #TODO the below code is not correct !!, need to pass all the data from test set to calculate the f1,
-        # now it is only for the last batch inside the loader !
+        #compute the f-1 measure
         report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
         try:
             f1_score = report['1']['f1-score']
@@ -310,8 +308,10 @@ class TrainModels:
             f1_score = 0
             print(report)
             print(e)
+        if f1_score <= 0.01:
+            print(f1_score)
+            pass
 
-        # todo compute accuracy
         accuracy /= len(data_loader.dataset)
         return accuracy, f1_score
 

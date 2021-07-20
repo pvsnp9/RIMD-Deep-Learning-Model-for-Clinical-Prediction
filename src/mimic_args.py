@@ -1,5 +1,5 @@
-args = {'epochs': 40,
-        'batch_size':48,
+args = {'epochs': 100,
+        'batch_size':56,
         'input_size': 104,
         'model_type': 'RIMDecay',
         'hidden_size': 104,

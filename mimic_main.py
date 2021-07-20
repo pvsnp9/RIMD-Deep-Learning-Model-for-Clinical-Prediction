@@ -8,6 +8,9 @@ from datetime import datetime
 
 import pandas as pd
 import pickle
+
+import torch
+
 from mimic_iii_train import TrainModels
 from src.mimic_args import args
 from src.model.mimic_ml_models import MimicMlTrain
@@ -20,13 +23,16 @@ import matplotlib.pyplot as plt
 import json
 from src.utils.save_utils import MimicSave
 import logging
+import numpy as np
 
-OUTPUT = 'output/plots'
+np.random.seed(1048)
+torch.manual_seed(1048)
+torch.cuda.manual_seed(1048)
+
+
 N_HYPER_PARAM_SET = 10
 
-save_dir = 'mimic/models'
-log_dir = 'mimic/logs/None Balanced'
-
+SAVE_DIR = 'mimic/'
 
 
 def mimic_main(run_type, run_description):
@@ -44,7 +50,7 @@ def mimic_main(run_type, run_description):
     #
     ## Craet a directory for saving the results
 
-    out_dir = MimicSave.get_instance().create_get_output_dir(OUTPUT)
+    out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
 
     # Save the args used in this experiment
     with open(f'{out_dir}/_experiment_args.txt','w') as f:
@@ -56,6 +62,7 @@ def mimic_main(run_type, run_description):
     consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(logging.Formatter('*\t%(message)s'))
     logging.getLogger().addHandler(consoleHandler)
+    logging.getLogger('matplotlib.font_manager').disabled = True
     dateformat = "%Y/%m/%d  %H:%M:%S"
     logging.info("Run Description: " + run_description)
     logging.info("Log file created at " + datetime.now().strftime("%Y/%m/%d  %H:%M:%S"))
@@ -75,15 +82,14 @@ def mimic_main(run_type, run_description):
     if run_type == "train":
         #ML models first
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
-        # ml_trainer.run()
-
-        # model_reports.update(ml_trainer.get_reports())
+        ml_trainer.run()
+        model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = [ 'RIMDecay' ]
+        model_type = [ 'RIMDecay', 'RIM','LSTM','GRU' ]
         for model in model_type:
             if model.startswith('RIM'):
-                cell_type = [ 'GRU']
+                cell_type = [ 'GRU','LSTM']
             elif model == 'LSTM':
                 cell_type = ['LSTM']
             else:
@@ -106,12 +112,12 @@ def mimic_main(run_type, run_description):
 
     else:
         #ML Test
-        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir)
+        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging)
         model_reports.update(ml_trainer.test())
 
         #DL Test
         # model_type = ['RIM_GRU', 'RIMDecay_GRU','RIM_LSTM', 'RIMDecay_LSTM','LSTM_GRU', 'GRU_LSTM']
-        model_type = ['RIMDecay_GRU','RIMDecay_LSTM']
+        model_type = ['RIMDecay_GRU','RIMDecay_LSTM', "LSTM", "GRU"]
         cell_type = ['LSTM', 'GRU']
 
         for model in model_type:
@@ -120,7 +126,7 @@ def mimic_main(run_type, run_description):
             else:
                 test_data = data_object.get_test_data()
             trainer = TrainModels(logger= logging)
-            model_path = f"{save_dir}/{model}_model.pt"
+            model_path = f"{SAVE_DIR}/{model}_model.pt"
             y_truth, y_pred, y_score = trainer.test(model_path, test_data)
             report = MIMICReport(model, y_truth, y_pred, y_score, './figures')
             model_reports.update({model:report})
@@ -150,10 +156,15 @@ def mimic_main(run_type, run_description):
         pickle.dump(model_reports, f)
 
 
-def plot_prauc():
-    with open(f'{MimicSave.get_instance().get_directory()}/reports.pickle', 'rb') as f:
+def plot_prauc( experiment_address = None):
+
+    if experiment_address != None:
+        folder_address = experiment_address
+    else:
+        folder_address = MimicSave.get_instance().get_directory()
+    with open(f'{folder_address}/reports.pickle', 'rb') as f:
         reports = pickle.load(f)
-    
+
     flag = True
     for model_name, report in reports.items():
         
@@ -163,11 +174,16 @@ def plot_prauc():
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
     plt.legend()
-    plt.savefig(f'{MimicSave.get_instance().get_directory()}/PRAUC_plot.png')
+    plt.savefig(f'{folder_address}/PRAUC_plot.png')
     plt.show()
 
-def plot_roc():
-    with open(f'{MimicSave.get_instance().get_directory()}/reports.pickle', 'rb') as f:
+def plot_roc(experiment_address=None):
+
+    if experiment_address != None:
+        folder_address = experiment_address
+    else:
+        folder_address = MimicSave.get_instance().get_directory()
+    with open(f'{folder_address}/reports.pickle', 'rb') as f:
         reports = pickle.load(f)
     
     flag = True
@@ -181,7 +197,7 @@ def plot_roc():
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
     plt.legend()
-    plt.savefig(f'{MimicSave.get_instance().get_directory()}/ROC_plot.png')
+    plt.savefig(f'{folder_address}/ROC_plot.png')
     plt.show()
     
 def no_skil(y_true):
@@ -197,7 +213,7 @@ def plo_training_stats():
     f = []
     losstats = []
     all_logs = {}
-    for (_, _, filenames) in walk('./mimic/logs'):
+    for (_, _, filenames) in walk(MimicSave.get_instance().get_log_directory()):
         f.extend(filenames)
     
     for file in f:
@@ -215,7 +231,7 @@ def plo_training_stats():
 def plot_stats(key,stats):
     plt.figure()
     for file in stats:    
-        with open(f'./mimic/logs/{file}', 'rb') as pickle_file:
+        with open(f'{MimicSave.get_instance().get_log_directory()}/{file}', 'rb') as pickle_file:
             content = pickle.load(pickle_file)
             y = [i[-1] for i in content]
             epocs = range(1,len(content)+1)

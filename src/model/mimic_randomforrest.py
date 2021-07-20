@@ -19,6 +19,7 @@ class MIMICRF():
             'max_depth': ss.randint(2, 10),
             'min_samples_split': ss.randint(2, 75),
             'min_samples_leaf': ss.randint(1, 50),
+            'class_weight' : Choice(["balanced"])
         })
         np.random.seed(SEED)
         self.RF_hyperparams_list = RF_dist.rvs(self.N)

@@ -45,7 +45,7 @@ class MIMICIIIData:
         # self.x_mean = self.x_mean[new_index]
 
         index_ = np.arange(self.x.shape[0], dtype=int)
-        np.random.seed(1024)
+        # np.random.seed(1024)
         np.random.shuffle(index_)
 
         self.x = self.x[index_]
@@ -74,6 +74,7 @@ class MIMICIIIData:
         test_static = torch.from_numpy(self.test_statics)
         return (test_data, test_static, test_label)
 
+
     def data_loader(self):
         train_data, train_label = torch.from_numpy(self.train_x), torch.from_numpy(self.train_ys)
         val_data, val_label = torch.from_numpy(self.dev_x), torch.from_numpy(self.dev_ys)
@@ -86,9 +87,9 @@ class MIMICIIIData:
         val_dataset = TensorDataset(val_data, val_static, val_label)
         test_dataset = TensorDataset(test_data, test_static, test_label)
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=False, drop_last=True)
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True, drop_last=True)
 
         return train_loader, val_loader, test_loader
 

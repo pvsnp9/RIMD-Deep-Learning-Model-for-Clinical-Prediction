@@ -45,7 +45,7 @@ class MIMICDecayData:
         '''
         Undersampling
         '''
-        np.random.seed(1024)
+        # np.random.seed(1024)
 
         zero_index = np.squeeze(np.where(self.y == 0) )
         #ToDO we may need to set Seed !
