@@ -83,6 +83,8 @@ def train(model, train_loader):
             
             y_pred = model(X_batch)
             
+            _, samples_per_class = torch.unique(y_batch, return_counts=True)
+            samples_per_class = samples_per_class.detach().cpu().numpy()
             loss = criterion(y_pred, y_batch.unsqueeze(1))
             acc = binary_acc(y_pred, y_batch.unsqueeze(1))
             
@@ -115,7 +117,7 @@ if __name__ == '__main__':
     gamma = 2.0
     samples_per_cls = [9,1]
     loss_type = "sigmoid"
-    # cb_loss = CB_loss(labels, logits, samples_per_cls, no_of_classes,loss_type, beta, gamma)
+    cb_loss = CB_loss(labels, logits, samples_per_cls, no_of_classes,loss_type, beta, gamma)
     # print(cb_loss)
 
     
