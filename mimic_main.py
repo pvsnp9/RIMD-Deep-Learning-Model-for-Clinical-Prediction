@@ -1,5 +1,3 @@
-
-
 """
 !!!! Important !!!!!!!
 Input arguments like model_type and cell type are crucial.

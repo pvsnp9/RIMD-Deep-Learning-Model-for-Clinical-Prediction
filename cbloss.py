@@ -6,6 +6,7 @@ from sklearn.datasets import make_classification
 from torch.nn.modules import module
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import classification_report, confusion_matrix
+from src.utils.class_balanceloss import CBLoss
 import seaborn as sns
 
 torch.manual_seed(1048)
@@ -37,7 +38,7 @@ def binary_acc(y_pred, y_test):
     acc = correct_results_sum/y_test.shape[0]
     acc = torch.round(acc * 100)
     return acc
-
+'''
 def CB_loss(labels, logits, samples_per_cls, no_of_classes, beta):
     effective_num = 1.0 - np.power(beta, samples_per_cls)
     weights = (1.0 - beta) / np.array(effective_num)
@@ -54,9 +55,9 @@ def CB_loss(labels, logits, samples_per_cls, no_of_classes, beta):
 
     cb_loss = F.binary_cross_entropy_with_logits(input = logits,target = labels_one_hot, weight = weights)
     return cb_loss
-
+'''
 def data_loader(one_hot=False):
-    X, y = make_classification(n_samples=1000, n_features=60,n_classes=2, n_clusters_per_class=2, weights=[0.9, 0.1], flip_y=0.1,  shuffle=True, random_state=1048)
+    X, y = make_classification(n_samples=1000, n_features=60,n_classes=2, n_clusters_per_class=2, weights=[0.95, 0.05], flip_y=0.1,  shuffle=True, random_state=1048)
     train_x, train_y = torch.from_numpy(X[:700]), torch.from_numpy(y[:700])
     val_x, val_y = torch.from_numpy(X[700:]), torch.from_numpy(y[700:])
 
@@ -77,6 +78,7 @@ def train(model, train_loader, loss_type='default'):
     lr = 0.01
     optimizer = torch.optim.SGD(model.parameters(),lr=lr)
     criterion = nn.CrossEntropyLoss()
+    cb_criterion = CBLoss(2)
 
     model.train()
     for e in range(1, epochs+1):
@@ -93,7 +95,7 @@ def train(model, train_loader, loss_type='default'):
             _, samples_per_class = torch.unique(y_batch, return_counts=True)
             samples_per_class = samples_per_class.detach().cpu().numpy()
             if loss_type == 'cb-loss':
-                loss = CB_loss(y_batch, y_pred, samples_per_class, 2, 0.9999999)
+                loss = cb_criterion(y_batch, y_pred, samples_per_class)
             else:
                 loss = criterion(y_pred , y_batch)
 
