@@ -1,0 +1,586 @@
+Run Description: Experiment # 1.2: RIMDecay tuned 
+Log file created at 2021/07/26  18:36:40
+Directory: mimic//0726-18-36-40
+Start time: 2021-07-26 18:36:40.692683
+Training initiated with custom loss function
+{'epochs': 100, 'batch_size': 56, 'input_size': 104, 'model_type': 'RIMDecay', 'hidden_size': 104, 'num_rims': 2, 'lr': 9.645142728701031e-05, 'rnn_cell': 'GRU', 'input_key_size': 64, 'input_value_size': 32, 'input_query_size': 64, 'num_input_heads': 1, 'input_dropout': 0.2694669454300502, 'comm_key_size': 32, 'comm_value_size': 104, 'comm_query_size': 32, 'num_comm_heads': 1, 'comm_dropout': 0.12824679075614986, 'active_rims': 2, 'mask': True, 'mask_size': 104, 'delta_size': 104, 'static_features': 17, 'need_data_preprocessing': False, 'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl', 'processed_data_path': 'data/50_percent/', 'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'max_no_improvement': 10, 'improvement_threshold': 0.0001, 'is_tuning': False, 'balance': False}
+Model Arch: 
+ MIMICDecayCBLossModel(
+  (rim_decay_cell): RIMDCell(
+    (gamma_x_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gamma_h_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (input_key_layer): CustomLinear(in_features=104, out_features=64, bias=False)
+    (input_value_layer): CustomLinear(in_features=104, out_features=32, bias=False)
+    (input_dropout): Dropout(p=0.2694669454300502, inplace=False)
+    (rnn): GroupGRUCell(
+      (input_hidden): GroupLinear(in_features=136, out_features=312, num_blocks=2, bias=True)
+      (hidden_hidden): GroupLinear(in_features=104, out_features=312, num_blocks=2, bias=True)
+    )
+    (input_query_layer): GroupLinear(in_features=104, out_features=64, num_blocks=2, bias=False)
+    (comm_key_layer): GroupLinear(in_features=104, out_features=32, num_blocks=2, bias=False)
+    (comm_value_layer): GroupLinear(in_features=104, out_features=104, num_blocks=2, bias=False)
+    (comm_query_layer): GroupLinear(in_features=104, out_features=32, num_blocks=2, bias=False)
+    (comm_attention_output): GroupLinear(in_features=104, out_features=104, num_blocks=2, bias=False)
+    (comm_dropout): Dropout(p=0.12824679075614986, inplace=False)
+  )
+  (linear_one): Linear(in_features=225, out_features=10, bias=True)
+  (linear_two): Linear(in_features=10, out_features=2, bias=True)
+  (relu): ReLU()
+)
+Training, Validating, and Testing: RIMDecay model with GRU cell 
+***********************************************************
+**************** EPOCH: 1 ***********************
+epoch loss: 62.857343297451735, taining accuracy: 0.7986755871108684, validation accuracy: 0.7734225621414914, Test accuracy: 0.7654557042702358 , F1-score: 0.41646090534979424
+***********************************************************
+**************** EPOCH: 2 ***********************
+epoch loss: 55.85051901638508, taining accuracy: 0.777785363189514, validation accuracy: 0.7966857871255577, Test accuracy: 0.7874442319949012 , F1-score: 0.4536082474226804
+***********************************************************
+**************** EPOCH: 3 ***********************
+epoch loss: 53.97355353832245, taining accuracy: 0.7782632441288914, validation accuracy: 0.8575525812619503, Test accuracy: 0.8559592096876991 , F1-score: 0.4902634593356243
+***********************************************************
+**************** EPOCH: 4 ***********************
+epoch loss: 50.05619802325964, taining accuracy: 0.7836564718732932, validation accuracy: 0.7947737412364564, Test accuracy: 0.7820267686424475 , F1-score: 0.46410684474123537
+***********************************************************
+**************** EPOCH: 5 ***********************
+epoch loss: 48.84715533815324, taining accuracy: 0.7885718186783178, validation accuracy: 0.7746972594008923, Test accuracy: 0.7594008922880816 , F1-score: 0.44531864673485444
+***********************************************************
+**************** EPOCH: 6 ***********************
+epoch loss: 49.45413490012288, taining accuracy: 0.8008601856908794, validation accuracy: 0.7836201402166986, Test accuracy: 0.7724665391969407 , F1-score: 0.4579663730984788
+***********************************************************
+**************** EPOCH: 7 ***********************
+epoch loss: 48.70930868014693, taining accuracy: 0.7958765701802294, validation accuracy: 0.8722115997450606, Test accuracy: 0.8718929254302104 , F1-score: 0.49301143583227447
+***********************************************************
+**************** EPOCH: 8 ***********************
+epoch loss: 47.22315193712711, taining accuracy: 0.7964227198252322, validation accuracy: 0.8215423836838751, Test accuracy: 0.8164435946462715 , F1-score: 0.4833333333333333
+***********************************************************
+**************** EPOCH: 9 ***********************
+epoch loss: 47.19792788848281, taining accuracy: 0.8047515019115238, validation accuracy: 0.847036328871893, Test accuracy: 0.8457616316124921 , F1-score: 0.4925690021231422
+***********************************************************
+**************** EPOCH: 10 ***********************
+epoch loss: 47.18757424503565, taining accuracy: 0.801815947569634, validation accuracy: 0.8413001912045889, Test accuracy: 0.840025493945188 , F1-score: 0.4865424430641822
+***********************************************************
+**************** EPOCH: 11 ***********************
+epoch loss: 45.73797196894884, taining accuracy: 0.8033178590933916, validation accuracy: 0.7578075207138305, Test accuracy: 0.7469725940089229 , F1-score: 0.44017725258493356
+***********************************************************
+**************** EPOCH: 12 ***********************
+epoch loss: 46.2012287247926, taining accuracy: 0.8011332605133806, validation accuracy: 0.7848948374760994, Test accuracy: 0.7708731676226896 , F1-score: 0.46203037569944044
+***********************************************************
+**************** EPOCH: 13 ***********************
+epoch loss: 46.05893683433533, taining accuracy: 0.8085062807209176, validation accuracy: 0.8138942001274697, Test accuracy: 0.8103887826641173 , F1-score: 0.48128342245989303
+***********************************************************
+**************** EPOCH: 14 ***********************
+epoch loss: 44.906615398824215, taining accuracy: 0.8028399781540142, validation accuracy: 0.7785213511790949, Test accuracy: 0.7740599107711919 , F1-score: 0.45390070921985815
+***********************************************************
+**************** EPOCH: 15 ***********************
+epoch loss: 44.220026053488255, taining accuracy: 0.8120562534134352, validation accuracy: 0.8052899936265137, Test accuracy: 0.8001912045889101 , F1-score: 0.4745470232959448
+***********************************************************
+**************** EPOCH: 16 ***********************
+epoch loss: 44.79037444666028, taining accuracy: 0.8141725832878208, validation accuracy: 0.812938177182919, Test accuracy: 0.8103887826641173 , F1-score: 0.47907390917186105
+***********************************************************
+**************** EPOCH: 17 ***********************
+epoch loss: 43.12302864342928, taining accuracy: 0.8162889131622064, validation accuracy: 0.8173996175908221, Test accuracy: 0.8135755258126195 , F1-score: 0.4813805631244323
+Early Stopping @ EPOCH:[16]
+***********************************************************
+**************** EPOCH: 18 ***********************
+epoch loss: 44.505818381905556, taining accuracy: 0.8244811578372474, validation accuracy: 0.8205863607393244, Test accuracy: 0.818674314850223 , F1-score: 0.488605287146764
+***********************************************************
+**************** EPOCH: 19 ***********************
+epoch loss: 42.26680230163038, taining accuracy: 0.8175177498634626, validation accuracy: 0.8202676864244742, Test accuracy: 0.8234544295729764 , F1-score: 0.4805914972273568
+***********************************************************
+**************** EPOCH: 20 ***********************
+epoch loss: 42.39441183581948, taining accuracy: 0.8213407973784818, validation accuracy: 0.8119821542383684, Test accuracy: 0.8119821542383684 , F1-score: 0.48148148148148145
+***********************************************************
+**************** EPOCH: 21 ***********************
+epoch loss: 41.545784037560225, taining accuracy: 0.820180229382851, validation accuracy: 0.8103887826641173, Test accuracy: 0.8110261312938177 , F1-score: 0.4820960698689956
+***********************************************************
+**************** EPOCH: 22 ***********************
+epoch loss: 40.89246318861842, taining accuracy: 0.820999453850355, validation accuracy: 0.8072020395156151, Test accuracy: 0.8119821542383684 , F1-score: 0.47701647875108405
+***********************************************************
+**************** EPOCH: 23 ***********************
+epoch loss: 42.737371971830726, taining accuracy: 0.828782086291644, validation accuracy: 0.7989165073295093, Test accuracy: 0.7982791586998088 , F1-score: 0.47098402018502944
+***********************************************************
+**************** EPOCH: 24 ***********************
+epoch loss: 40.749593583866954, taining accuracy: 0.8247542326597488, validation accuracy: 0.8072020395156151, Test accuracy: 0.8110261312938177 , F1-score: 0.4742807323452484
+***********************************************************
+**************** EPOCH: 25 ***********************
+epoch loss: 39.98441410250962, taining accuracy: 0.824617695248498, validation accuracy: 0.8260038240917782, Test accuracy: 0.8177182919056724 , F1-score: 0.4962962962962964
+***********************************************************
+**************** EPOCH: 26 ***********************
+epoch loss: 39.452256011776626, taining accuracy: 0.8308301474604042, validation accuracy: 0.8148502230720204, Test accuracy: 0.8202676864244742 , F1-score: 0.47506799637352676
+***********************************************************
+**************** EPOCH: 27 ***********************
+epoch loss: 39.54314314201474, taining accuracy: 0.8300109229929, validation accuracy: 0.8215423836838751, Test accuracy: 0.8237731038878267 , F1-score: 0.48618784530386744
+***********************************************************
+**************** EPOCH: 28 ***********************
+epoch loss: 38.750964894890785, taining accuracy: 0.8370425996723102, validation accuracy: 0.840025493945188, Test accuracy: 0.8438495857233907 , F1-score: 0.500998003992016
+***********************************************************
+**************** EPOCH: 29 ***********************
+epoch loss: 40.18975527770817, taining accuracy: 0.8349262697979246, validation accuracy: 0.8196303377947738, Test accuracy: 0.818674314850223 , F1-score: 0.49005424954792043
+***********************************************************
+**************** EPOCH: 30 ***********************
+epoch loss: 38.159857901744545, taining accuracy: 0.8382714363735664, validation accuracy: 0.8403441682600382, Test accuracy: 0.8374760994263862 , F1-score: 0.5093411996066863
+***********************************************************
+**************** EPOCH: 31 ***********************
+epoch loss: 38.39491880685091, taining accuracy: 0.8420262151829602, validation accuracy: 0.825685149776928, Test accuracy: 0.8237731038878267 , F1-score: 0.4920782851817334
+***********************************************************
+**************** EPOCH: 32 ***********************
+epoch loss: 37.990245098248124, taining accuracy: 0.8368377935554342, validation accuracy: 0.8272785213511791, Test accuracy: 0.8247291268323773 , F1-score: 0.49248120300751874
+***********************************************************
+**************** EPOCH: 33 ***********************
+epoch loss: 36.84252358041704, taining accuracy: 0.843801201529219, validation accuracy: 0.8355640535372849, Test accuracy: 0.8403441682600382 , F1-score: 0.4950884086444008
+***********************************************************
+**************** EPOCH: 34 ***********************
+epoch loss: 36.171975053846836, taining accuracy: 0.8460540688148552, validation accuracy: 0.8588272785213512, Test accuracy: 0.8524537922243467 , F1-score: 0.5283422459893049
+***********************************************************
+**************** EPOCH: 35 ***********************
+epoch loss: 35.7792466012761, taining accuracy: 0.8509694156198798, validation accuracy: 0.819949012109624, Test accuracy: 0.8240917782026769 , F1-score: 0.4820607175712971
+***********************************************************
+**************** EPOCH: 36 ***********************
+epoch loss: 36.915939984843135, taining accuracy: 0.8435281267067176, validation accuracy: 0.8362014021669854, Test accuracy: 0.834289356277884 , F1-score: 0.4990215264187866
+***********************************************************
+**************** EPOCH: 37 ***********************
+epoch loss: 35.50123785529286, taining accuracy: 0.8532222829055162, validation accuracy: 0.8502230720203952, Test accuracy: 0.8425748884639898 , F1-score: 0.5155279503105591
+***********************************************************
+**************** EPOCH: 38 ***********************
+epoch loss: 35.79263475816697, taining accuracy: 0.8549290005461496, validation accuracy: 0.8403441682600382, Test accuracy: 0.840025493945188 , F1-score: 0.5093411996066863
+***********************************************************
+**************** EPOCH: 39 ***********************
+epoch loss: 34.396972611546516, taining accuracy: 0.8548607318405244, validation accuracy: 0.831421287444232, Test accuracy: 0.8387507966857871 , F1-score: 0.4878522837706512
+***********************************************************
+**************** EPOCH: 40 ***********************
+epoch loss: 34.10694016516209, taining accuracy: 0.8544511196067722, validation accuracy: 0.811344805608668, Test accuracy: 0.8078393881453155 , F1-score: 0.476950354609929
+***********************************************************
+**************** EPOCH: 41 ***********************
+epoch loss: 33.42862529028207, taining accuracy: 0.8588885854724194, validation accuracy: 0.8397068196303378, Test accuracy: 0.8403441682600382 , F1-score: 0.4964824120603014
+***********************************************************
+**************** EPOCH: 42 ***********************
+epoch loss: 32.94990072026849, taining accuracy: 0.8610731840524304, validation accuracy: 0.8189929891650733, Test accuracy: 0.8224984066284258 , F1-score: 0.48073394495412836
+***********************************************************
+**************** EPOCH: 43 ***********************
+epoch loss: 35.20769714936614, taining accuracy: 0.8541780447842708, validation accuracy: 0.8142128744423199, Test accuracy: 0.8240917782026769 , F1-score: 0.4635272391505078
+***********************************************************
+**************** EPOCH: 44 ***********************
+epoch loss: 33.15945727284998, taining accuracy: 0.8637356635718186, validation accuracy: 0.8275971956660293, Test accuracy: 0.8266411727214786 , F1-score: 0.4919886899151743
+***********************************************************
+**************** EPOCH: 45 ***********************
+epoch loss: 32.14850835688412, taining accuracy: 0.8653741125068268, validation accuracy: 0.8301465901848311, Test accuracy: 0.8330146590184832 , F1-score: 0.4908916586768936
+***********************************************************
+**************** EPOCH: 46 ***********************
+epoch loss: 32.16325358953327, taining accuracy: 0.867217367558711, validation accuracy: 0.801465901848311, Test accuracy: 0.8068833652007649 , F1-score: 0.4687767322497861
+***********************************************************
+**************** EPOCH: 47 ***********************
+epoch loss: 31.229344107210636, taining accuracy: 0.8672856362643364, validation accuracy: 0.801465901848311, Test accuracy: 0.8033779477374123 , F1-score: 0.4669527896995708
+***********************************************************
+**************** EPOCH: 48 ***********************
+epoch loss: 31.73225310444832, taining accuracy: 0.8687192790824686, validation accuracy: 0.8419375398342893, Test accuracy: 0.8473550031867432 , F1-score: 0.49796747967479676
+***********************************************************
+**************** EPOCH: 49 ***********************
+epoch loss: 32.93733703624457, taining accuracy: 0.8661250682687056, validation accuracy: 0.8049713193116634, Test accuracy: 0.812938177182919 , F1-score: 0.46397188049209137
+***********************************************************
+**************** EPOCH: 50 ***********************
+epoch loss: 30.571032712236047, taining accuracy: 0.8676269797924632, validation accuracy: 0.8432122370936902, Test accuracy: 0.8438495857233907 , F1-score: 0.5
+***********************************************************
+**************** EPOCH: 51 ***********************
+epoch loss: 30.352319148369133, taining accuracy: 0.8765019115237576, validation accuracy: 0.8202676864244742, Test accuracy: 0.8298279158699808 , F1-score: 0.46780303030303033
+***********************************************************
+**************** EPOCH: 52 ***********************
+epoch loss: 29.991612629964948, taining accuracy: 0.8768432550518842, validation accuracy: 0.8282345442957297, Test accuracy: 0.8326959847036329 , F1-score: 0.48115942028985503
+***********************************************************
+**************** EPOCH: 53 ***********************
+epoch loss: 29.09200639091432, taining accuracy: 0.8777307482250136, validation accuracy: 0.8075207138304653, Test accuracy: 0.818674314850223 , F1-score: 0.45960502692998206
+***********************************************************
+**************** EPOCH: 54 ***********************
+epoch loss: 29.505468433722854, taining accuracy: 0.8706308028399782, validation accuracy: 0.7909496494582536, Test accuracy: 0.801465901848311 , F1-score: 0.4504201680672269
+***********************************************************
+**************** EPOCH: 55 ***********************
+epoch loss: 29.091660108417273, taining accuracy: 0.8786865101037684, validation accuracy: 0.8323773103887827, Test accuracy: 0.8320586360739325 , F1-score: 0.48828125000000006
+***********************************************************
+**************** EPOCH: 56 ***********************
+epoch loss: 27.922732619568706, taining accuracy: 0.8802566903331512, validation accuracy: 0.8154875717017208, Test accuracy: 0.8151688973868706 , F1-score: 0.4749772520473157
+***********************************************************
+**************** EPOCH: 57 ***********************
+epoch loss: 27.61331595852971, taining accuracy: 0.8784817039868924, validation accuracy: 0.7903123008285532, Test accuracy: 0.7906309751434034 , F1-score: 0.45963756177924214
+***********************************************************
+**************** EPOCH: 58 ***********************
+epoch loss: 27.69207235518843, taining accuracy: 0.8800518842162752, validation accuracy: 0.840025493945188, Test accuracy: 0.8374760994263862 , F1-score: 0.4989979959919839
+***********************************************************
+**************** EPOCH: 59 ***********************
+epoch loss: 27.44609438907355, taining accuracy: 0.8808711086837794, validation accuracy: 0.8231357552581262, Test accuracy: 0.8333333333333334 , F1-score: 0.4817244611059044
+***********************************************************
+**************** EPOCH: 60 ***********************
+epoch loss: 27.11131054535508, taining accuracy: 0.884216275259421, validation accuracy: 0.8218610579987253, Test accuracy: 0.8263224984066284 , F1-score: 0.4649375600384246
+***********************************************************
+**************** EPOCH: 61 ***********************
+epoch loss: 28.102237631566823, taining accuracy: 0.8830557072637902, validation accuracy: 0.8224984066284258, Test accuracy: 0.8266411727214786 , F1-score: 0.462729912875121
+***********************************************************
+**************** EPOCH: 62 ***********************
+epoch loss: 27.400814613327384, taining accuracy: 0.8865374112506826, validation accuracy: 0.8291905672402804, Test accuracy: 0.8323773103887827 , F1-score: 0.48255813953488375
+***********************************************************
+**************** EPOCH: 63 ***********************
+epoch loss: 25.49865520466119, taining accuracy: 0.8923402512288368, validation accuracy: 0.8597833014659019, Test accuracy: 0.8594646271510517 , F1-score: 0.5056433408577878
+***********************************************************
+**************** EPOCH: 64 ***********************
+epoch loss: 25.52618467528373, taining accuracy: 0.8920671764063354, validation accuracy: 0.8103887826641173, Test accuracy: 0.8167622689611217 , F1-score: 0.456461961503208
+***********************************************************
+**************** EPOCH: 65 ***********************
+epoch loss: 26.83411897253245, taining accuracy: 0.8929546695794648, validation accuracy: 0.8562778840025494, Test accuracy: 0.8540471637985978 , F1-score: 0.5103598691384951
+***********************************************************
+**************** EPOCH: 66 ***********************
+epoch loss: 25.291483626700938, taining accuracy: 0.88701529219006, validation accuracy: 0.8569152326322499, Test accuracy: 0.8597833014659019 , F1-score: 0.5082508250825083
+***********************************************************
+**************** EPOCH: 67 ***********************
+epoch loss: 23.992391011677682, taining accuracy: 0.8967094483888586, validation accuracy: 0.8419375398342893, Test accuracy: 0.8358827278521351 , F1-score: 0.5
+***********************************************************
+**************** EPOCH: 68 ***********************
+epoch loss: 25.552981544286013, taining accuracy: 0.8974604041507374, validation accuracy: 0.8546845124282982, Test accuracy: 0.8438495857233907 , F1-score: 0.5086580086580088
+***********************************************************
+**************** EPOCH: 69 ***********************
+epoch loss: 24.87888051569462, taining accuracy: 0.9012834516657564, validation accuracy: 0.8224984066284258, Test accuracy: 0.8288718929254302 , F1-score: 0.47592067988668557
+***********************************************************
+**************** EPOCH: 70 ***********************
+epoch loss: 26.792833471670747, taining accuracy: 0.892613326051338, validation accuracy: 0.8683875079668578, Test accuracy: 0.8629700446144041 , F1-score: 0.5077844311377245
+***********************************************************
+**************** EPOCH: 71 ***********************
+epoch loss: 27.398196355439723, taining accuracy: 0.8851037684325506, validation accuracy: 0.8377947737412365, Test accuracy: 0.8413001912045889 , F1-score: 0.49652432969215493
+***********************************************************
+**************** EPOCH: 72 ***********************
+epoch loss: 23.866556220222265, taining accuracy: 0.8974604041507374, validation accuracy: 0.8234544295729764, Test accuracy: 0.8291905672402804 , F1-score: 0.46511627906976744
+***********************************************************
+**************** EPOCH: 73 ***********************
+epoch loss: 22.492480465210974, taining accuracy: 0.901419989077007, validation accuracy: 0.8282345442957297, Test accuracy: 0.834289356277884 , F1-score: 0.4635364635364635
+***********************************************************
+**************** EPOCH: 74 ***********************
+epoch loss: 23.689170425757766, taining accuracy: 0.903194975423266, validation accuracy: 0.8393881453154876, Test accuracy: 0.8432122370936902 , F1-score: 0.48565573770491804
+***********************************************************
+**************** EPOCH: 75 ***********************
+epoch loss: 22.54009040654637, taining accuracy: 0.9012834516657564, validation accuracy: 0.8479923518164436, Test accuracy: 0.8581899298916508 , F1-score: 0.48648648648648646
+***********************************************************
+**************** EPOCH: 76 ***********************
+epoch loss: 21.170844526961446, taining accuracy: 0.909202621518296, validation accuracy: 0.8706182281708095, Test accuracy: 0.8677501593371574 , F1-score: 0.5213270142180095
+***********************************************************
+**************** EPOCH: 77 ***********************
+epoch loss: 21.90293593890965, taining accuracy: 0.9091343528126706, validation accuracy: 0.8346080305927343, Test accuracy: 0.8393881453154876 , F1-score: 0.48040201005025124
+***********************************************************
+**************** EPOCH: 78 ***********************
+epoch loss: 20.501042953692377, taining accuracy: 0.909817039868924, validation accuracy: 0.8381134480560867, Test accuracy: 0.8432122370936902 , F1-score: 0.47942386831275724
+***********************************************************
+**************** EPOCH: 79 ***********************
+epoch loss: 21.02032784745097, taining accuracy: 0.9139131622064446, validation accuracy: 0.8288718929254302, Test accuracy: 0.8253664754620778 , F1-score: 0.4810863239573229
+***********************************************************
+**************** EPOCH: 80 ***********************
+epoch loss: 21.39786123484373, taining accuracy: 0.9111141452758056, validation accuracy: 0.8326959847036329, Test accuracy: 0.8387507966857871 , F1-score: 0.4775224775224775
+***********************************************************
+**************** EPOCH: 81 ***********************
+epoch loss: 19.150006849318743, taining accuracy: 0.9165756417258328, validation accuracy: 0.8463989802421925, Test accuracy: 0.8550031867431485 , F1-score: 0.4849785407725322
+***********************************************************
+**************** EPOCH: 82 ***********************
+epoch loss: 19.541091430932283, taining accuracy: 0.9176679410158384, validation accuracy: 0.8588272785213512, Test accuracy: 0.8636073932441045 , F1-score: 0.4878048780487805
+***********************************************************
+**************** EPOCH: 83 ***********************
+epoch loss: 18.028922245604917, taining accuracy: 0.9239486619333698, validation accuracy: 0.854365838113448, Test accuracy: 0.8473550031867432 , F1-score: 0.5016429353778751
+***********************************************************
+**************** EPOCH: 84 ***********************
+epoch loss: 18.793227253947407, taining accuracy: 0.9212861824139814, validation accuracy: 0.8483110261312938, Test accuracy: 0.8588272785213512 , F1-score: 0.48812095032397407
+***********************************************************
+**************** EPOCH: 85 ***********************
+epoch loss: 18.243751927744597, taining accuracy: 0.9216957946477334, validation accuracy: 0.8244104525175271, Test accuracy: 0.8377947737412365 , F1-score: 0.4426395939086294
+***********************************************************
+**************** EPOCH: 86 ***********************
+epoch loss: 18.398945121094584, taining accuracy: 0.9195794647733478, validation accuracy: 0.8521351179094965, Test accuracy: 0.8553218610579987 , F1-score: 0.4866666666666667
+***********************************************************
+**************** EPOCH: 87 ***********************
+epoch loss: 18.36494356021285, taining accuracy: 0.9273620972146368, validation accuracy: 0.8734862970044615, Test accuracy: 0.8718929254302104 , F1-score: 0.5043914680050188
+***********************************************************
+**************** EPOCH: 88 ***********************
+epoch loss: 17.57167993672192, taining accuracy: 0.9282495903877662, validation accuracy: 0.8339706819630338, Test accuracy: 0.8352453792224347 , F1-score: 0.4752275025278058
+***********************************************************
+**************** EPOCH: 89 ***********************
+epoch loss: 16.983767493627965, taining accuracy: 0.9305024576734026, validation accuracy: 0.847036328871893, Test accuracy: 0.8556405353728489 , F1-score: 0.4804347826086956
+***********************************************************
+**************** EPOCH: 90 ***********************
+epoch loss: 16.887858465779573, taining accuracy: 0.931185144729656, validation accuracy: 0.8534098151688974, Test accuracy: 0.854365838113448 , F1-score: 0.4865470852017937
+***********************************************************
+**************** EPOCH: 91 ***********************
+epoch loss: 16.96547824132722, taining accuracy: 0.9296832332058984, validation accuracy: 0.8610579987253028, Test accuracy: 0.8623326959847036 , F1-score: 0.4906103286384977
+***********************************************************
+**************** EPOCH: 92 ***********************
+epoch loss: 16.953569404780865, taining accuracy: 0.929205352266521, validation accuracy: 0.8620140216698534, Test accuracy: 0.8534098151688974 , F1-score: 0.5118912797281993
+***********************************************************
+**************** EPOCH: 93 ***********************
+epoch loss: 17.33341566566378, taining accuracy: 0.9272255598033862, validation accuracy: 0.8537284894837476, Test accuracy: 0.8604206500956023 , F1-score: 0.4777142857142857
+***********************************************************
+**************** EPOCH: 94 ***********************
+epoch loss: 17.454168662894517, taining accuracy: 0.9267476788640088, validation accuracy: 0.861376673040153, Test accuracy: 0.861376673040153 , F1-score: 0.5028702640642939
+***********************************************************
+**************** EPOCH: 95 ***********************
+epoch loss: 15.443439896218479, taining accuracy: 0.9348716548334244, validation accuracy: 0.8575525812619503, Test accuracy: 0.8540471637985978 , F1-score: 0.503901895206243
+***********************************************************
+**************** EPOCH: 96 ***********************
+epoch loss: 16.0534030883573, taining accuracy: 0.935417804478427, validation accuracy: 0.8667941363926067, Test accuracy: 0.8696622052262588 , F1-score: 0.5105882352941176
+***********************************************************
+**************** EPOCH: 97 ***********************
+epoch loss: 14.529837695881724, taining accuracy: 0.9413571818678318, validation accuracy: 0.8301465901848311, Test accuracy: 0.8362014021669854 , F1-score: 0.4652567975830815
+Early Stopping @ EPOCH:[96]
+***********************************************************
+**************** EPOCH: 98 ***********************
+epoch loss: 15.68925255862996, taining accuracy: 0.9365783724740578, validation accuracy: 0.882727852135118, Test accuracy: 0.8801784576163161 , F1-score: 0.5221932114882506
+***********************************************************
+**************** EPOCH: 99 ***********************
+epoch loss: 14.198027538135648, taining accuracy: 0.9388995084653194, validation accuracy: 0.848629700446144, Test accuracy: 0.8511790949649458 , F1-score: 0.47502774694783567
+***********************************************************
+**************** EPOCH: 100 ***********************
+epoch loss: 14.87819974240847, taining accuracy: 0.9392408519934462, validation accuracy: 0.8499043977055449, Test accuracy: 0.8527724665391969 , F1-score: 0.47125140924464487
+saving the models state...
+Testing with CB-Loss function model
+Loaded model arch: 
+ MIMICDecayCBLossModel(
+  (rim_decay_cell): RIMDCell(
+    (gamma_x_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gamma_h_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (input_key_layer): CustomLinear(in_features=104, out_features=64, bias=False)
+    (input_value_layer): CustomLinear(in_features=104, out_features=32, bias=False)
+    (input_dropout): Dropout(p=0.2694669454300502, inplace=False)
+    (rnn): GroupGRUCell(
+      (input_hidden): GroupLinear(in_features=136, out_features=312, num_blocks=2, bias=True)
+      (hidden_hidden): GroupLinear(in_features=104, out_features=312, num_blocks=2, bias=True)
+    )
+    (input_query_layer): GroupLinear(in_features=104, out_features=64, num_blocks=2, bias=False)
+    (comm_key_layer): GroupLinear(in_features=104, out_features=32, num_blocks=2, bias=False)
+    (comm_value_layer): GroupLinear(in_features=104, out_features=104, num_blocks=2, bias=False)
+    (comm_query_layer): GroupLinear(in_features=104, out_features=32, num_blocks=2, bias=False)
+    (comm_attention_output): GroupLinear(in_features=104, out_features=104, num_blocks=2, bias=False)
+    (comm_dropout): Dropout(p=0.12824679075614986, inplace=False)
+  )
+  (linear_one): Linear(in_features=225, out_features=10, bias=True)
+  (linear_two): Linear(in_features=10, out_features=2, bias=True)
+  (relu): ReLU()
+)
+{'epochs': 100, 'batch_size': 56, 'input_size': 104, 'model_type': 'RIMDecay', 'hidden_size': 104, 'num_rims': 2, 'lr': 9.645142728701031e-05, 'rnn_cell': 'LSTM', 'input_key_size': 64, 'input_value_size': 32, 'input_query_size': 64, 'num_input_heads': 1, 'input_dropout': 0.2694669454300502, 'comm_key_size': 32, 'comm_value_size': 104, 'comm_query_size': 32, 'num_comm_heads': 1, 'comm_dropout': 0.12824679075614986, 'active_rims': 2, 'mask': True, 'mask_size': 104, 'delta_size': 104, 'static_features': 17, 'need_data_preprocessing': False, 'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl', 'processed_data_path': 'data/50_percent/', 'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'max_no_improvement': 10, 'improvement_threshold': 0.0001, 'is_tuning': False, 'balance': False}
+Model Arch: 
+ MIMICDecayCBLossModel(
+  (rim_decay_cell): RIMDCell(
+    (gamma_x_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gamma_h_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (input_key_layer): CustomLinear(in_features=104, out_features=64, bias=False)
+    (input_value_layer): CustomLinear(in_features=104, out_features=32, bias=False)
+    (input_dropout): Dropout(p=0.2694669454300502, inplace=False)
+    (rnn): GroupLSTMCell(
+      (input_hidden): GroupLinear(in_features=136, out_features=416, num_blocks=2, bias=True)
+      (hidden_hidden): GroupLinear(in_features=104, out_features=416, num_blocks=2, bias=True)
+    )
+    (input_query_layer): GroupLinear(in_features=104, out_features=64, num_blocks=2, bias=False)
+    (comm_key_layer): GroupLinear(in_features=104, out_features=32, num_blocks=2, bias=False)
+    (comm_value_layer): GroupLinear(in_features=104, out_features=104, num_blocks=2, bias=False)
+    (comm_query_layer): GroupLinear(in_features=104, out_features=32, num_blocks=2, bias=False)
+    (comm_attention_output): GroupLinear(in_features=104, out_features=104, num_blocks=2, bias=False)
+    (comm_dropout): Dropout(p=0.12824679075614986, inplace=False)
+  )
+  (linear_one): Linear(in_features=225, out_features=10, bias=True)
+  (linear_two): Linear(in_features=10, out_features=2, bias=True)
+  (relu): ReLU()
+)
+Training, Validating, and Testing: RIMDecay model with LSTM cell 
+***********************************************************
+**************** EPOCH: 1 ***********************
+epoch loss: 67.2703251503408, taining accuracy: 0.818814855270344, validation accuracy: 0.7555768005098789, Test accuracy: 0.7552581261950286 , F1-score: 0.4055944055944056
+***********************************************************
+**************** EPOCH: 2 ***********************
+epoch loss: 54.127639785408974, taining accuracy: 0.7586701256144184, validation accuracy: 0.7587635436583812, Test accuracy: 0.7495219885277247 , F1-score: 0.43530291697830964
+***********************************************************
+**************** EPOCH: 3 ***********************
+epoch loss: 50.523116517812014, taining accuracy: 0.7722555980338612, validation accuracy: 0.758444869343531, Test accuracy: 0.7552581261950286 , F1-score: 0.43497757847533636
+***********************************************************
+**************** EPOCH: 4 ***********************
+epoch loss: 48.92156255245209, taining accuracy: 0.7868651010376844, validation accuracy: 0.7810707456978967, Test accuracy: 0.7648183556405354 , F1-score: 0.46020488573680063
+***********************************************************
+**************** EPOCH: 5 ***********************
+epoch loss: 49.84613216109574, taining accuracy: 0.7928727471327144, validation accuracy: 0.7919056724028043, Test accuracy: 0.7782026768642447 , F1-score: 0.4677023712183156
+***********************************************************
+**************** EPOCH: 6 ***********************
+epoch loss: 47.022474475204945, taining accuracy: 0.793214090660841, validation accuracy: 0.8260038240917782, Test accuracy: 0.8215423836838751 , F1-score: 0.48679245283018874
+***********************************************************
+**************** EPOCH: 7 ***********************
+epoch loss: 47.56473094411194, taining accuracy: 0.8007236482796286, validation accuracy: 0.8119821542383684, Test accuracy: 0.8024219247928617 , F1-score: 0.4833040421792619
+***********************************************************
+**************** EPOCH: 8 ***********************
+epoch loss: 46.697499545291066, taining accuracy: 0.803795740032769, validation accuracy: 0.7979604843849586, Test accuracy: 0.7903123008285532 , F1-score: 0.46890756302521014
+***********************************************************
+**************** EPOCH: 9 ***********************
+epoch loss: 46.31820762529969, taining accuracy: 0.8128754778809394, validation accuracy: 0.8215423836838751, Test accuracy: 0.8167622689611217 , F1-score: 0.4871323529411765
+***********************************************************
+**************** EPOCH: 10 ***********************
+epoch loss: 44.797760773450136, taining accuracy: 0.8059120699071546, validation accuracy: 0.7931803696622052, Test accuracy: 0.7868068833652008 , F1-score: 0.46484698097601324
+***********************************************************
+**************** EPOCH: 11 ***********************
+epoch loss: 44.84508769959211, taining accuracy: 0.8108956854178044, validation accuracy: 0.8339706819630338, Test accuracy: 0.8291905672402804 , F1-score: 0.4975798644724105
+***********************************************************
+**************** EPOCH: 12 ***********************
+epoch loss: 44.73680867254734, taining accuracy: 0.8060486073184052, validation accuracy: 0.8167622689611217, Test accuracy: 0.8097514340344169 , F1-score: 0.48793565683646123
+***********************************************************
+**************** EPOCH: 13 ***********************
+epoch loss: 44.5514963530004, taining accuracy: 0.8162206444565812, validation accuracy: 0.8814531548757171, Test accuracy: 0.8779477374123645 , F1-score: 0.5157068062827225
+***********************************************************
+**************** EPOCH: 14 ***********************
+epoch loss: 43.61226540990174, taining accuracy: 0.813216821409066, validation accuracy: 0.8419375398342893, Test accuracy: 0.8368387507966858 , F1-score: 0.5040160642570282
+***********************************************************
+**************** EPOCH: 15 ***********************
+epoch loss: 42.43361554853618, taining accuracy: 0.8159475696340798, validation accuracy: 0.8167622689611217, Test accuracy: 0.8151688973868706 , F1-score: 0.4860986547085201
+***********************************************************
+**************** EPOCH: 16 ***********************
+epoch loss: 42.156155871227384, taining accuracy: 0.8209311851447296, validation accuracy: 0.8170809432759719, Test accuracy: 0.8100701083492671 , F1-score: 0.4892857142857143
+***********************************************************
+**************** EPOCH: 17 ***********************
+epoch loss: 41.73884801007807, taining accuracy: 0.8212725286728564, validation accuracy: 0.8142128744423199, Test accuracy: 0.8075207138304653 , F1-score: 0.48810572687224674
+***********************************************************
+**************** EPOCH: 18 ***********************
+epoch loss: 41.67488423641771, taining accuracy: 0.8199754232659748, validation accuracy: 0.7855321861057999, Test accuracy: 0.7855321861057999 , F1-score: 0.46533864541832665
+***********************************************************
+**************** EPOCH: 19 ***********************
+epoch loss: 41.00320623628795, taining accuracy: 0.8248225013653742, validation accuracy: 0.822817080943276, Test accuracy: 0.8231357552581262 , F1-score: 0.49360146252285186
+***********************************************************
+**************** EPOCH: 20 ***********************
+epoch loss: 40.67657760716975, taining accuracy: 0.8267340251228836, validation accuracy: 0.7861695347355003, Test accuracy: 0.7845761631612492 , F1-score: 0.46608140462889064
+***********************************************************
+**************** EPOCH: 21 ***********************
+epoch loss: 40.07987150084227, taining accuracy: 0.824208083014746, validation accuracy: 0.8224984066284258, Test accuracy: 0.8221797323135756 , F1-score: 0.5004500450045005
+***********************************************************
+**************** EPOCH: 22 ***********************
+epoch loss: 40.60493351705372, taining accuracy: 0.8311032222829056, validation accuracy: 0.8397068196303378, Test accuracy: 0.8365200764818356 , F1-score: 0.5102639296187683
+***********************************************************
+**************** EPOCH: 23 ***********************
+epoch loss: 39.39935235772282, taining accuracy: 0.8318541780447842, validation accuracy: 0.8601019757807521, Test accuracy: 0.8534098151688974 , F1-score: 0.5296017222820236
+Early Stopping @ EPOCH:[22]
+***********************************************************
+**************** EPOCH: 24 ***********************
+epoch loss: 39.29433783888817, taining accuracy: 0.8313762971054068, validation accuracy: 0.8333333333333334, Test accuracy: 0.8247291268323773 , F1-score: 0.5042816365366318
+***********************************************************
+**************** EPOCH: 25 ***********************
+epoch loss: 38.761047922074795, taining accuracy: 0.8336974330966684, validation accuracy: 0.8138942001274697, Test accuracy: 0.8100701083492671 , F1-score: 0.4894736842105264
+***********************************************************
+**************** EPOCH: 26 ***********************
+epoch loss: 38.265384380705655, taining accuracy: 0.8334926269797924, validation accuracy: 0.8100701083492671, Test accuracy: 0.8046526449968132 , F1-score: 0.4888123924268504
+***********************************************************
+**************** EPOCH: 27 ***********************
+epoch loss: 38.940714126452804, taining accuracy: 0.8405243036592026, validation accuracy: 0.8320586360739325, Test accuracy: 0.8323773103887827 , F1-score: 0.5033112582781457
+***********************************************************
+**************** EPOCH: 28 ***********************
+epoch loss: 38.053998155519366, taining accuracy: 0.8430502457673402, validation accuracy: 0.8323773103887827, Test accuracy: 0.8266411727214786 , F1-score: 0.500952380952381
+***********************************************************
+**************** EPOCH: 29 ***********************
+epoch loss: 36.867490289732814, taining accuracy: 0.835813762971054, validation accuracy: 0.837157425111536, Test accuracy: 0.8295092415551306 , F1-score: 0.49950835791543763
+***********************************************************
+**************** EPOCH: 30 ***********************
+epoch loss: 36.5612564496696, taining accuracy: 0.8399781540141998, validation accuracy: 0.8142128744423199, Test accuracy: 0.8138942001274697 , F1-score: 0.4844720496894411
+***********************************************************
+**************** EPOCH: 31 ***********************
+epoch loss: 37.78543828241527, taining accuracy: 0.8427771709448388, validation accuracy: 0.8355640535372849, Test accuracy: 0.8330146590184832 , F1-score: 0.5000000000000001
+***********************************************************
+**************** EPOCH: 32 ***********************
+epoch loss: 36.47694639116526, taining accuracy: 0.8454396504642272, validation accuracy: 0.8403441682600382, Test accuracy: 0.8317399617590823 , F1-score: 0.516003879728419
+***********************************************************
+**************** EPOCH: 33 ***********************
+epoch loss: 36.807745680212975, taining accuracy: 0.8461223375204806, validation accuracy: 0.7648183556405354, Test accuracy: 0.7715105162523901 , F1-score: 0.4523809523809524
+***********************************************************
+**************** EPOCH: 34 ***********************
+epoch loss: 36.0868269354105, taining accuracy: 0.8444838885854724, validation accuracy: 0.8444869343530912, Test accuracy: 0.8355640535372849 , F1-score: 0.5130260521042084
+***********************************************************
+**************** EPOCH: 35 ***********************
+epoch loss: 35.27635543141514, taining accuracy: 0.8526761332605134, validation accuracy: 0.8448056086679414, Test accuracy: 0.8333333333333334 , F1-score: 0.5115810674723061
+***********************************************************
+**************** EPOCH: 36 ***********************
+epoch loss: 34.94544687308371, taining accuracy: 0.8513107591480066, validation accuracy: 0.8419375398342893, Test accuracy: 0.8260038240917782 , F1-score: 0.5203883495145631
+***********************************************************
+**************** EPOCH: 37 ***********************
+epoch loss: 36.07697312440723, taining accuracy: 0.8504915346805024, validation accuracy: 0.8432122370936902, Test accuracy: 0.831421287444232 , F1-score: 0.5167652859960552
+***********************************************************
+**************** EPOCH: 38 ***********************
+epoch loss: 34.01716102100909, taining accuracy: 0.8516521026761332, validation accuracy: 0.8451242829827916, Test accuracy: 0.8362014021669854 , F1-score: 0.508130081300813
+***********************************************************
+**************** EPOCH: 39 ***********************
+epoch loss: 32.82581224478781, taining accuracy: 0.8506963407973784, validation accuracy: 0.8164435946462715, Test accuracy: 0.8119821542383684 , F1-score: 0.4929328621908127
+***********************************************************
+**************** EPOCH: 40 ***********************
+epoch loss: 34.164062570780516, taining accuracy: 0.8483069361004916, validation accuracy: 0.8154875717017208, Test accuracy: 0.8138942001274697 , F1-score: 0.484361036639857
+***********************************************************
+**************** EPOCH: 41 ***********************
+epoch loss: 32.087681798264384, taining accuracy: 0.858205898416166, validation accuracy: 0.7992351816443595, Test accuracy: 0.8065646908859146 , F1-score: 0.47226890756302514
+***********************************************************
+**************** EPOCH: 42 ***********************
+epoch loss: 34.358864929527044, taining accuracy: 0.8564991807755324, validation accuracy: 0.8718929254302104, Test accuracy: 0.8639260675589547 , F1-score: 0.5381062355658198
+***********************************************************
+**************** EPOCH: 43 ***********************
+epoch loss: 32.508165090344846, taining accuracy: 0.858410704533042, validation accuracy: 0.8559592096876991, Test accuracy: 0.8505417463352454 , F1-score: 0.5212765957446808
+***********************************************************
+**************** EPOCH: 44 ***********************
+epoch loss: 31.910932272672653, taining accuracy: 0.8712452211906062, validation accuracy: 0.8604206500956023, Test accuracy: 0.8537284894837476 , F1-score: 0.5229759299781181
+***********************************************************
+**************** EPOCH: 45 ***********************
+epoch loss: 31.340477380901575, taining accuracy: 0.8624385581649372, validation accuracy: 0.8499043977055449, Test accuracy: 0.840025493945188 , F1-score: 0.5199590583418628
+***********************************************************
+**************** EPOCH: 46 ***********************
+epoch loss: 30.655977116897702, taining accuracy: 0.8660567995630802, validation accuracy: 0.844168260038241, Test accuracy: 0.8320586360739325 , F1-score: 0.5055837563451776
+***********************************************************
+**************** EPOCH: 47 ***********************
+epoch loss: 31.24182025808841, taining accuracy: 0.8651010376843256, validation accuracy: 0.8221797323135756, Test accuracy: 0.8202676864244742 , F1-score: 0.4870848708487085
+***********************************************************
+**************** EPOCH: 48 ***********************
+epoch loss: 29.40951418597251, taining accuracy: 0.8668760240305844, validation accuracy: 0.8505417463352454, Test accuracy: 0.8339706819630338 , F1-score: 0.5180598555211557
+***********************************************************
+**************** EPOCH: 49 ***********************
+epoch loss: 28.82067780289799, taining accuracy: 0.8734980884762424, validation accuracy: 0.8068833652007649, Test accuracy: 0.8024219247928617 , F1-score: 0.4720279720279721
+***********************************************************
+**************** EPOCH: 50 ***********************
+epoch loss: 28.751357664354146, taining accuracy: 0.8669442927362098, validation accuracy: 0.8301465901848311, Test accuracy: 0.8205863607393244 , F1-score: 0.4938036224976168
+***********************************************************
+**************** EPOCH: 51 ***********************
+epoch loss: 28.284278221428394, taining accuracy: 0.872405789186237, validation accuracy: 0.8463989802421925, Test accuracy: 0.8352453792224347 , F1-score: 0.5102040816326531
+***********************************************************
+**************** EPOCH: 52 ***********************
+epoch loss: 27.574421474710107, taining accuracy: 0.875614418350628, validation accuracy: 0.7966857871255577, Test accuracy: 0.7992351816443595 , F1-score: 0.4601018675721562
+***********************************************************
+**************** EPOCH: 53 ***********************
+epoch loss: 27.512941164895892, taining accuracy: 0.8734298197706172, validation accuracy: 0.8409815168897387, Test accuracy: 0.8298279158699808 , F1-score: 0.5025025025025024
+***********************************************************
+**************** EPOCH: 54 ***********************
+epoch loss: 27.13541184552014, taining accuracy: 0.8798470780993992, validation accuracy: 0.8311026131293817, Test accuracy: 0.8196303377947738 , F1-score: 0.4942528735632184
+***********************************************************
+**************** EPOCH: 55 ***********************
+epoch loss: 25.935587372630835, taining accuracy: 0.8798470780993992, validation accuracy: 0.8326959847036329, Test accuracy: 0.8304652644996813 , F1-score: 0.49272550921435504
+***********************************************************
+**************** EPOCH: 56 ***********************
+epoch loss: 25.9910034108907, taining accuracy: 0.883806663025669, validation accuracy: 0.8161249203314213, Test accuracy: 0.8183556405353728 , F1-score: 0.4680851063829788
+***********************************************************
+**************** EPOCH: 57 ***********************
+epoch loss: 25.325621454045177, taining accuracy: 0.8825778263244128, validation accuracy: 0.8575525812619503, Test accuracy: 0.8425748884639898 , F1-score: 0.5240641711229946
+***********************************************************
+**************** EPOCH: 58 ***********************
+epoch loss: 26.73240033350885, taining accuracy: 0.882782632441289, validation accuracy: 0.8311026131293817, Test accuracy: 0.8231357552581262 , F1-score: 0.4961832061068702
+***********************************************************
+**************** EPOCH: 59 ***********************
+epoch loss: 24.292835546657443, taining accuracy: 0.888380666302567, validation accuracy: 0.8499043977055449, Test accuracy: 0.8403441682600382 , F1-score: 0.5159958720330238
+***********************************************************
+**************** EPOCH: 60 ***********************
+epoch loss: 23.761919332668185, taining accuracy: 0.8913162206444566, validation accuracy: 0.8151688973868706, Test accuracy: 0.8119821542383684 , F1-score: 0.46972477064220186
+***********************************************************
+**************** EPOCH: 61 ***********************
+epoch loss: 25.38843229599297, taining accuracy: 0.8919306389950846, validation accuracy: 0.8282345442957297, Test accuracy: 0.8138942001274697 , F1-score: 0.49291784702549574
+***********************************************************
+**************** EPOCH: 62 ***********************
+epoch loss: 23.274616442620754, taining accuracy: 0.8948661933369744, validation accuracy: 0.8530911408540471, Test accuracy: 0.8413001912045889 , F1-score: 0.5111821086261981
+***********************************************************
+**************** EPOCH: 63 ***********************
+epoch loss: 22.732173793949187, taining accuracy: 0.895617149098853, validation accuracy: 0.8209050350541747, Test accuracy: 0.815806246016571 , F1-score: 0.474671669793621
+***********************************************************
+**************** EPOCH: 64 ***********************
+epoch loss: 22.06853921059519, taining accuracy: 0.9029219006007646, validation accuracy: 0.854365838113448, Test accuracy: 0.8438495857233907 , F1-score: 0.5154419595314164
+***********************************************************
+**************** EPOCH: 65 ***********************
+epoch loss: 21.743359992746264, taining accuracy: 0.9030584380120152, validation accuracy: 0.8521351179094965, Test accuracy: 0.8435309114085404 , F1-score: 0.4797297297297297
+***********************************************************
+**************** EPOCH: 66 ***********************
+epoch loss: 22.806424639187753, taining accuracy: 0.8988257782632442, validation accuracy: 0.8652007648183556, Test accuracy: 0.8518164435946463 , F1-score: 0.5264341957255343
+***********************************************************
+**************** EPOCH: 67 ***********************
+epoch loss: 21.619074545800686, taining accuracy: 0.905789186237029, validation accuracy: 0.8323773103887827, Test accuracy: 0.8234544295729764 , F1-score: 0.49420849420849416
+***********************************************************
+**************** EPOCH: 68 ***********************

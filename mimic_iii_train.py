@@ -8,6 +8,7 @@ from src.utils.mimic_evaluation import MIMICReport
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.data_prep import MortalityDataPrep
 from src.model.mimic_decay_model import MIMICDecayModel
+from src.model.mimic_decay_with_cb_loss import MIMICDecayCBLossModel
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 
@@ -382,13 +383,15 @@ class TrainModels:
         train_loader, val_loader, test_loader = self.data_object.data_loader()
         # self.args['rnn_cell'] = cell
         if self.args['model_type'] == 'RIMDecay':
-            self.model = MIMICDecayModel(self.args).to(self.device)
+            self.model = MIMICDecayCBLossModel(self.args).to(self.device)
         elif self.args['model_type'] == 'RIM':
             self.model = MIMICModel(self.args).to(self.device)
-        elif self.args['model_type'] == 'LSTM':
-            self.model = MIMICLSTMModel(self.args).to(self.device)
         else:
-            self.model = MIMICGRUModel(self.args).to(self.device)
+            raise Exception(f"No models found for {self.args['model_type']}")
+        # elif self.args['model_type'] == 'LSTM':
+        #     self.model = MIMICLSTMModel(self.args).to(self.device)
+        # else:
+        #     self.model = MIMICGRUModel(self.args).to(self.device)
         
         self.logger.info(f'Model Arch: \n {self.model}')
         self.logger.info(f"Training, Validating, and Testing: {self.args['model_type']} model with {self.args['rnn_cell']} cell ")
@@ -416,7 +419,7 @@ class TrainModels:
 
                     y = y.to(self.device)
 
-                    output, l = self.model(x, static, x_mask, delta, x_last_ob, x_mean, y)
+                    predictions, l = self.model(x, static, x_mask, delta, x_last_ob, x_mean, y)
                 
                     optimizer.zero_grad()
                     l.backward()
@@ -427,8 +430,7 @@ class TrainModels:
                     
 
                     epoch_loss += l.item()
-                    predictions = torch.round(output)
-                    correct = y == output
+                    correct = y.long() == output
                     t_accuracy += correct.sum().item()
 
                     ctr += 1
@@ -440,23 +442,24 @@ class TrainModels:
                     statics = statics.to(self.device)
                     y = y.to(self.device)
 
-                    output, l = self.model(x, statics, y)
+                    predictions, l = self.model(x, statics, y)
+                    output = torch.argmax(predictions, dim=1)
 
                     optimizer.zero_grad()
                     l.backward()
                     optimizer.step()
                     norm += self.model.grad_norm()
 
+
                     epoch_loss += l.item()
-                    predictions = torch.round(output)
-                    correct = predictions.view(-1) == y.long()
+                    correct = output == y.long()
                     t_accuracy += correct.sum().item()
 
                     ctr += 1
 
-            train_f1_report = classification_report(y.cpu().detach().numpy(), predictions.view(-1).cpu().detach().numpy(), output_dict= True)
-            validation_accuracy, val_f1 = self.eval(val_loader)
-            test_accuracy, t_f1 = self.eval(test_loader)
+            train_f1_report = classification_report(y.cpu().detach().numpy(), output.cpu().detach().numpy(), output_dict= True)
+            validation_accuracy, val_f1 = self.eval_cb_loss(val_loader)
+            test_accuracy, t_f1 = self.eval_cb_loss(test_loader)
 
             self.logger.info(f'epoch loss: {epoch_loss}, taining accuracy: {t_accuracy/len(train_loader.dataset)}, validation accuracy: {validation_accuracy}, Test accuracy: {test_accuracy} , F1-score: {val_f1}')
 
@@ -528,8 +531,113 @@ class TrainModels:
         #right after training do the test step
 
         self.reports.update({self.model_name:
-                            self.test(self.model_saved_fname,self.data_object.get_test_data())})
+                            self.test_cb_loss(self.model_saved_fname,self.data_object.get_test_data())})
         return self.reports
+
+    def eval_cb_loss(self, data_loader):
+        accuracy = 0
+        self.model.eval()
+        y_truth = []
+        y_pred = []
+        with torch.no_grad():
+            if self.args['model_type'] == 'RIMDecay':
+                #TODO there is a bug in number of samples for test and val data sets
+                for x, static, x_mean, y in data_loader:
+                    static = static.to(self.device)
+                    x_mask = x[:,1,:,:].to(self.device)
+                    delta = x[:,2,:,:].to(self.device)
+                    x_mean = x_mean.to(self.device)
+                    x_last_ob = x[:,3,:,:].to(self.device)
+                    x = x[:,0,:,:].to(self.device)
+
+                    y = y.to(self.device)
+
+                    predictions = self.model(x, static, x_mask, delta, x_last_ob, x_mean)
+                    output = torch.argmax(predictions, dim=1)
+                    correct = output == y.long()
+                    accuracy += correct.sum().item()
+                    # add them to a list to calculate f1 score later on
+                    y_truth.extend(y.cpu().detach().numpy())
+                    y_pred.extend(output.cpu().detach().numpy())
+
+
+            else:
+                for x, statics, y in data_loader:
+                    x = x.to(self.device)
+                    statics = statics.to(self.device)
+                    y = y.to(self.device)
+
+                    predictions = self.model(x, statics)
+
+                    output = torch.argmax(predictions)
+                    correct = output == y.long()
+                    accuracy += correct.sum().item()
+
+                    # add them to a list to calculate f1 score later on
+                    y_truth.extend(y.cpu().detach().numpy())
+                    y_pred.extend(output.cpu().detach().numpy())
+
+        #compute the f-1 measure
+        report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
+        try:
+            f1_score = report['1']['f1-score']
+        except Exception as e:
+            f1_score = 0
+            print(report)
+            print(e)
+        if f1_score <= 0.01:
+            print(f1_score)
+            pass
+
+        accuracy /= len(data_loader.dataset)
+        return accuracy, f1_score
+
+    def test_cb_loss(self, model_path, test_data):
+        checkpoint = torch.load(model_path)
+        args = checkpoint['args']
+        if args['model_type'] == 'RIMDecay':
+            model = MIMICDecayCBLossModel(args).to(self.device)
+        elif args['model_type'] == 'RIM':
+            model = MIMICModel(args).to(self.device)
+        elif args['model_type'] == 'LSTM':
+            model = MIMICLSTMModel(args).to(self.device)
+        elif args['model_type'] == 'GRU':
+            model = MIMICGRUModel(args).to(self.device)
+        else:
+            raise Exception('No model type found: {}'.format(model_path))
+
+        self.args = args
+        self.set_model_name()
+
+        model.load_state_dict(checkpoint['net'])
+        self.logger.info(f'Testing with CB-Loss function model')
+        self.logger.info(f'Loaded model arch: \n {model}')
+
+        if args['model_type'] == 'RIMDecay':
+            x, static, x_mean, y = test_data
+            static = static.to(self.device)
+            x_mask = x[:,1,:,:].to(self.device)
+            delta = x[:,2,:,:].to(self.device)
+            x_mean = x_mean.to(self.device)
+            x_last_ob = x[:,3,:,:].to(self.device)
+            x = x[:,0,:,:].to(self.device)
+            y = y.to(self.device)
+            predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
+            probs = torch.argmax(predictions)
+        else:
+            x, statics, y = test_data
+            x = x.to(self.device)
+            statics = statics.to(self.device)
+            y = y.to(self.device)
+            predictions = model(x, statics)
+            probs = torch.argmax(predictions)
+
+        gt = y.cpu().detach().numpy()
+        pt = probs.cpu().detach().numpy()
+        y_score = torch.max(torch.softmax(predictions, dim=1)).cpu().detach().numpy()
+
+        return gt, pt, y_score
+
 
 
 # def make_report(model):

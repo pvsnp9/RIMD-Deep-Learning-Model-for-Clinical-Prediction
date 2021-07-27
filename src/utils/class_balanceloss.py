@@ -9,6 +9,12 @@ class CBLoss():
         self.beta = beta
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
+    def __repr__(self):
+        return self.__class__.__name__ + '(' \
+            + 'beta=' + str(self.beta) \
+            + ', num classes=' + str(self.number_of_class) + ')'
+
+
     def __call__(self, labels, logits, sample_per_class):
         effective_num = 1.0 - np.power(self.beta, sample_per_class)
         weights = (1.0 - self.beta) / np.array(effective_num)
@@ -25,3 +31,8 @@ class CBLoss():
 
         cb_loss = F.binary_cross_entropy_with_logits(input = logits,target = labels_one_hot, weight = weights)
         return cb_loss
+
+    
+# if __name__ == '__main__':
+#     cb = CBLoss(2)
+#     print(cb)

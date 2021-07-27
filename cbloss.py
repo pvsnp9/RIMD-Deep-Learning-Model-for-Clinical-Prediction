@@ -137,15 +137,15 @@ if __name__ == '__main__':
     # print(cb_loss)
 
     
-    print(f'--------------- Cross-Entropy -----------------')
-    model = MyNN().to(device)
-    train_loader, val_loader = data_loader()
-    train(model, train_loader)
-    eval(model, val_loader)
+    # print(f'--------------- Cross-Entropy -----------------')
+    # model = MyNN().to(device)
+    # train_loader, val_loader = data_loader()
+    # train(model, train_loader)
+    # eval(model, val_loader)
 
-    print(f'--------------- classBalance -----------------')
-    model_cb = MyNN().to(device)
-    train_loader, val_loader = data_loader()
-    train(model_cb, train_loader,'cb-loss')
-    eval(model_cb, val_loader)
+    # print(f'--------------- classBalance -----------------')
+    # model_cb = MyNN().to(device)
+    # train_loader, val_loader = data_loader()
+    # train(model_cb, train_loader,'cb-loss')
+    # eval(model_cb, val_loader)
     

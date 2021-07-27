@@ -107,7 +107,32 @@ def mimic_main(run_type, run_description):
                     y_truth, y_pred, y_score = res_sets
                     report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
                     model_reports.update({model_1:report})
+    elif(run_type == 'train_with_cb_loss'):
+        logging.info("Training initiated with custom loss function")
+        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
+        model_type = [ 'RIMDecay'] #, 'RIM' ]
+        for model in model_type:
+            if model.startswith('RIM'):
+                cell_type = [ 'GRU','LSTM']
+            elif model == 'LSTM':
+                cell_type = ['LSTM']
+            else:
+                cell_type = ['GRU']
 
+            for cell in cell_type:
+                #TODO calculate execution time and log it
+                args['rnn_cell'] = cell
+                args['model_type'] = model
+                if args['model_type'] == 'RIMDecay':
+                    dl_trainer = TrainModels(args,decay_data_object, logging)
+                else:
+                    dl_trainer = TrainModels(args,data_object, logging)
+
+                train_res =  dl_trainer.train_cb_loss()
+                for model_1, res_sets in train_res.items():
+                    y_truth, y_pred, y_score = res_sets
+                    report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
+                    model_reports.update({model_1:report})
     else:
         #ML Test
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging)
@@ -204,7 +229,6 @@ def no_skil(y_true):
     ns_fpr, ns_tpr, _ = roc_curve(y_true, ns_probs)
     return ns_fpr, ns_tpr
 
-
 def plo_training_stats():
     from os import walk
     epocs = range(1,3)
@@ -245,8 +269,6 @@ def plot_stats(key,stats):
     plt.plot()
     plt.show()
 
-        
-
 def plot_confusion_matrixes(out_dir,reports):
        
     fig = plt.figure()
@@ -267,7 +289,7 @@ def plot_confusion_matrixes(out_dir,reports):
 MimicSave.get_instance()
 
 description = "Experiment # 1.2: RIMDecay tuned "
-mimic_main("train",description)
+mimic_main("train_with_cb_loss",description)
 plo_training_stats()
 plot_roc()
 plot_prauc()

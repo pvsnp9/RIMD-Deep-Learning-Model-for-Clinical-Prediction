@@ -2,9 +2,9 @@ import math
 import torch
 import torch.nn as nn
 from .rim_d import RIMDCell
-from utils.class_balanceloss import CBLoss
+from src.utils.class_balanceloss import CBLoss
 
-class MIMICDecayModel(nn.Module):
+class MIMICDecayCBLossModel(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -68,13 +68,6 @@ class MIMICDecayModel(nn.Module):
 
             loss = self.loss(y, predictions, samples_per_class)
             probs = torch.softmax(predictions, dim=1)
-
-            #output = torch.argmax(predictions, dim=1)
-            #correct_results = (y == output).sum().float()
-            #accuracy = correct_results/y.size()[0]
-
-            #probs = torch.sigmoid(predictions)
-            #loss = self.loss(probs.view(-1), y)
 
             return probs, loss
 

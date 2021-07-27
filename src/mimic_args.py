@@ -24,7 +24,7 @@ args = {'epochs': 100,
         'need_data_preprocessing': False,
         'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl',
         'processed_data_path': 'data/50_percent/',
-        'input_file_path': 'data/mimic_iii/test_dump/x_y_statics_20926.npz',
+        'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz',
         'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz',
         'max_no_improvement': 10, 'improvement_threshold': 0.0001,
         'is_tuning': False, 'balance': False}
