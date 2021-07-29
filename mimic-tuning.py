@@ -4,10 +4,9 @@ from optuna.trial import TrialState
 import math
 
 from mimic_iii_train import TrainModels
-from src.mimic_args import args
+from src.utils.mimic_args import args
 import logging
 #load datasets
-from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 
 out_dir = 'mimic/logs'

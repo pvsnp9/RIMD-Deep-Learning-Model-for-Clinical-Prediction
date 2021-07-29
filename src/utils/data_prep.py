@@ -4,6 +4,7 @@ import numpy as np
 import torch 
 from simple_imputer import SimpleImputer
 
+
 class MortalityDataPrep:
     # data file path to read, parse, and impute
     def __init__(self, file_path, window_size = 24, gap_time = 6, type='in_hospital', non_iid = [18,30,36,42,48]):

@@ -10,7 +10,7 @@ import pickle
 import torch
 
 from mimic_iii_train import TrainModels
-from src.mimic_args import args
+from src.utils.mimic_args import args
 from src.model.mimic_ml_models import MimicMlTrain
 from src.utils.data_prep import MortalityDataPrep
 from src.utils.mimic_evaluation import MIMICReport
@@ -80,14 +80,14 @@ def mimic_main(run_type, run_description):
     if run_type == "train":
         #ML models first
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
-        ml_trainer.run()
-        model_reports.update(ml_trainer.get_reports())
+        # ml_trainer.run()
+        # model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = [ 'RIMDecay', 'RIM','LSTM','GRU' ]
+        model_type = [ 'RIMDecay' ]
         for model in model_type:
             if model.startswith('RIM'):
-                cell_type = [ 'GRU','LSTM']
+                cell_type = [ 'GRU']
             elif model == 'LSTM':
                 cell_type = ['LSTM']
             else:
@@ -107,6 +107,8 @@ def mimic_main(run_type, run_description):
                     y_truth, y_pred, y_score = res_sets
                     report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
                     model_reports.update({model_1:report})
+
+
     elif(run_type == 'train_with_cb_loss'):
         logging.info("Training initiated with custom loss function")
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
@@ -135,7 +137,7 @@ def mimic_main(run_type, run_description):
                     model_reports.update({model_1:report})
     else:
         #ML Test
-        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging)
+        ml_trainer = MimicMlTrain(data_object, './mimic/0727-10-55-06/model', out_dir,logging)
         model_reports.update(ml_trainer.test())
 
         #DL Test
@@ -289,7 +291,7 @@ def plot_confusion_matrixes(out_dir,reports):
 MimicSave.get_instance()
 
 description = "Experiment # 1.2: RIMDecay tuned "
-mimic_main("train_with_cb_loss",description)
+mimic_main("train",description)
 plo_training_stats()
 plot_roc()
 plot_prauc()

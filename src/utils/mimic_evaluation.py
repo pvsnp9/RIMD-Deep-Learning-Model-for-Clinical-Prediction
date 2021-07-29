@@ -32,7 +32,7 @@ class MIMICReport():
 
         res = classification_report(self.y_true, self.y_pred, output_dict=True)
         res_pos = res[pos_lable]
-        res_pos['accuaracy'] = res["accuracy"]
+        res_pos['accuracy'] = res["accuracy"]
 
         return res_pos
     def get_brier(self):

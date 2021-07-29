@@ -1,4 +1,4 @@
-args = {'epochs': 100,
+args = {'epochs': 50,
         'batch_size':56,
         'input_size': 104,
         'model_type': 'RIMDecay',
@@ -26,8 +26,11 @@ args = {'epochs': 100,
         'processed_data_path': 'data/50_percent/',
         'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz',
         'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz',
-        'max_no_improvement': 10, 'improvement_threshold': 0.0001,
-        'is_tuning': False, 'balance': False}
+        'max_no_improvement': 20,
+        'improvement_threshold': 0.0001,
+        'is_tuning': False,
+        'balance': False
+        , 'is_cbloss': True}
 
 
 #
