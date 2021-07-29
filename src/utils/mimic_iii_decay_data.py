@@ -1,9 +1,8 @@
 import math
-from operator import index
 import numpy as np
-from numpy.core.numeric import zeros_like
+from numpy.core.defchararray import index
+from numpy.core.fromnumeric import shape
 import torch
-import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICDecayData:
@@ -133,9 +132,82 @@ class MIMICDecayData:
 
         return train_loader, val_loader, test_loader
 
+
+'''
+non-iid data loader class
+'''
+class MIMICNonIidData:
+    def __init__(self, file_path, number_of_instances=1000 ):
+        self.file_path = file_path
+        self.number_of_instances = number_of_instances
+        self.data = None
+
+    def __read_data(self):
+        self.data = np.load(self.file_path, allow_pickle=True)
+        # self.h18, self.h30, self.h36, self.h42, self.h48 = data['h_18'], data['h_30'], data['h_36'], data['h_42'], data['h_48']
+    
+    def get_data(self, hour=18):
+        self.__read_data()
+        if hour ==18:
+            return self.__prepare_data(self.data['h_18'], 18)
+        elif hour == 30:
+            return self.__prepare_data(self.data['h_30'], 30)
+        elif hour == 36:
+            return self.__prepare_data(self.data['h_36'], 36)
+        elif hour == 42:
+            return self.__prepare_data(self.data['h_42'], 42)
+        elif hour == 48:
+            return self.__prepare_data(self.data['h_48'], 48)
+        else:
+            raise Exception(f'Data could not be found on {hour}-hr')
+    
+    def __prepare_data(self, hour_data, hour):
+        x,y,statics, x_mean, x_mask, delta, last_ob = hour_data 
+        x= np.reshape(x, (y.shape[0], hour, -1))
+        y = np.squeeze(y, axis=1)
+        mask = np.reshape(x_mask, (y.shape[0], hour, -1))
+        delta = np.reshape(delta, (y.shape[0], hour, -1))
+        last_observed= np.reshape(last_ob, (y.shape[0], hour, -1))
+
+        # delta normalization for each patients
+        delta_mean = np.amax(delta, axis=1)
+        for i in range(delta.shape[0]):
+            delta[i] = np.divide(delta[i], delta_mean[i], out=np.zeros_like(delta[i]), where=delta_mean[i]!=0)
+
+        '''Data shuffling'''        
+        index_ = np.arange(self.number_of_instances, dtype=int)
+        np.random.shuffle(index_)
+
+        x = x[index_]
+        y = y[index_]
+        statics = statics[index_]
+        mask = mask[index_]
+        delta = delta[index_]
+        last_observed = last_observed[index_]
+        x_mean = x_mean[index_]
+
+        # expanding dims to concatenate
+        x = np.expand_dims(x, axis=1)
+        mask = np.expand_dims(mask, axis=1)
+        delta = np.expand_dims(delta, axis=1)
+        last_observed = np.expand_dims(last_observed, axis=1)
+
+        data_agg = np.concatenate((x, mask, delta, last_observed), axis=1)
+
+        return (
+            torch.from_numpy(data_agg),
+            torch.from_numpy(statics),
+            torch.from_numpy(x_mean),
+            torch.from_numpy(y)
+        )
+
+
 # if __name__ =='__main__':
-#     d = MIMICDecayData(64, 24 , './data/mimic_iii/test_dump/decay_data_20926.npz')
-#     x,y,z,t = d.get_test_data()
-#     print(x)
+#     d = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_los_icu.npz')
+#     x = d.get_data(48)
+#     #x,y,z,t = d.get_test_data()
+#     for num in range(len(x)):
+#         print(torch.isnan(x[num]).any())
+    # print(len(x))
     # for i, x,s, m,y in tqdm(ran(t)):
     #     print(f'x:{x.size()},s:{s.size()}, m:{m.size()}, y:{y.size()}')
