@@ -171,14 +171,15 @@ class MIMICIIIData:
 #     # x = torch.from_numpy(x).to(device)
 
 #
-if __name__ =='__main__':
-    d = MIMICIIIData(64, 24 , '../../data/mimic_iii/test_dump/decay_data_20926.npz',)
-    t_l,v_l,ts_l = d.data_loader()
 
-    for x, s,y in v_l:
-        if y.shape[0] <= 40:
-            print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
-            break
-        print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
+# if __name__ =='__main__':
+#     d = MIMICIIIData(64, 24 , '../../data/mimic_iii/test_dump/decay_data_20926.npz',)
+#     t_l,v_l,ts_l = d.data_loader()
 
-    print(len(v_l.dataset))
+#     for x, s,y in v_l:
+#         if y.shape[0] <= 40:
+#             print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
+#             break
+#         print(f'x:{x.size()},s:{s.size()}, y:{y.size()}')
+
+#     print(len(v_l.dataset))

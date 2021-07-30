@@ -304,7 +304,7 @@ class TrainModels:
         y_truth = []
         y_pred = []
         with torch.no_grad():
-            if self.args['model_type'] == 'RIMDecay':
+            if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
                 # TODO there is a bug in number of samples for test and val data sets
                 for x, static, x_mean, y in data_loader:
                     static = static.to(self.device)
@@ -376,7 +376,7 @@ class TrainModels:
         model.load_state_dict(checkpoint['net'])
         self.logger.info(f'Loaded model arch: \n {model}')
 
-        if args['model_type'] == 'RIMDecay':
+        if args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
             x, static, x_mean, y = test_data
             static = static.to(self.device)
             x_mask = x[:, 1, :, :].to(self.device)

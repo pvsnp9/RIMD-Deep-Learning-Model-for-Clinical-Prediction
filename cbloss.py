@@ -125,7 +125,7 @@ def eval(model, val_loader):
             print(classification_report(y, pred.cpu().detach().numpy()))
             sns.heatmap(cf_matrix, annot=True)
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     '''no_of_classes = 2
     logits = torch.rand(10,no_of_classes).float()
     labels = torch.randint(0,no_of_classes, size = (10,))

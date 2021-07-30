@@ -1,0 +1,338 @@
+Run Description: Experiment # 1.2: RIMDecay tuned 
+Log file created at 2021/07/30  09:34:25
+Directory: mimic//0730-09-34-25
+Start time: 2021-07-30 09:34:25.194500
+{'epochs': 50, 'batch_size': 56, 'input_size': 13, 'model_type': 'GRUD', 'hidden_size': 13, 'num_rims': 2, 'lr': 9.645142728701031e-05, 'rnn_cell': 'GRU', 'input_key_size': 64, 'input_value_size': 32, 'input_query_size': 64, 'num_input_heads': 1, 'input_dropout': 0.2694669454300502, 'comm_key_size': 32, 'comm_value_size': 13, 'comm_query_size': 32, 'num_comm_heads': 1, 'comm_dropout': 0.12824679075614986, 'active_rims': 2, 'mask': True, 'mask_size': 13, 'delta_size': 13, 'static_features': 16, 'need_data_preprocessing': False, 'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl', 'processed_data_path': 'data/50_percent/', 'input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_in_hosp_23944.npz', 'decay_input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_in_hosp_23944.npz', 'max_no_improvement': 20, 'improvement_threshold': 0.0001, 'is_tuning': False, 'balance': False, 'is_cbloss': False}
+Model Arch: 
+ MIMICGRUDModel(
+  (grud): GRUD(
+    (gamma_x_l): CustomLinear(in_features=13, out_features=13, bias=True)
+    (gamma_h_l): CustomLinear(in_features=13, out_features=13, bias=True)
+    (gru_cell): CustomGRUCell()
+  )
+  (linear): Linear(in_features=29, out_features=1, bias=True)
+  (loss): BCELoss()
+)
+Training, Validating, and Testing: GRUD model with GRU cell 
+******************** GRUD_GRU *************************************
+--- EPOCH: 1 --------------------------------- B-F1: 0.00 from EPOCH: 1,   Test-F1 : 0.00
+----- time spent for training  : 14.229328870773315 -----
+ time for train set report : 0.02499985694885254 
+eval time for val set : 1.1747336387634277 
+epoch loss: 156.822, taining accuracy: 87.82, validation accuracy: 89.25, Val-F1-score: 0.52, Test-F1 : 0.00 
+New Best F1 Score at epoch 0 : 0.52
+******************** GRUD_GRU *************************************
+--- EPOCH: 2 --------------------------------- B-F1: 0.52 from EPOCH: 1,   Test-F1 : 0.00
+----- time spent for training  : 14.003719806671143 -----
+ time for train set report : 0.022002458572387695 
+eval time for val set : 1.1467559337615967 
+epoch loss: 123.963, taining accuracy: 89.25, validation accuracy: 89.25, Val-F1-score: 0.00, Test-F1 : 0.00 
+******************** GRUD_GRU *************************************
+--- EPOCH: 3 --------------------------------- B-F1: 0.52 from EPOCH: 1,   Test-F1 : 0.00
+----- time spent for training  : 13.835481405258179 -----
+ time for train set report : 0.021970272064208984 
+eval time for val set : 1.153904676437378 
+epoch loss: 106.173, taining accuracy: 89.26, validation accuracy: 89.25, Val-F1-score: 0.00, Test-F1 : 0.00 
+******************** GRUD_GRU *************************************
+--- EPOCH: 4 --------------------------------- B-F1: 0.52 from EPOCH: 1,   Test-F1 : 0.00
+----- time spent for training  : 14.008111000061035 -----
+ time for train set report : 0.02200007438659668 
+eval time for val set : 1.144277572631836 
+epoch loss: 100.563, taining accuracy: 89.27, validation accuracy: 89.22, Val-F1-score: 0.00, Test-F1 : 0.00 
+******************** GRUD_GRU *************************************
+--- EPOCH: 5 --------------------------------- B-F1: 0.52 from EPOCH: 1,   Test-F1 : 0.00
+----- time spent for training  : 14.196650266647339 -----
+ time for train set report : 0.023000478744506836 
+eval time for val set : 1.1567070484161377 
+epoch loss: 97.717, taining accuracy: 89.28, validation accuracy: 89.22, Val-F1-score: 0.00, Test-F1 : 0.53 
+******************** GRUD_GRU *************************************
+--- EPOCH: 6 --------------------------------- B-F1: 0.52 from EPOCH: 1,   Test-F1 : 0.53
+----- time spent for training  : 14.090433835983276 -----
+ time for train set report : 0.022997379302978516 
+eval time for val set : 1.1329329013824463 
+epoch loss: 94.923, taining accuracy: 89.30, validation accuracy: 89.33, Val-F1-score: 2.08, Test-F1 : 2.10 
+New Best F1 Score at epoch 5 : 2.08
+******************** GRUD_GRU *************************************
+--- EPOCH: 7 --------------------------------- B-F1: 2.08 from EPOCH: 6,   Test-F1 : 2.10
+----- time spent for training  : 13.90033745765686 -----
+ time for train set report : 0.022030115127563477 
+eval time for val set : 1.1580662727355957 
+epoch loss: 91.937, taining accuracy: 89.40, validation accuracy: 89.61, Val-F1-score: 8.04, Test-F1 : 5.66 
+New Best F1 Score at epoch 6 : 8.04
+******************** GRUD_GRU *************************************
+--- EPOCH: 8 --------------------------------- B-F1: 8.04 from EPOCH: 7,   Test-F1 : 5.66
+----- time spent for training  : 14.17387580871582 -----
+ time for train set report : 0.023001432418823242 
+eval time for val set : 1.2220067977905273 
+epoch loss: 89.331, taining accuracy: 89.55, validation accuracy: 89.92, Val-F1-score: 14.46, Test-F1 : 12.78 
+New Best F1 Score at epoch 7 : 14.46
+******************** GRUD_GRU *************************************
+--- EPOCH: 9 --------------------------------- B-F1: 14.46 from EPOCH: 8,   Test-F1 : 12.78
+----- time spent for training  : 14.099534511566162 -----
+ time for train set report : 0.023030996322631836 
+eval time for val set : 1.1454458236694336 
+epoch loss: 87.335, taining accuracy: 89.73, validation accuracy: 90.03, Val-F1-score: 18.94, Test-F1 : 18.18 
+New Best F1 Score at epoch 8 : 18.94
+******************** GRUD_GRU *************************************
+--- EPOCH: 10 --------------------------------- B-F1: 18.94 from EPOCH: 9,   Test-F1 : 18.18
+----- time spent for training  : 14.15177583694458 -----
+ time for train set report : 0.022032499313354492 
+eval time for val set : 1.1719191074371338 
+epoch loss: 86.004, taining accuracy: 89.88, validation accuracy: 90.14, Val-F1-score: 21.67, Test-F1 : 22.42 
+New Best F1 Score at epoch 9 : 21.67
+******************** GRUD_GRU *************************************
+--- EPOCH: 11 --------------------------------- B-F1: 21.67 from EPOCH: 10,   Test-F1 : 22.42
+----- time spent for training  : 14.16637659072876 -----
+ time for train set report : 0.02300262451171875 
+eval time for val set : 1.158388614654541 
+epoch loss: 85.195, taining accuracy: 89.92, validation accuracy: 90.31, Val-F1-score: 24.72, Test-F1 : 24.45 
+New Best F1 Score at epoch 10 : 24.72
+******************** GRUD_GRU *************************************
+--- EPOCH: 12 --------------------------------- B-F1: 24.72 from EPOCH: 11,   Test-F1 : 24.45
+----- time spent for training  : 15.262206077575684 -----
+ time for train set report : 0.023999452590942383 
+eval time for val set : 1.1490871906280518 
+epoch loss: 84.637, taining accuracy: 89.92, validation accuracy: 90.31, Val-F1-score: 25.71, Test-F1 : 24.40 
+New Best F1 Score at epoch 11 : 25.71
+******************** GRUD_GRU *************************************
+--- EPOCH: 13 --------------------------------- B-F1: 25.71 from EPOCH: 12,   Test-F1 : 24.40
+----- time spent for training  : 14.155839920043945 -----
+ time for train set report : 0.02299976348876953 
+eval time for val set : 1.1538455486297607 
+epoch loss: 84.129, taining accuracy: 89.93, validation accuracy: 90.31, Val-F1-score: 25.71, Test-F1 : 24.02 
+******************** GRUD_GRU *************************************
+--- EPOCH: 14 --------------------------------- B-F1: 25.71 from EPOCH: 12,   Test-F1 : 24.02
+----- time spent for training  : 14.065299987792969 -----
+ time for train set report : 0.02299809455871582 
+eval time for val set : 1.2024528980255127 
+epoch loss: 83.816, taining accuracy: 89.90, validation accuracy: 90.36, Val-F1-score: 26.14, Test-F1 : 25.22 
+New Best F1 Score at epoch 13 : 26.14
+******************** GRUD_GRU *************************************
+--- EPOCH: 15 --------------------------------- B-F1: 26.14 from EPOCH: 14,   Test-F1 : 25.22
+----- time spent for training  : 14.419476509094238 -----
+ time for train set report : 0.023030996322631836 
+eval time for val set : 1.204463243484497 
+epoch loss: 83.395, taining accuracy: 89.95, validation accuracy: 90.34, Val-F1-score: 26.41, Test-F1 : 25.92 
+New Best F1 Score at epoch 14 : 26.41
+******************** GRUD_GRU *************************************
+--- EPOCH: 16 --------------------------------- B-F1: 26.41 from EPOCH: 15,   Test-F1 : 25.92
+----- time spent for training  : 14.321859359741211 -----
+ time for train set report : 0.023997783660888672 
+eval time for val set : 1.154473066329956 
+epoch loss: 83.145, taining accuracy: 89.94, validation accuracy: 90.36, Val-F1-score: 26.46, Test-F1 : 26.29 
+New Best F1 Score at epoch 15 : 26.46
+******************** GRUD_GRU *************************************
+--- EPOCH: 17 --------------------------------- B-F1: 26.46 from EPOCH: 16,   Test-F1 : 26.29
+----- time spent for training  : 14.41499376296997 -----
+ time for train set report : 0.02300405502319336 
+eval time for val set : 1.1773557662963867 
+epoch loss: 82.730, taining accuracy: 89.99, validation accuracy: 90.31, Val-F1-score: 26.35, Test-F1 : 25.86 
+******************** GRUD_GRU *************************************
+--- EPOCH: 18 --------------------------------- B-F1: 26.46 from EPOCH: 16,   Test-F1 : 25.86
+----- time spent for training  : 14.082651138305664 -----
+ time for train set report : 0.02300238609313965 
+eval time for val set : 1.2215251922607422 
+epoch loss: 82.429, taining accuracy: 89.99, validation accuracy: 90.34, Val-F1-score: 26.72, Test-F1 : 26.29 
+New Best F1 Score at epoch 17 : 26.72
+******************** GRUD_GRU *************************************
+--- EPOCH: 19 --------------------------------- B-F1: 26.72 from EPOCH: 18,   Test-F1 : 26.29
+----- time spent for training  : 14.323575973510742 -----
+ time for train set report : 0.024080514907836914 
+eval time for val set : 1.1754980087280273 
+epoch loss: 82.281, taining accuracy: 90.00, validation accuracy: 90.31, Val-F1-score: 26.67, Test-F1 : 26.24 
+******************** GRUD_GRU *************************************
+--- EPOCH: 20 --------------------------------- B-F1: 26.72 from EPOCH: 18,   Test-F1 : 26.24
+----- time spent for training  : 14.23393988609314 -----
+ time for train set report : 0.024038314819335938 
+eval time for val set : 1.1755001544952393 
+epoch loss: 82.057, taining accuracy: 90.00, validation accuracy: 90.28, Val-F1-score: 26.61, Test-F1 : 26.50 
+******************** GRUD_GRU *************************************
+--- EPOCH: 21 --------------------------------- B-F1: 26.72 from EPOCH: 18,   Test-F1 : 26.50
+----- time spent for training  : 14.30202054977417 -----
+ time for train set report : 0.02302837371826172 
+eval time for val set : 1.1575877666473389 
+epoch loss: 81.674, taining accuracy: 90.01, validation accuracy: 90.28, Val-F1-score: 26.29, Test-F1 : 26.61 
+******************** GRUD_GRU *************************************
+--- EPOCH: 22 --------------------------------- B-F1: 26.72 from EPOCH: 18,   Test-F1 : 26.61
+----- time spent for training  : 14.246374607086182 -----
+ time for train set report : 0.024004697799682617 
+eval time for val set : 1.1864254474639893 
+epoch loss: 81.428, taining accuracy: 90.03, validation accuracy: 90.31, Val-F1-score: 27.29, Test-F1 : 26.78 
+New Best F1 Score at epoch 21 : 27.29
+******************** GRUD_GRU *************************************
+--- EPOCH: 23 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 26.78
+----- time spent for training  : 14.276028633117676 -----
+ time for train set report : 0.023972272872924805 
+eval time for val set : 1.1664650440216064 
+epoch loss: 81.337, taining accuracy: 90.05, validation accuracy: 90.25, Val-F1-score: 26.87, Test-F1 : 26.61 
+******************** GRUD_GRU *************************************
+--- EPOCH: 24 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 26.61
+----- time spent for training  : 14.34551191329956 -----
+ time for train set report : 0.023008108139038086 
+eval time for val set : 1.170835256576538 
+epoch loss: 80.978, taining accuracy: 90.04, validation accuracy: 90.20, Val-F1-score: 27.06, Test-F1 : 27.35 
+******************** GRUD_GRU *************************************
+--- EPOCH: 25 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 27.35
+----- time spent for training  : 14.281977653503418 -----
+ time for train set report : 0.023540735244750977 
+eval time for val set : 1.1739344596862793 
+epoch loss: 80.815, taining accuracy: 90.04, validation accuracy: 90.28, Val-F1-score: 27.23, Test-F1 : 26.44 
+******************** GRUD_GRU *************************************
+--- EPOCH: 26 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 26.44
+----- time spent for training  : 14.257020950317383 -----
+ time for train set report : 0.02300882339477539 
+eval time for val set : 1.1735875606536865 
+epoch loss: 80.732, taining accuracy: 90.06, validation accuracy: 90.20, Val-F1-score: 26.75, Test-F1 : 26.98 
+******************** GRUD_GRU *************************************
+--- EPOCH: 27 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 26.98
+----- time spent for training  : 14.334423065185547 -----
+ time for train set report : 0.02296900749206543 
+eval time for val set : 1.1602206230163574 
+epoch loss: 80.476, taining accuracy: 90.09, validation accuracy: 90.17, Val-F1-score: 26.69, Test-F1 : 27.48 
+******************** GRUD_GRU *************************************
+--- EPOCH: 28 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 27.48
+----- time spent for training  : 14.324833154678345 -----
+ time for train set report : 0.022962570190429688 
+eval time for val set : 1.185567855834961 
+epoch loss: 80.160, taining accuracy: 90.14, validation accuracy: 90.28, Val-F1-score: 26.92, Test-F1 : 27.35 
+******************** GRUD_GRU *************************************
+--- EPOCH: 29 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 27.35
+----- time spent for training  : 14.300135135650635 -----
+ time for train set report : 0.023003816604614258 
+eval time for val set : 1.1764678955078125 
+epoch loss: 80.018, taining accuracy: 90.12, validation accuracy: 90.25, Val-F1-score: 27.18, Test-F1 : 27.91 
+******************** GRUD_GRU *************************************
+--- EPOCH: 30 --------------------------------- B-F1: 27.29 from EPOCH: 22,   Test-F1 : 27.91
+----- time spent for training  : 14.321715116500854 -----
+ time for train set report : 0.023028135299682617 
+eval time for val set : 1.2105154991149902 
+epoch loss: 79.783, taining accuracy: 90.10, validation accuracy: 90.28, Val-F1-score: 27.85, Test-F1 : 27.18 
+New Best F1 Score at epoch 29 : 27.85
+******************** GRUD_GRU *************************************
+--- EPOCH: 31 --------------------------------- B-F1: 27.85 from EPOCH: 30,   Test-F1 : 27.18
+----- time spent for training  : 14.206068515777588 -----
+ time for train set report : 0.02304553985595703 
+eval time for val set : 1.1656014919281006 
+epoch loss: 79.605, taining accuracy: 90.21, validation accuracy: 90.25, Val-F1-score: 26.87, Test-F1 : 27.29 
+******************** GRUD_GRU *************************************
+--- EPOCH: 32 --------------------------------- B-F1: 27.85 from EPOCH: 30,   Test-F1 : 27.29
+----- time spent for training  : 14.220269441604614 -----
+ time for train set report : 0.021999597549438477 
+eval time for val set : 1.1688923835754395 
+epoch loss: 79.484, taining accuracy: 90.17, validation accuracy: 90.28, Val-F1-score: 28.15, Test-F1 : 28.15 
+New Best F1 Score at epoch 31 : 28.15
+******************** GRUD_GRU *************************************
+--- EPOCH: 33 --------------------------------- B-F1: 28.15 from EPOCH: 32,   Test-F1 : 28.15
+----- time spent for training  : 14.394216299057007 -----
+ time for train set report : 0.0239715576171875 
+eval time for val set : 1.181920051574707 
+epoch loss: 79.255, taining accuracy: 90.20, validation accuracy: 90.31, Val-F1-score: 28.81, Test-F1 : 28.99 
+New Best F1 Score at epoch 32 : 28.81
+******************** GRUD_GRU *************************************
+--- EPOCH: 34 --------------------------------- B-F1: 28.81 from EPOCH: 33,   Test-F1 : 28.99
+----- time spent for training  : 14.217323780059814 -----
+ time for train set report : 0.02297067642211914 
+eval time for val set : 1.1713297367095947 
+epoch loss: 79.179, taining accuracy: 90.20, validation accuracy: 90.50, Val-F1-score: 30.13, Test-F1 : 28.57 
+New Best F1 Score at epoch 33 : 30.13
+******************** GRUD_GRU *************************************
+--- EPOCH: 35 --------------------------------- B-F1: 30.13 from EPOCH: 34,   Test-F1 : 28.57
+----- time spent for training  : 14.301572799682617 -----
+ time for train set report : 0.023003816604614258 
+eval time for val set : 1.2153542041778564 
+epoch loss: 79.087, taining accuracy: 90.21, validation accuracy: 90.39, Val-F1-score: 28.99, Test-F1 : 27.54 
+******************** GRUD_GRU *************************************
+--- EPOCH: 36 --------------------------------- B-F1: 30.13 from EPOCH: 34,   Test-F1 : 27.54
+----- time spent for training  : 14.281180381774902 -----
+ time for train set report : 0.022996187210083008 
+eval time for val set : 1.194666862487793 
+epoch loss: 78.822, taining accuracy: 90.23, validation accuracy: 90.42, Val-F1-score: 29.05, Test-F1 : 28.09 
+******************** GRUD_GRU *************************************
+--- EPOCH: 37 --------------------------------- B-F1: 30.13 from EPOCH: 34,   Test-F1 : 28.09
+----- time spent for training  : 14.344542741775513 -----
+ time for train set report : 0.022028207778930664 
+eval time for val set : 1.1776173114776611 
+epoch loss: 78.669, taining accuracy: 90.28, validation accuracy: 90.45, Val-F1-score: 29.41, Test-F1 : 28.09 
+******************** GRUD_GRU *************************************
+--- EPOCH: 38 --------------------------------- B-F1: 30.13 from EPOCH: 34,   Test-F1 : 28.09
+----- time spent for training  : 14.255216598510742 -----
+ time for train set report : 0.022029876708984375 
+eval time for val set : 1.1923975944519043 
+epoch loss: 78.605, taining accuracy: 90.26, validation accuracy: 90.34, Val-F1-score: 30.33, Test-F1 : 28.33 
+New Best F1 Score at epoch 37 : 30.33
+******************** GRUD_GRU *************************************
+--- EPOCH: 39 --------------------------------- B-F1: 30.33 from EPOCH: 38,   Test-F1 : 28.33
+----- time spent for training  : 14.238347053527832 -----
+ time for train set report : 0.023038148880004883 
+eval time for val set : 1.207578182220459 
+epoch loss: 78.477, taining accuracy: 90.27, validation accuracy: 90.45, Val-F1-score: 30.58, Test-F1 : 28.03 
+New Best F1 Score at epoch 38 : 30.58
+******************** GRUD_GRU *************************************
+--- EPOCH: 40 --------------------------------- B-F1: 30.58 from EPOCH: 39,   Test-F1 : 28.03
+----- time spent for training  : 14.250748872756958 -----
+ time for train set report : 0.02299976348876953 
+eval time for val set : 1.173557996749878 
+epoch loss: 78.231, taining accuracy: 90.31, validation accuracy: 90.53, Val-F1-score: 31.06, Test-F1 : 27.97 
+New Best F1 Score at epoch 39 : 31.06
+******************** GRUD_GRU *************************************
+--- EPOCH: 41 --------------------------------- B-F1: 31.06 from EPOCH: 40,   Test-F1 : 27.97
+----- time spent for training  : 14.273332834243774 -----
+ time for train set report : 0.024030208587646484 
+eval time for val set : 1.161919355392456 
+epoch loss: 78.067, taining accuracy: 90.27, validation accuracy: 90.45, Val-F1-score: 31.71, Test-F1 : 29.27 
+New Best F1 Score at epoch 40 : 31.71
+******************** GRUD_GRU *************************************
+--- EPOCH: 42 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 29.27
+----- time spent for training  : 14.31006407737732 -----
+ time for train set report : 0.023999691009521484 
+eval time for val set : 1.1941592693328857 
+epoch loss: 77.955, taining accuracy: 90.29, validation accuracy: 90.42, Val-F1-score: 31.36, Test-F1 : 30.14 
+******************** GRUD_GRU *************************************
+--- EPOCH: 43 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 30.14
+----- time spent for training  : 14.243642091751099 -----
+ time for train set report : 0.022701025009155273 
+eval time for val set : 1.1781337261199951 
+epoch loss: 77.873, taining accuracy: 90.39, validation accuracy: 90.48, Val-F1-score: 31.49, Test-F1 : 29.16 
+******************** GRUD_GRU *************************************
+--- EPOCH: 44 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 29.16
+----- time spent for training  : 14.22989296913147 -----
+ time for train set report : 0.02200794219970703 
+eval time for val set : 1.1620533466339111 
+epoch loss: 77.742, taining accuracy: 90.36, validation accuracy: 90.50, Val-F1-score: 30.71, Test-F1 : 28.45 
+******************** GRUD_GRU *************************************
+--- EPOCH: 45 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 28.45
+----- time spent for training  : 14.294247388839722 -----
+ time for train set report : 0.023028850555419922 
+eval time for val set : 1.1823005676269531 
+epoch loss: 77.579, taining accuracy: 90.38, validation accuracy: 90.42, Val-F1-score: 31.36, Test-F1 : 29.04 
+******************** GRUD_GRU *************************************
+--- EPOCH: 46 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 29.04
+----- time spent for training  : 14.68076491355896 -----
+ time for train set report : 0.023029565811157227 
+eval time for val set : 1.2937285900115967 
+epoch loss: 77.489, taining accuracy: 90.38, validation accuracy: 90.39, Val-F1-score: 31.30, Test-F1 : 30.24 
+******************** GRUD_GRU *************************************
+--- EPOCH: 47 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 30.24
+----- time spent for training  : 14.3705153465271 -----
+ time for train set report : 0.02200031280517578 
+eval time for val set : 1.1801791191101074 
+epoch loss: 77.328, taining accuracy: 90.33, validation accuracy: 90.45, Val-F1-score: 31.15, Test-F1 : 28.81 
+******************** GRUD_GRU *************************************
+--- EPOCH: 48 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 28.81
+----- time spent for training  : 14.598905801773071 -----
+ time for train set report : 0.023997068405151367 
+eval time for val set : 1.2141344547271729 
+epoch loss: 77.254, taining accuracy: 90.33, validation accuracy: 90.48, Val-F1-score: 31.49, Test-F1 : 30.55 
+******************** GRUD_GRU *************************************
+--- EPOCH: 49 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 30.55
+----- time spent for training  : 14.67457365989685 -----
+ time for train set report : 0.023027658462524414 
+eval time for val set : 1.2521355152130127 
+epoch loss: 77.164, taining accuracy: 90.42, validation accuracy: 90.53, Val-F1-score: 31.62, Test-F1 : 29.80 
+******************** GRUD_GRU *************************************
+--- EPOCH: 50 --------------------------------- B-F1: 31.71 from EPOCH: 41,   Test-F1 : 29.80
+----- time spent for training  : 14.097780227661133 -----
+ time for train set report : 0.024001598358154297 
+eval time for val set : 1.1740241050720215 
+epoch loss: 77.124, taining accuracy: 90.32, validation accuracy: 90.39, Val-F1-score: 31.02, Test-F1 : 30.12 
+saving the models state...

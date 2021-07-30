@@ -278,9 +278,9 @@ class MortalityDataPrep:
             print('Given variables does not exist in statics data frame !!')
 
         
-#if __name__ == "__main__":
- #   d = MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data_10hr.pkl', type='los_icu')
-  #  print('Reading and prepprocessing data .....')
-   # x = d.preprocess_decay(destination_dir='data/mimic_iii/test_dump')
-    # x = d.prepare_non_iid('data/mimic_iii/test_dump','data/mimic_iii/test_dump/all_hourly_data.pkl' )
-    #print(f'Preprocessing Done, and saved .npz files @ {x}')
+# if __name__ == "__main__":
+#    d = MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data_10hr.pkl', type='in_hosp')
+#    print('Reading and prepprocessing data .....')
+#    x = d.preprocess_decay(destination_dir='data/mimic_iii/test_dump')
+# #    x = d.prepare_non_iid('data/mimic_iii/test_dump','data/mimic_iii/test_dump/all_hourly_data.pkl' )
+#    print(f'Preprocessing Done, and saved .npz files @ {x}')
