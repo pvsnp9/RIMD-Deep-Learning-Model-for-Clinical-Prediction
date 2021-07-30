@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import argmax
 import torch
 import pickle
 import numpy as np
@@ -9,6 +10,7 @@ from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.data_prep import MortalityDataPrep
 from src.model.mimic_decay_model import MIMICDecayModel
 from src.model.mimic_decay_with_cb_loss import MIMICDecayCBLossModel
+from src.model.mimic_grud_model import MIMICGRUDModel
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 import time
@@ -41,7 +43,7 @@ class TrainModels:
             self.model = None
             self.cell_types = ['LSTM', 'GRU']
             self.data_object = data_object
-            if args['model_type'] == 'RIMDecay':
+            if args['model_type'] == 'RIMDecay' or args['model_type'] == 'GRUD' :
                 self.set_decay_params()
             else:
                 self.set_default_params()
@@ -125,7 +127,8 @@ class TrainModels:
         # self.args['rnn_cell'] = cell
         if self.args['model_type'] == 'RIMDecay':
             self.model = MIMICDecayModel(self.args).to(self.device)
-
+        if self.args['model_type'] == 'GRUD':
+            self.model = MIMICGRUDModel(self.args).to(self.device)
         elif self.args['model_type'] == 'RIM':
             self.model = MIMICModel(self.args).to(self.device)
         elif self.args['model_type'] == 'LSTM':
@@ -152,7 +155,7 @@ class TrainModels:
             y_pred = []
             y_truth = []
             self.model.train()
-            if self.args['model_type'] == 'RIMDecay':
+            if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
                 for x, static, x_mean, y in train_loader:
                     iter_ctr += 1
 

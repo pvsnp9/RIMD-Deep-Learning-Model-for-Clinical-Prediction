@@ -19,10 +19,8 @@ class MIMICDecayModel(nn.Module):
             args['num_comm_heads'], args['comm_dropout']
         )
 
-        self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 10)
-        self.linear_two = nn.Linear(10, 1)
-        self.relu = nn.ReLU()
-        self.loss = nn.BCELoss()
+        self.linear = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 1)
+        self.loss = nn.MSELoss()
 
     def forward(self, x, statics, mask, delta, x_last_observed, x_mean, y=None):
         x = x.float()
@@ -55,15 +53,12 @@ class MIMICDecayModel(nn.Module):
         else:
             full_data = hs
             
-        linear_1 = self.linear_one(full_data)
-        relu_out = self.relu(linear_1)
-        predictions = self.linear_two(relu_out)
+        predictions = self.linear(full_data)
 
         if y is not None:
             y = y.float()
-            probs = torch.sigmoid(predictions)
-            loss = self.loss(probs.view(-1), y)
-            return probs, loss
+            loss = self.loss(predictions.view(-1), y)
+            return predictions, loss
 
         return predictions
         

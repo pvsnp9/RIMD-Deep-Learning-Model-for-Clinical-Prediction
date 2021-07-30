@@ -2,7 +2,7 @@ from pickle import NONE
 import pandas as pd 
 import numpy as np
 import torch 
-from simple_imputer import SimpleImputer
+from .simple_imputer import SimpleImputer
 
 
 class MortalityDataPrep:
@@ -55,6 +55,11 @@ class MortalityDataPrep:
 
             vital_labs.loc[:, idx[:, 'mean']] = (vital_labs.loc[:, idx[:, 'mean']] - means) / stdv
             
+
+            vital_labs = self.imputer.decay_imputer(vital_labs)
+            statics.isnull().any().any(), 'Null Found in static features'
+            vital_labs.isnull().any().any(), 'Null found in variable feature'
+            
             '''
             compute icu_stay mean for each patients
             '''
@@ -64,10 +69,6 @@ class MortalityDataPrep:
             
             del icu_stay_mean
 
-            vital_labs = self.imputer.decay_imputer(vital_labs)
-            statics.isnull().any().any(), 'Null Found in static features'
-            vital_labs.isnull().any().any(), 'Null found in variable feature'
-            
 
             if self.type == 'in_icu':
                 targets.drop(columns=['mort_hosp', 'los_icu'], inplace=True)
@@ -112,7 +113,7 @@ class MortalityDataPrep:
         self.read_file()
 
         # pick targets who has max_hours >= 24 hrs
-        targets = self.statics[self.statics.max_hours > self.window_size + self.gap_time][['mort_hosp', 'mort_icu']]
+        targets = self.statics[self.statics.max_hours > self.window_size + self.gap_time][['mort_hosp', 'mort_icu', 'los_icu']]
         targets.astype(float)
 
         '''
@@ -133,6 +134,12 @@ class MortalityDataPrep:
 
         self.vital_labs.loc[:, idx[:, 'mean']] = (self.vital_labs.loc[:, idx[:, 'mean']] - means) / stdv
         
+        
+
+        self.vital_labs = self.imputer.decay_imputer(self.vital_labs)
+        self.statics.isnull().any().any(), 'Null Found in static features'
+        self.vital_labs.isnull().any().any(), 'Null found in variable feature'
+
         '''
         compute icu_stay mean for each patients [24 hrs]
         '''
@@ -141,10 +148,6 @@ class MortalityDataPrep:
         x_mean = np.expand_dims(icu_stay_mean, axis=1)
         
         del icu_stay_mean
-
-        self.vital_labs = self.imputer.decay_imputer(self.vital_labs)
-        self.statics.isnull().any().any(), 'Null Found in static features'
-        self.vital_labs.isnull().any().any(), 'Null found in variable feature'
         
 
         if self.type == 'in_icu':
@@ -185,7 +188,7 @@ class MortalityDataPrep:
     def preprocess(self, save_npy = True, destination_dir=''):
         self.read_file()
 
-        targets = self.statics[self.statics.max_hours > self.window_size + self.gap_time][['mort_hosp', 'mort_icu']]
+        targets = self.statics[self.statics.max_hours > self.window_size + self.gap_time][['mort_hosp', 'mort_icu', 'los_icu']]
         targets.astype(float) #index (ID_COLS) and data cols ['mort_hosp', 'mort_icu']
         self.vital_labs = self.vital_labs[(self.vital_labs.index.get_level_values('icustay_id').isin(set(targets.index.get_level_values('icustay_id')))) & (self.vital_labs.index.get_level_values('hours_in') < self.window_size)]
         self.statics = self.statics[(self.statics.index.get_level_values('icustay_id').isin(set(targets.index.get_level_values('icustay_id'))))]
@@ -275,9 +278,9 @@ class MortalityDataPrep:
             print('Given variables does not exist in statics data frame !!')
 
         
-# if __name__ == "__main__":
-#     d = MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data.pkl', type='los_icu')
-#     print('Reading and prepprocessing data .....')
-#     # x = d.preprocess_decay(destination_dir='data/mimic_iii/test_dump')
-#     x = d.prepare_non_iid('data/mimic_iii/test_dump','data/mimic_iii/test_dump/all_hourly_data.pkl' )
-#     print(f'Preprocessing Done, and saved .npz files @ {x}')
+#if __name__ == "__main__":
+ #   d = MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data_10hr.pkl', type='los_icu')
+  #  print('Reading and prepprocessing data .....')
+   # x = d.preprocess_decay(destination_dir='data/mimic_iii/test_dump')
+    # x = d.prepare_non_iid('data/mimic_iii/test_dump','data/mimic_iii/test_dump/all_hourly_data.pkl' )
+    #print(f'Preprocessing Done, and saved .npz files @ {x}')

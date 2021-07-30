@@ -84,7 +84,7 @@ def mimic_main(run_type, run_description):
         # model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = [ 'RIMDecay' ]
+        model_type = [ 'GRUD' ]
         for model in model_type:
             if model.startswith('RIM'):
                 cell_type = [ 'GRU']
@@ -97,7 +97,7 @@ def mimic_main(run_type, run_description):
                 #TODO calculate execution time and log it
                 args['rnn_cell'] = cell
                 args['model_type'] = model
-                if args['model_type'] == 'RIMDecay':
+                if args['model_type'] == 'RIMDecay' or args['model_type'] == 'GRUD':
                     dl_trainer = TrainModels(args,decay_data_object, logging)
                 else:
                     dl_trainer = TrainModels(args,data_object, logging)

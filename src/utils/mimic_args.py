@@ -24,13 +24,13 @@ args = {'epochs': 50,
         'need_data_preprocessing': False,
         'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl',
         'processed_data_path': 'data/50_percent/',
-        'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz',
-        'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz',
+        'input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_los_icu_23944.npz',
+        'decay_input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_los_icu_23944.npz',
         'max_no_improvement': 20,
         'improvement_threshold': 0.0001,
         'is_tuning': False,
         'balance': False
-        , 'is_cbloss': True}
+        , 'is_cbloss': False}
 
 
 #
