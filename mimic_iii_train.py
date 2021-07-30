@@ -133,7 +133,7 @@ class TrainModels:
             self.model = MIMICModel(self.args).to(self.device)
         elif self.args['model_type'] == 'LSTM':
             self.model = MIMICLSTMModel(self.args).to(self.device)
-        else:
+        elif self.args['model_type'] == 'GRU':
             self.model = MIMICGRUModel(self.args).to(self.device)
 
         self.logger.info(f'Model Arch: \n {self.model}')
