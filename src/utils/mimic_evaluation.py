@@ -1,18 +1,20 @@
+from imblearn.metrics import geometric_mean_score
 from matplotlib import pyplot as plt
 import sklearn.metrics
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, auc
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 from sklearn.metrics import roc_curve
 
 class MIMICReport():
 
-    def __init__(self,classifire_name, y_true, y_pred, y_score, output_dir):
+    def __init__(self,classifire_name, y_true, y_pred, y_score, output_dir, is_cbloss):
         self.y_pred = y_pred
         self.y_true = y_true
         self.y_score = y_score
         self.y_max = max(y_true)
         self.output_dir = output_dir
         self.classifire_name = classifire_name
+        self.is_cbloss = is_cbloss
     """
     Classification Report : SK-Learn version 
     """
@@ -54,9 +56,15 @@ class MIMICReport():
         precision, recall, threashold = precision_recall_curve(self.y_true, self.y_score)
         auc_p_r = roc_auc_score(y_true=self.y_true, y_score=self.y_score, average="weighted")
         # Since the possitive class is more important, and the data is imbalanced, this mettic may fits better to our need
-        prauc = average_precision_score(self.y_true, self.y_score )
-
+        if not self.is_cbloss:
+            prauc = average_precision_score(self.y_true, self.y_score )
+        else:
+            precision, recall, _ = precision_recall_curve(self.y_true, self.y_score)
+            prauc = auc(recall, precision)
         return {'AUROC': auc_p_r, 'PRAUC': prauc}
+
+    def get_geo_mean(self):
+        return {"GEOMEAN": geometric_mean_score(self.y_true,self.y_pred)}
 
     def get_all_metrics(self):
         #claculate the metrics
@@ -66,8 +74,10 @@ class MIMICReport():
         roc = self.get_roc_metrics()
         brier = self.get_brier()
 
+        geo =  self.get_geo_mean()
         #update the dictionary to add the roc and brier
         res.update(roc)
+        res.update(geo)
         res.pop('support')
         res['Brier'] = brier
 

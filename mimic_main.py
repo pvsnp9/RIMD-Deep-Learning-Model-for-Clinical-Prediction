@@ -84,10 +84,10 @@ def mimic_main(run_type, run_description):
         # model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = [ 'GRUD' ]
+        model_type = [ 'LSTM', 'GRU', 'RIMDecay','RIM']
         for model in model_type:
             if model.startswith('RIM'):
-                cell_type = [ 'GRU']
+                cell_type = [ 'GRU','LSTM']
             elif model == 'LSTM':
                 cell_type = ['LSTM']
             else:
@@ -105,7 +105,7 @@ def mimic_main(run_type, run_description):
                 train_res =  dl_trainer.train()
                 for model_1, res_sets in train_res.items():
                     y_truth, y_pred, y_score = res_sets
-                    report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
+                    report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures',args['is_cbloss'])
                     model_reports.update({model_1:report})
 
 
@@ -153,7 +153,7 @@ def mimic_main(run_type, run_description):
             trainer = TrainModels(logger= logging)
             model_path = f"{SAVE_DIR}/{model}_model.pt"
             y_truth, y_pred, y_score = trainer.test(model_path, test_data)
-            report = MIMICReport(model, y_truth, y_pred, y_score, './figures')
+            report = MIMICReport(model, y_truth, y_pred, y_score, './figures', args['is_cbloss'])
             model_reports.update({model:report})
 
     results = {}

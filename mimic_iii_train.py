@@ -2,6 +2,8 @@ from numpy.core.fromnumeric import argmax
 import torch
 import pickle
 import numpy as np
+from imblearn.metrics import geometric_mean_score
+
 from src.model.mimic_model import MIMICModel
 from src.model.mimic_lstm_model import MIMICLSTMModel
 from src.model.mimic_gru_model import MIMICGRUModel
@@ -112,7 +114,7 @@ class TrainModels:
         train_acc = []
         test_acc = []
         valid_f1 = []
-        train_f1 = []
+        # train_f1 = []
         # test_f1 = []
         t_f1 = 0
         max_val_accuracy = 0.0
@@ -121,7 +123,9 @@ class TrainModels:
         best_epoch_number = 0
         max_no_improvement = self.args['max_no_improvement']
         improvement_threshold = self.args['improvement_threshold']
-
+        max_test_f1 = 0
+        max_val_geo = 0
+        max_val_geo = 0
         # for cell in self.cell_types:
         train_loader, val_loader, test_loader = self.data_object.data_loader()
         # self.args['rnn_cell'] = cell
@@ -152,8 +156,8 @@ class TrainModels:
             iter_ctr = 0.0
             t_accuracy = 0
             norm = 0
-            y_pred = []
-            y_truth = []
+            # y_pred = []
+            # y_truth = []
             self.model.train()
             if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
                 for x, static, x_mean, y in train_loader:
@@ -181,8 +185,8 @@ class TrainModels:
 
                     correct = predictions.view(-1) == y.long()
                     t_accuracy += correct.sum().item()
-                    y_truth.append(y) #y.cpu().detach().numpy()
-                    y_pred.append(predictions) #predictions.view(-1).cpu().detach().numpy()
+                    # y_truth.append(y) #y.cpu().detach().numpy()
+                    # y_pred.append(predictions) #predictions.view(-1).cpu().detach().numpy()
                     ctr += 1
             else:
                 for x, statics, y in train_loader:
@@ -203,36 +207,39 @@ class TrainModels:
                     predictions = torch.round(output)
                     correct = predictions.view(-1) == y.long()
                     t_accuracy += correct.sum().item()
-                    y_truth.append(y)
-                    y_pred.append(predictions )
+                    # y_truth.append(y)
+                    # y_pred.append(predictions )
                     ctr += 1
-            y_truth = torch.cat(y_truth)
-            y_pred = torch.cat(y_pred)
-            y_truth = y_truth.cpu().detach().numpy()
-            y_pred = y_pred.view(-1).cpu().detach().numpy()
+            # y_truth = torch.cat(y_truth)
+            # y_pred = torch.cat(y_pred)
+            # y_truth = y_truth.cpu().detach().numpy()
+            # y_pred = y_pred.view(-1).cpu().detach().numpy()
             self.logger.info(f"----- time spent for training  : {time.time() - start} -----")
             start = time.time()
-            train_f1_report = classification_report(y_truth, y_pred, output_dict=True)
+            # train_f1_report = classification_report(y_truth, y_pred, output_dict=True)
             self.logger.info(f" time for train set report : {time.time() - start} ")
 
             start = time.time()
-            validation_accuracy, val_f1 = self.eval(val_loader)
+            validation_accuracy, val_f1, val_geo = self.eval(val_loader)
             self.logger.info(f"eval time for val set : {time.time() - start } ")
 
             # TODO Commented as we are not using it and in iteration it takes almost 3 seconds !, we might be able
             # to calculate the eval for validation set concurrently to reduce the time spent for each epoch
 
-            test_accuracy, t_f1 = self.eval(test_loader)
+            test_accuracy, t_f1, test_geo = self.eval(test_loader)
 
             self.logger.info(
                 f'epoch loss: {format(epoch_loss, ".3f")}, taining accuracy: {format(t_accuracy / len(train_loader.dataset) * 100, ".2f")},'
                 f' validation accuracy: {format(validation_accuracy * 100, ".2f")}, '
-                f'Val-F1-score: {format(val_f1 * 100, ".2f")}, Test-F1 : {format(t_f1 * 100, ".2f")} ')
+                f'Val-F1-score: {format(val_f1 * 100, ".2f")}, Test-F1 : {format(t_f1 * 100, ".2f")}, ')
+            self.logger.info(
+                f"Val_Geo_Mean : {format(val_geo * 100, '.2f')} , test_geo: {format(test_geo * 100, '.2f')}")
 
-            try:
-                train_f1.append((epoch, train_f1_report['1']['f1-score']))
-            except:
-                self.logger.info("Error : there is no sample with class label '1' !!!!")
+
+            # try:
+            #     train_f1.append((epoch, train_f1_report['1']['f1-score']))
+            # except:
+            #     self.logger.info("Error : there is no sample with class label '1' !!!!")
             valid_f1.append((epoch, val_f1))
             # test_f1.append((epoch, t_f1))
 
@@ -283,8 +290,8 @@ class TrainModels:
                       'wb') as f:
                 pickle.dump(test_acc, f)
 
-            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle", 'wb') as f:
-                pickle.dump(train_f1, f)
+            # with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Train_f1.pickle", 'wb') as f:
+            #     pickle.dump(train_f1, f)
 
             with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_Dev_f1.pickle", 'wb') as f:
                 pickle.dump(valid_f1, f)
@@ -297,6 +304,8 @@ class TrainModels:
         self.reports.update({self.model_name:
                                  self.test(self.model_saved_fname, self.data_object.get_test_data())})
         return self.reports
+
+
 
     def eval(self, data_loader):
         accuracy = 0
@@ -352,9 +361,9 @@ class TrainModels:
         if f1_score <= 0.01:
             print(f1_score)
             pass
-
+        geo = geometric_mean_score(y_truth, y_pred)
         accuracy /= len(data_loader.dataset)
-        return accuracy, f1_score
+        return accuracy, f1_score, geo
 
     def test(self, model_path, test_data):
         checkpoint = torch.load(model_path)
@@ -410,7 +419,7 @@ class TrainModels:
         train_acc = []
         test_acc = []
         valid_f1 = []
-        train_f1 = []
+        # train_f1 = []
         test_f1 = []
         best_epoch_number =0
         max_val_accuracy = 0.0
@@ -448,8 +457,8 @@ class TrainModels:
             t_accuracy = 0
             norm = 0
             start = time.time()
-            y_pred = []
-            y_truth = []
+            # y_pred = []
+            # y_truth = []
             self.model.train()
             if self.args['model_type'] == 'RIMDecay':
                 for x, static, x_mean, y in train_loader:
@@ -476,8 +485,8 @@ class TrainModels:
                     epoch_loss += l.item()
                     correct = y.long() == output
                     t_accuracy += correct.sum().item()
-                    y_truth.extend(y.cpu().detach().numpy())
-                    y_pred.extend(output.cpu().detach().numpy())
+                    # y_truth.extend(y.cpu().detach().numpy())
+                    # y_pred.extend(output.cpu().detach().numpy())
 
                     ctr += 1
             else:
@@ -500,30 +509,30 @@ class TrainModels:
                     correct = output == y.long()
                     t_accuracy += correct.sum().item()
 
-                    y_truth.extend(y.cpu().detach().numpy())
-                    y_pred.extend(output.cpu().detach().numpy())
+                    # y_truth.extend(y.cpu().detach().numpy())
+                    # y_pred.extend(output.cpu().detach().numpy())
 
                     ctr += 1
             self.logger.info(f"time spent for training : {time.time() - start }")
-            train_f1_report = classification_report(y_truth, y_pred, output_dict=True)
-            validation_accuracy, val_f1 = self.eval_cb_loss(val_loader)
-            test_accuracy, t_f1 = self.eval_cb_loss(test_loader)
+            # train_f1_report = classification_report(y_truth, y_pred, output_dict=True)
+            validation_accuracy, val_f1 , val_geo = self.eval_cb_loss(val_loader)
+            test_accuracy, t_f1, test_geo = self.eval_cb_loss(test_loader)
 
             self.logger.info(
                 f'epoch loss: {format(epoch_loss, ".3f")}, taining accuracy: {format(t_accuracy / len(train_loader.dataset) * 100, ".2f")},'
                 f' validation accuracy: {format(validation_accuracy * 100, ".2f")}, '
-                f'Val-F1-score: {format(val_f1 * 100, ".2f")}, Test-F1 : {format(t_f1 * 100 , ".2f")} ')
-
+                f'Val-F1-score: {format(val_f1 * 100, ".2f")}, Test-F1 : {format(t_f1 * 100 , ".2f")}, ')
+            self.logger.info(f"Val_Geo_Mean : {format(val_geo * 100,'.2f' )  } , test_geo: {format(test_geo * 100,'.2f') }")
             # TODO - Warning!!! the below code has been added to stop bad parameters which cause large loss and continuing
             # Training is not desired !
             if epoch_loss > 1000:
                 self.logger.warn("Un acceptable loss")
                 return 0
             # append f1 score
-            try:
-                train_f1.append((epoch, train_f1_report['1']['f1-score']))
-            except:
-                self.logger.info("Error : there is no sample with class label '1' !!!!")
+            # try:
+            #     train_f1.append((epoch, train_f1_report['1']['f1-score']))
+            # except:
+            #     self.logger.info("Error : there is no sample with class label '1' !!!!")
             valid_f1.append((epoch, val_f1))
             test_f1.append((epoch, t_f1))
 
@@ -645,7 +654,10 @@ class TrainModels:
             pass
 
         accuracy /= len(data_loader.dataset)
-        return accuracy, f1_score
+        geo = geometric_mean_score(y_truth, y_pred)
+
+        return accuracy, f1_score, geo
+
 
     def test_cb_loss(self, model_path, test_data):
         checkpoint = torch.load(model_path)
@@ -691,11 +703,100 @@ class TrainModels:
         gt = y.cpu().detach().numpy()
         pt = probs.cpu().detach().numpy()
 
-        y_score , indexes = torch.max(torch.softmax(predictions, dim=1),dim=1)
+        y_score  = torch.softmax(predictions, dim=1)
         y_score =  y_score.cpu().detach().numpy()
         print(f"time to detach arrays { time.time() - start }")
-        return gt, pt, y_score
+        return gt, pt, y_score[:,1]
 
+    # def test_cb_loss_new(self, model_path, data_loader):
+    #     checkpoint = torch.load(model_path)
+    #     args = checkpoint['args']
+    #     if args['model_type'] == 'RIMDecay':
+    #         model = MIMICDecayCBLossModel(args).to(self.device)
+    #     elif args['model_type'] == 'RIM':
+    #         model = MIMICModel(args).to(self.device)
+    #     elif args['model_type'] == 'LSTM':
+    #         model = MIMICLSTMModel(args).to(self.device)
+    #     elif args['model_type'] == 'GRU':
+    #         model = MIMICGRUModel(args).to(self.device)
+    #     else:
+    #         raise Exception('No model type found: {}'.format(model_path))
+    #
+    #     self.args = args
+    #     self.set_model_name()
+    #     accuracy = 0
+    #
+    #     y_truth = []
+    #     y_pred = []
+    #     model.load_state_dict(checkpoint['net'])
+    #     self.logger.info(f'Testing with CB-Loss function model')
+    #     self.logger.info(f'Loaded model arch: \n {model}')
+    #     with torch.no_grad():
+    #         if self.args['model_type'] == 'RIMDecay':
+    #             # TODO there is a bug in number of samples for test and val data sets
+    #             for x, static, x_mean, y in data_loader:
+    #                 static = static.to(self.device)
+    #                 x_mask = x[:, 1, :, :].to(self.device)
+    #                 delta = x[:, 2, :, :].to(self.device)
+    #                 x_mean = x_mean.to(self.device)
+    #                 x_last_ob = x[:, 3, :, :].to(self.device)
+    #                 x = x[:, 0, :, :].to(self.device)
+    #
+    #                 y = y.to(self.device)
+    #
+    #                 predictions = self.model(x, static, x_mask, delta, x_last_ob, x_mean)
+    #                 output = torch.argmax(predictions, dim=1)
+    #                 correct = output == y.long()
+    #                 accuracy += correct.sum().item()
+    #                 # add them to a list to calculate f1 score later on
+    #                 y_truth.extend(y.cpu().detach().numpy())
+    #                 y_pred.extend(output.cpu().detach().numpy())
+    #
+    #
+    #         else:
+    #             for x, statics, y in data_loader:
+    #                 x = x.to(self.device)
+    #                 statics = statics.to(self.device)
+    #                 y = y.to(self.device)
+    #
+    #                 predictions = self.model(x, statics)
+    #
+    #                 output = torch.argmax(predictions,dim=1)
+    #                 correct = output == y.long()
+    #                 accuracy += correct.sum().item()
+    #
+    #                 # add them to a list to calculate f1 score later on
+    #                 y_truth.extend(y.cpu().detach().numpy())
+    #                 y_pred.extend(output.cpu().detach().numpy())
+    #
+    #
+    #         if args['model_type'] == 'RIMDecay':
+    #             x, static, x_mean, y = test_data
+    #             static = static.to(self.device)
+    #             x_mask = x[:, 1, :, :].to(self.device)
+    #             delta = x[:, 2, :, :].to(self.device)
+    #             x_mean = x_mean.to(self.device)
+    #             x_last_ob = x[:, 3, :, :].to(self.device)
+    #             x = x[:, 0, :, :].to(self.device)
+    #             y = y.to(self.device)
+    #             predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
+    #             probs = torch.argmax(predictions, dim=1)
+    #         else:
+    #             x, statics, y = test_data
+    #             x = x.to(self.device)
+    #             statics = statics.to(self.device)
+    #             y = y.to(self.device)
+    #             predictions = model(x, statics)
+    #             probs = torch.argmax(predictions, dim=1)
+    #
+    #
+    #     gt = y.cpu().detach().numpy()
+    #     pt = probs.cpu().detach().numpy()
+    #
+    #     y_score = torch.softmax(predictions, dim=1)
+    #     y_score = y_score.cpu().detach().numpy()
+    #     print(f"time to detach arrays {time.time() - start}")
+    #     return gt, pt, y_score[:, 1]
 # def make_report(model):
 #     # data = MIMICIIIData(64, 24, args['input_file_path'])  # MIMICDecayData(64, 24, args['input_file_path'])
 #     test_data = data_object.get_test_data()
