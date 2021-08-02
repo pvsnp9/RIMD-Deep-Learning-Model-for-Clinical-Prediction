@@ -124,8 +124,7 @@ class TrainModels:
         max_no_improvement = self.args['max_no_improvement']
         improvement_threshold = self.args['improvement_threshold']
         max_test_f1 = 0
-        max_val_geo = 0
-        max_val_geo = 0
+
         # for cell in self.cell_types:
         train_loader, val_loader, test_loader = self.data_object.data_loader()
         # self.args['rnn_cell'] = cell
@@ -146,10 +145,11 @@ class TrainModels:
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args['lr'])
         for epoch in range(start_epochs, self.args['epochs']):
+            self.logger.info("")
             self.logger.info(f"******************** {self.model_name} *************************************")
             self.logger.info(
                 f'--- EPOCH: {epoch + 1} --------------------------------- B-F1: {format(max_val_f1 * 100, ".2f")} '
-                f'from EPOCH: {best_epoch_number + 1},   Test-F1 : {format(t_f1 * 100, ".2f")}')
+                f'from EPOCH: {best_epoch_number + 1},   Test-F1 : {format(max_test_f1 * 100, ".2f")}')
 
             start = time.time()
             epoch_loss = 0.0
@@ -254,6 +254,7 @@ class TrainModels:
             if improve > improvement_threshold:
                 epochs_no_improve = 0
                 max_val_f1 = val_f1
+                max_test_f1 = t_f1
                 best_epoch_number = epoch
                 # TODO chose the best model !?
                 # TODO set the best_epoch and report it (epoch with best results)
@@ -376,6 +377,8 @@ class TrainModels:
             model = MIMICLSTMModel(args).to(self.device)
         elif args['model_type'] == 'GRU':
             model = MIMICGRUModel(args).to(self.device)
+        elif args['model_type'] == 'GRUD':
+            model = MIMICGRUDModel(args).to(self.device)
         else:
             raise Exception('No model type found: {}'.format(model_path))
 

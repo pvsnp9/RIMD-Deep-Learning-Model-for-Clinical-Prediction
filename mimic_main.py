@@ -84,7 +84,7 @@ def mimic_main(run_type, run_description):
         # model_reports.update(ml_trainer.get_reports())
 
         #DL Models
-        model_type = ['LSTM', 'GRU', 'RIMDecay','RIM']
+        model_type = ['LSTM', 'GRU', 'RIMDecay','RIM','GRUD']
         for model in model_type:
             if model.startswith('RIM'):
                 cell_type = [ 'GRU','LSTM']
