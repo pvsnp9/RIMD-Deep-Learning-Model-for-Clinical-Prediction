@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from .rim_d import RIMDCell
 
-class MIMICDecayModel(nn.Module):
+class MIMICLosDecayModel(nn.Module):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -20,9 +20,8 @@ class MIMICDecayModel(nn.Module):
         )
 
         self.linear = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 1)
-        self.loss = nn.MSELoss()
 
-    def forward(self, x, statics, mask, delta, x_last_observed, x_mean, y=None):
+    def forward(self, x, statics, mask, delta, x_last_observed, x_mean):
         x = x.float()
         statics =statics.float()
         mask = mask.float()
@@ -54,11 +53,6 @@ class MIMICDecayModel(nn.Module):
             full_data = hs
             
         predictions = self.linear(full_data)
-
-        if y is not None:
-            y = y.float()
-            loss = self.loss(predictions.view(-1), y)
-            return predictions, loss
 
         return predictions
         

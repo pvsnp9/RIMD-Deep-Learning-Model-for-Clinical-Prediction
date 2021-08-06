@@ -4,7 +4,7 @@ args = {'epochs': 50,
         'model_type': 'RIMDecay',
         'hidden_size': 104,
         'num_rims': 2,
-        'lr': 9.645142728701031e-05,
+        'lr': 0.001,#9.645142728701031e-05,
         'rnn_cell': 'GRU',
         'input_key_size': 64,
         'input_value_size': 32,
@@ -24,13 +24,14 @@ args = {'epochs': 50,
         'need_data_preprocessing': False,
         'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl',
         'processed_data_path': 'data/50_percent/',
-        'input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_in_hosp_23944.npz',
-        'decay_input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_in_hosp_23944.npz',
+        'input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_los_icu_23944.npz',
+        'decay_input_file_path': 'data/mimic_iii/test_dump/decay_x_y_statics_xmean_mask_delta_lastob_los_icu_23944.npz',
         'max_no_improvement': 20,
         'improvement_threshold': 0.0001,
         'is_tuning': False,
         'balance': False
-        , 'is_cbloss': False}
+        , 'is_cbloss': False
+}
 
 
 #
