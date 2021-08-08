@@ -23,9 +23,11 @@ from src.utils.save_utils import MimicSave
 import logging
 import numpy as np
 
-np.random.seed(1048)
-torch.manual_seed(1048)
-torch.cuda.manual_seed(1048)
+#1048
+#1024
+np.random.seed(24)
+torch.manual_seed(24)
+torch.cuda.manual_seed(24)
 
 
 N_HYPER_PARAM_SET = 10
@@ -82,33 +84,36 @@ def mimic_main(run_type, run_description):
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir,logging, N_HYPER_PARAM_SET)
         # ml_trainer.run()
         # model_reports.update(ml_trainer.get_reports())
-
+        # [0.2, 0.3, 0.35, 0.4, 0.5, 0.55, 0.57, 0.59, 0.62, 0.65, 0.7, 0.73, 0.78, 0.85, 0.9, 0.93, 0.95, 0.98]
+        beta = [.95]
         #DL Models
-        model_type = ['LSTM', 'GRU', 'RIMDecay','RIM','GRUD']
-        for model in model_type:
-            if model.startswith('RIM'):
-                cell_type = [ 'GRU','LSTM']
-            elif model == 'LSTM':
-                cell_type = ['LSTM']
-            elif args['model_type'] == 'GRUD':
-                cell_type = ['GRU']
-            else:
-                cell_type = ['GRU']
-
-            for cell in cell_type:
-                #TODO calculate execution time and log it
-                args['rnn_cell'] = cell
-                args['model_type'] = model
-                if args['model_type'] == 'RIMDecay' or args['model_type'] == 'GRUD':
-                    dl_trainer = TrainModels(args,decay_data_object, logging)
+        for b in beta:
+            args['cb_beta'] = b
+            model_type = [ 'RIMDecay','RIM','GRUD']#[  'RIMDecay']
+            for model in model_type:
+                if model.startswith('RIM'):
+                    cell_type = ['GRU', 'LSTM']
+                elif model == 'LSTM':
+                    cell_type = ['LSTM']
+                elif args['model_type'] == 'GRUD':
+                    cell_type = ['GRU']
                 else:
-                    dl_trainer = TrainModels(args,data_object, logging)
+                    cell_type = ['GRU']
 
-                train_res =  dl_trainer.train()
-                for model_1, res_sets in train_res.items():
-                    y_truth, y_pred, y_score = res_sets
-                    report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures',args['is_cbloss'])
-                    model_reports.update({model_1:report})
+                for cell in cell_type:
+                    #TODO calculate execution time and log it
+                    args['rnn_cell'] = cell
+                    args['model_type'] = model
+                    if args['model_type'] == 'RIMDecay' or args['model_type'] == 'GRUD':
+                        dl_trainer = TrainModels(args,decay_data_object, logging)
+                    else:
+                        dl_trainer = TrainModels(args,data_object, logging)
+
+                    train_res =  dl_trainer.train()
+                    for model_1, res_sets in train_res.items():
+                        y_truth, y_pred, y_score = res_sets
+                        report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures',args['is_cbloss'])
+                        model_reports.update({model_1:report})
 
 
     elif(run_type == 'train_with_cb_loss'):

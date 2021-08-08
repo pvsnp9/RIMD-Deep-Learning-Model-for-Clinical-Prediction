@@ -23,7 +23,7 @@ class MIMICDecayCBLossModel(nn.Module):
         self.linear_one = nn.Linear(args['hidden_size'] * args['num_rims'] + args['static_features'], 10)
         self.linear_two = nn.Linear(10, 2)
         self.relu = nn.ReLU()
-        self.loss = CBLoss(2)
+        self.loss = CBLoss(2, beta=args['cb_beta'])
 
     def forward(self, x, statics, mask, delta, x_last_observed, x_mean, y=None):
         x = x.float()

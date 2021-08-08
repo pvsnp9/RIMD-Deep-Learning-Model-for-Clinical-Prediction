@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import argmax
 import torch
 import pickle
 import numpy as np
@@ -585,8 +586,8 @@ class TrainModels:
                       'wb') as f:
                 pickle.dump(test_acc, f)
 
-            with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_cbloss_Train_f1.pickle", 'wb') as f:
-                pickle.dump(train_f1, f)
+            # with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_cbloss_Train_f1.pickle", 'wb') as f:
+            #     pickle.dump(train_f1, f)
 
             with open(f"{self.log_dir}/{self.args['model_type']}_{self.args['rnn_cell']}_cbloss_Dev_f1.pickle", 'wb') as f:
                 pickle.dump(valid_f1, f)
@@ -595,10 +596,61 @@ class TrainModels:
                 pickle.dump(test_f1, f)
 
         # right after training do the test step
-
-        self.reports.update({self.model_name:
-                                 self.test_cb_loss(self.model_saved_fname, self.data_object.get_test_data())})
+        self.model.load_state_dict(best_model_state['net'])
+        self.reports.update({f'{self.model_name}_{self.args["cb_beta"]}' :
+                                 self.eval_best_model_cb( test_loader )})
         return self.reports
+
+    def eval_best_model_cb(self, data_loader):
+        accuracy = 0
+        self.model.eval()
+        y_truth = []
+        y_pred = []
+        y_score = []
+        with torch.no_grad():
+            if self.args['model_type'] == 'RIMDecay':
+                # TODO there is a bug in number of samples for test and val data sets
+                for x, static, x_mean, y in data_loader:
+                    static = static.to(self.device)
+                    x_mask = x[:, 1, :, :].to(self.device)
+                    delta = x[:, 2, :, :].to(self.device)
+                    x_mean = x_mean.to(self.device)
+                    x_last_ob = x[:, 3, :, :].to(self.device)
+                    x = x[:, 0, :, :].to(self.device)
+
+                    y = y.to(self.device)
+
+                    predictions = self.model(x, static, x_mask, delta, x_last_ob, x_mean)
+                    output = torch.argmax(predictions, dim=1)
+                    correct = output == y.long()
+                    accuracy += correct.sum().item()
+                    # add them to a list to calculate f1 score later on
+                    y_truth.extend(y.cpu().detach().numpy())
+                    y_pred.extend(output.cpu().detach().numpy())
+                    y_score.extend(torch.softmax(predictions, dim=1)[:,1].cpu().detach().numpy())
+
+            else:
+                for x, statics, y in data_loader:
+                    x = x.to(self.device)
+                    statics = statics.to(self.device)
+                    y = y.to(self.device)
+
+                    predictions = self.model(x, statics)
+
+                    output = torch.argmax(predictions,dim=1)
+                    correct = output == y.long()
+                    accuracy += correct.sum().item()
+
+                    # add them to a list to calculate f1 score later on
+                    y_truth.extend(y.cpu().detach().numpy())
+                    y_pred.extend(output.cpu().detach().numpy())
+                    y_score.extend(torch.softmax(predictions, dim=1)[:,1].cpu().detach().numpy())
+        # compute the f-1 measure
+
+        # y_score = y_score.cpu().detach().numpy()
+
+
+        return  y_truth, y_pred, y_score
 
     def eval_cb_loss(self, data_loader):
         accuracy = 0

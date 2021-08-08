@@ -2,7 +2,7 @@ from pickle import NONE
 import pandas as pd 
 import numpy as np
 import torch 
-from simple_imputer import SimpleImputer
+from .simple_imputer import SimpleImputer
 
 
 class MortalityDataPrep:

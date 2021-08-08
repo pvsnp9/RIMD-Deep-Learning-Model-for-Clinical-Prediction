@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CBLoss():
-    def __init__(self, number_of_class, beta=0.7):
+    def __init__(self, number_of_class, beta=0.55):
         self.number_of_class = number_of_class
         self.beta = beta
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
