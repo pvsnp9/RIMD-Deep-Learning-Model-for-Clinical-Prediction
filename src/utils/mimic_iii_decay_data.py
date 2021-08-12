@@ -109,6 +109,9 @@ class MIMICDecayData:
     
     def data_loader(self):
         train_data,train_label = torch.from_numpy(self.train_data), torch.from_numpy(self.train_label)
+
+
+
         valid_data,valid_label = torch.from_numpy(self.valid_data), torch.from_numpy(self.valid_label)
         test_data,test_label = torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
 

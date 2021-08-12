@@ -89,10 +89,12 @@ def mimic_main(run_type, run_description):
         #DL Models
         for b in beta:
             args['cb_beta'] = b
-            model_type = [ 'RIMDecay','RIM','GRUD']#[  'RIMDecay']
+            model_type =['LSTM', 'GRU', 'RIMDecay','RIM','GRUD', 'RIMCB'] #[  'RIMDecay'] #
             for model in model_type:
                 if model.startswith('RIM'):
                     cell_type = ['GRU', 'LSTM']
+                    if model.endswith('CB'):
+                        args['is_cbloss']= True
                 elif model == 'LSTM':
                     cell_type = ['LSTM']
                 elif args['model_type'] == 'GRUD':

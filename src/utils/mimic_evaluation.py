@@ -7,7 +7,7 @@ from sklearn.metrics import roc_curve
 
 class MIMICReport():
 
-    def __init__(self,classifire_name, y_true, y_pred, y_score, output_dir, is_cbloss):
+    def __init__(self,classifire_name, y_true, y_pred, y_score, output_dir, is_cbloss=False ):
         self.y_pred = y_pred
         self.y_true = y_true
         self.y_score = y_score

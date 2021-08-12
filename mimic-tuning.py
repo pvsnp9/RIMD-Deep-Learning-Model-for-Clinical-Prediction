@@ -7,8 +7,10 @@ from mimic_iii_train import TrainModels
 from src.utils.mimic_args import args
 import logging
 #load datasets
+from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
-
+from src.utils.save_utils import MimicSave
+SAVE_DIR = 'mimic/tuning/'
 out_dir = 'mimic/logs'
 # config logging
 logging.basicConfig(filename=out_dir + '/' + 'tuning-log.txt', format='%(message)s', level=logging.DEBUG)
@@ -21,10 +23,10 @@ def draw_args(trial):
     """
     Here we will randomly generate args values before each model training
     """
-    args['batch_size'] = 48 #trial.suggest_int('batch_size',low=32,high=96,step=16)
+    args['batch_size'] = trial.suggest_int('batch_size',low=32,high=96,step=16)
 
-    # args['hidden_size'] =  trial.suggest_int('hidden_size', low=30,high=100,step=10)
-    # args['comm_value_size'] = args['hidden_size']
+    args['hidden_size'] =  trial.suggest_int('hidden_size', low=30,high=128,step=10)
+    args['comm_value_size'] = args['hidden_size']
 
 
     args['num_rims'] =  trial.suggest_int('num_rims', low=2,high=6,step=1)
@@ -54,11 +56,14 @@ def tuning_model(trial):
     """
     iterate over the models
     """
-    draw_args(trial)
-    print(args)
-    decay_data_object = MIMICDecayData(args['batch_size'], 24, args['decay_input_file_path'], balance=args['balance'])
-    # data_object = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], args['mask'])
-    dl_trainer = TrainModels(args, decay_data_object, logging)
+    draw_args( trial)
+    print(f'Random Args for Tuning:{args}')
+    model_type = args['model_type']
+    if model_type.startswith('RIMD') or model_type.startswith("GRUD"):
+         data_object = MIMICDecayData(args['batch_size'], 24, args['decay_input_file_path'])
+    else:
+        data_object = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], args['mask'])
+    dl_trainer = TrainModels(args,  data_object, logging)
 
 
     train_res = dl_trainer.tune_train()
@@ -73,7 +78,8 @@ def save_best_parameters():
     pass
 
 if __name__ == '__main__':
-    args['rnn_cell'] = 'GRU'
+    out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
+    args['rnn_cell'] = 'LSTM'
     args['model_type'] = 'RIMDecay'
     study = optuna.create_study(direction="maximize")
     study.optimize(tuning_model, n_trials=100)
