@@ -168,9 +168,27 @@ class MIMICNonIidData:
         x,y,statics, x_mean, x_mask, delta, last_ob = hour_data 
         x= np.reshape(x, (y.shape[0], hour, -1))
         y = np.squeeze(y, axis=1)
+        del hour_data
+        # class balanced data
+
+        zero_index = np.squeeze(np.where(y == 0) )
+        np.random.shuffle(zero_index)
+        ones_index = np.squeeze(np.where(y == 1) )
+        zero_index = zero_index[:math.floor(0.6 * self.number_of_instances)]
+        ones_index = ones_index[-math.ceil(0.4 * self.number_of_instances):]
+        new_index = np.concatenate((ones_index,zero_index))
+        
+
         mask = np.reshape(x_mask, (y.shape[0], hour, -1))
         delta = np.reshape(delta, (y.shape[0], hour, -1))
         last_observed= np.reshape(last_ob, (y.shape[0], hour, -1))
+
+        x = x[new_index]
+        y = y[new_index]
+        statics = statics[new_index]
+        mask = mask[new_index]
+        delta = delta[new_index]
+        last_observed = last_observed[new_index]
 
         # delta normalization for each patients
         delta_mean = np.amax(delta, axis=1)
