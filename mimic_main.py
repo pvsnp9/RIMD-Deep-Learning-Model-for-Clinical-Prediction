@@ -71,8 +71,6 @@ def mimic_main(run_type, run_description):
     startTime = datetime.now()
     logging.info('Start time: ' + str(startTime))
 
-
-
     #load datasets
     decay_data_object = MIMICDecayData(args['batch_size'], 24, args['decay_input_file_path'])
     data_object = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], args['mask'])
@@ -85,14 +83,14 @@ def mimic_main(run_type, run_description):
         # ml_trainer.run()
         # model_reports.update(ml_trainer.get_reports())
         # [0.2, 0.3, 0.35, 0.4, 0.5, 0.55, 0.57, 0.59, 0.62, 0.65, 0.7, 0.73, 0.78, 0.85, 0.9, 0.93, 0.95, 0.98]
-        beta = [.95]
+        beta = [.9]
         #DL Models
         for b in beta:
             args['cb_beta'] = b
-            model_type =['LSTM', 'GRU', 'RIMDecay','RIM','GRUD', 'RIMCB'] #[  'RIMDecay'] #
+            model_type =[  'RIMDecay'] #['LSTM', 'GRU', 'RIMDecay','RIM','GRUD', 'RIMCB'] #
             for model in model_type:
                 if model.startswith('RIM'):
-                    cell_type = ['GRU', 'LSTM']
+                    cell_type = [ 'LSTM']
                     if model.endswith('CB'):
                         args['is_cbloss']= True
                 elif model == 'LSTM':

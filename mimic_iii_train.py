@@ -1,3 +1,5 @@
+import copy
+
 from numpy.core.fromnumeric import argmax
 import torch
 import pickle
@@ -260,7 +262,7 @@ class TrainModels:
                 # TODO set the best_epoch and report it (epoch with best results)
                 self.logger.info(f"New Best F1 Score at epoch {epoch} : {format( max_val_f1 * 100, '.2f')}")
                 best_model_state = {
-                    'net': self.model.state_dict(),
+                    'net': copy.deepcopy(self.model.state_dict()),
                     'epochs': epoch,
                     'args': self.args
                 }
@@ -555,7 +557,7 @@ class TrainModels:
                 # TODO set the best_epoch and report it (epoch with best results)
                 self.logger.info(f"New Best F1 Score at epoch {epoch} : {format(max_val_f1 * 100, '.2f')}")
                 best_model_state = {
-                    'net': self.model.state_dict(),
+                    'net': copy.deepcopy(self.model.state_dict()),
                     'epochs': epoch,
                     'args': self.args
                 }

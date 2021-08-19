@@ -10,6 +10,14 @@ import logging
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 from src.utils.save_utils import MimicSave
+import numpy as np
+import torch
+
+np.random.seed(24)
+torch.manual_seed(24)
+torch.cuda.manual_seed(24)
+
+
 SAVE_DIR = 'mimic/tuning/'
 out_dir = 'mimic/logs'
 # config logging
