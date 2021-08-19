@@ -1,0 +1,561 @@
+Run Description: LOS task
+Directory: mimic/los/0817-13-08-07
+Model Arch: 
+ MIMICLosDecayModel(
+  (rim_decay_cell): RIMDCell(
+    (gamma_x_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gamma_h_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (input_key_layer): CustomLinear(in_features=104, out_features=64, bias=False)
+    (input_value_layer): CustomLinear(in_features=104, out_features=32, bias=False)
+    (input_dropout): Dropout(p=0.2694669454300502, inplace=False)
+    (rnn): GroupLSTMCell(
+      (input_hidden): GroupLinear(in_features=136, out_features=416, num_blocks=3, bias=True)
+      (hidden_hidden): GroupLinear(in_features=104, out_features=416, num_blocks=3, bias=True)
+    )
+    (input_query_layer): GroupLinear(in_features=104, out_features=64, num_blocks=3, bias=False)
+    (comm_key_layer): GroupLinear(in_features=104, out_features=32, num_blocks=3, bias=False)
+    (comm_value_layer): GroupLinear(in_features=104, out_features=104, num_blocks=3, bias=False)
+    (comm_query_layer): GroupLinear(in_features=104, out_features=32, num_blocks=3, bias=False)
+    (comm_attention_output): GroupLinear(in_features=104, out_features=104, num_blocks=3, bias=False)
+    (comm_dropout): Dropout(p=0.12824679075614986, inplace=False)
+  )
+  (linear): Linear(in_features=328, out_features=1, bias=True)
+)
+
+ Training, Validating, and Testing: RIMDecay model with LSTM cell 
+###################### Training ################
+EPOCH [1], training loss: 5.761234778409813, val loss: 3.69158529319514, test_loss: 3.9092197813805596
+###################### Training ################
+EPOCH [2], training loss: 3.866875195712374, val loss: 3.620871048773014, test_loss: 3.862386401162735
+###################### Training ################
+EPOCH [3], training loss: 3.8101857196517854, val loss: 3.6020091700744015, test_loss: 3.802263287924581
+###################### Training ################
+EPOCH [4], training loss: 3.762743632347263, val loss: 3.541800181540849, test_loss: 3.6968863753807915
+###################### Training ################
+EPOCH [5], training loss: 3.71421649267799, val loss: 3.459949873552379, test_loss: 3.6730225515158117
+###################### Training ################
+EPOCH [6], training loss: 3.6678056640234606, val loss: 3.4270218262585037, test_loss: 3.640190670495281
+###################### Training ################
+EPOCH [7], training loss: 3.6225871384492394, val loss: 3.3939755106431218, test_loss: 3.584964523200793
+###################### Training ################
+EPOCH [8], training loss: 3.573092196071357, val loss: 3.385622082819993, test_loss: 3.5059341627192784
+###################### Training ################
+EPOCH [9], training loss: 3.525481072434208, val loss: 3.35278785311589, test_loss: 3.4484814388836447
+###################### Training ################
+EPOCH [10], training loss: 3.4796816215180515, val loss: 3.296525948817301, test_loss: 3.391978091842835
+###################### Training ################
+EPOCH [11], training loss: 3.43545927569183, val loss: 3.262392636363768, test_loss: 3.3771674687690925
+###################### Training ################
+EPOCH [12], training loss: 3.394229919938316, val loss: 3.2358329064402964, test_loss: 3.3616263197307186
+###################### Training ################
+EPOCH [13], training loss: 3.3633048157942924, val loss: 3.2456645639218458, test_loss: 3.317244475070576
+###################### Training ################
+EPOCH [14], training loss: 3.3384117198269267, val loss: 3.197197697993824, test_loss: 3.2950316683544894
+###################### Training ################
+EPOCH [15], training loss: 3.313310979053988, val loss: 3.2051995933428623, test_loss: 3.2581392370404942
+###################### Training ################
+EPOCH [16], training loss: 3.2937200641074376, val loss: 3.2096685178642614, test_loss: 3.2418266392624253
+###################### Training ################
+EPOCH [17], training loss: 3.2773235001062093, val loss: 3.190683970980671, test_loss: 3.2329150610829434
+###################### Training ################
+EPOCH [18], training loss: 3.266573010829457, val loss: 3.179089302557591, test_loss: 3.2308989205748935
+###################### Training ################
+EPOCH [19], training loss: 3.2574187517166138, val loss: 3.1640546472968687, test_loss: 3.2360800691633655
+###################### Training ################
+EPOCH [20], training loss: 3.2485231080947563, val loss: 3.178600750062073, test_loss: 3.197288635695954
+###################### Training ################
+EPOCH [21], training loss: 3.2432043503599557, val loss: 3.1595694964744476, test_loss: 3.231695441285737
+###################### Training ################
+EPOCH [22], training loss: 3.2355536895188672, val loss: 3.157735965317271, test_loss: 3.206373141719974
+###################### Training ################
+EPOCH [23], training loss: 3.229698876888431, val loss: 3.12722442627525, test_loss: 3.2165324620256994
+###################### Training ################
+EPOCH [24], training loss: 3.2240564007508126, val loss: 3.1299921529398853, test_loss: 3.2171783168298433
+###################### Training ################
+EPOCH [25], training loss: 3.217814748398742, val loss: 3.1441002646084533, test_loss: 3.1917552171871417
+###################### Training ################
+EPOCH [26], training loss: 3.212788226311667, val loss: 3.1444788710721876, test_loss: 3.1994494679702696
+###################### Training ################
+EPOCH [27], training loss: 3.2093187256863245, val loss: 3.1754924111940386, test_loss: 3.1736103684195123
+###################### Training ################
+EPOCH [28], training loss: 3.204247935125005, val loss: 3.140283161577456, test_loss: 3.17783900468252
+###################### Training ################
+EPOCH [29], training loss: 3.2025796805906017, val loss: 3.1189186514522773, test_loss: 3.154460615744686
+###################### Training ################
+EPOCH [30], training loss: 3.1987279559436597, val loss: 3.1081172651676985, test_loss: 3.178197000592559
+###################### Training ################
+EPOCH [31], training loss: 3.1964011439803053, val loss: 3.1069925644023044, test_loss: 3.1899557744424696
+###################### Training ################
+EPOCH [32], training loss: 3.1960061297082065, val loss: 3.1603040716157187, test_loss: 3.192688012784719
+###################### Training ################
+EPOCH [33], training loss: 3.191652826747002, val loss: 3.155534762728975, test_loss: 3.1922223530665086
+###################### Training ################
+EPOCH [34], training loss: 3.1886203309945893, val loss: 3.146995366446965, test_loss: 3.188124765401714
+###################### Training ################
+EPOCH [35], training loss: 3.186361505274187, val loss: 3.135604932327552, test_loss: 3.1970422095986057
+###################### Training ################
+EPOCH [36], training loss: 3.183251833009441, val loss: 3.134939317319266, test_loss: 3.158367211891373
+###################### Training ################
+EPOCH [37], training loss: 3.180898428660387, val loss: 3.104915473601532, test_loss: 3.192009848392989
+###################### Training ################
+EPOCH [38], training loss: 3.177583666921359, val loss: 3.1043255762164663, test_loss: 3.1278736716552564
+###################### Training ################
+EPOCH [39], training loss: 3.1735073599899026, val loss: 3.131139788954294, test_loss: 3.1658685548386507
+###################### Training ################
+EPOCH [40], training loss: 3.1733107796886513, val loss: 3.098305302914028, test_loss: 3.1846933065684677
+###################### Training ################
+EPOCH [41], training loss: 3.171332487934514, val loss: 3.141704083819496, test_loss: 3.142046233444133
+###################### Training ################
+EPOCH [42], training loss: 3.1684865268350344, val loss: 3.131917821159808, test_loss: 3.176059273333621
+###################### Training ################
+EPOCH [43], training loss: 3.1690703302796126, val loss: 3.1446842207783394, test_loss: 3.1412678884217122
+###################### Training ################
+EPOCH [44], training loss: 3.1655547653722484, val loss: 3.126164146135377, test_loss: 3.1854528407425224
+###################### Training ################
+EPOCH [45], training loss: 3.1635597871060956, val loss: 3.132176901967986, test_loss: 3.1758367626218225
+###################### Training ################
+EPOCH [46], training loss: 3.164292591705657, val loss: 3.117024452738663, test_loss: 3.1689224966391305
+###################### Training ################
+EPOCH [47], training loss: 3.1586431153336463, val loss: 3.1387990511418065, test_loss: 3.1746170279836963
+###################### Training ################
+EPOCH [48], training loss: 3.158599891857794, val loss: 3.1041337748420723, test_loss: 3.1770785817038063
+Run Description: LOS task
+Directory: mimic/los/0817-14-04-10
+Model Arch: 
+ MIMICLosDecayModel(
+  (rim_decay_cell): RIMDCell(
+    (gamma_x_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gamma_h_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (input_key_layer): CustomLinear(in_features=104, out_features=64, bias=False)
+    (input_value_layer): CustomLinear(in_features=104, out_features=32, bias=False)
+    (input_dropout): Dropout(p=0.2694669454300502, inplace=False)
+    (rnn): GroupGRUCell(
+      (input_hidden): GroupLinear(in_features=136, out_features=312, num_blocks=3, bias=True)
+      (hidden_hidden): GroupLinear(in_features=104, out_features=312, num_blocks=3, bias=True)
+    )
+    (input_query_layer): GroupLinear(in_features=104, out_features=64, num_blocks=3, bias=False)
+    (comm_key_layer): GroupLinear(in_features=104, out_features=32, num_blocks=3, bias=False)
+    (comm_value_layer): GroupLinear(in_features=104, out_features=104, num_blocks=3, bias=False)
+    (comm_query_layer): GroupLinear(in_features=104, out_features=32, num_blocks=3, bias=False)
+    (comm_attention_output): GroupLinear(in_features=104, out_features=104, num_blocks=3, bias=False)
+    (comm_dropout): Dropout(p=0.12824679075614986, inplace=False)
+  )
+  (linear): Linear(in_features=328, out_features=1, bias=True)
+)
+
+ Training, Validating, and Testing: RIMDecay model with GRU cell 
+###################### Training ################
+EPOCH [1], training loss: 4.834359583101775, val loss: 3.643787671851257, test_loss: 3.882779411043807
+###################### Training ################
+EPOCH [2], training loss: 3.8161285519599915, val loss: 3.552235035733781, test_loss: 3.7422346811328944
+###################### Training ################
+EPOCH [3], training loss: 3.6946204646289, val loss: 3.4742077417997823, test_loss: 3.6276234980882145
+###################### Training ################
+EPOCH [4], training loss: 3.5924252519133497, val loss: 3.4137669933113197, test_loss: 3.506678248339632
+###################### Training ################
+EPOCH [5], training loss: 3.506929928099203, val loss: 3.3042781489322373, test_loss: 3.4344560619384583
+###################### Training ################
+EPOCH [6], training loss: 3.439246419926136, val loss: 3.317475646565145, test_loss: 3.3771226327180406
+###################### Training ################
+EPOCH [7], training loss: 3.3866470400352924, val loss: 3.2334542516734452, test_loss: 3.3005784164493703
+###################### Training ################
+EPOCH [8], training loss: 3.348886783708606, val loss: 3.224421405759946, test_loss: 3.309317979865468
+###################### Training ################
+EPOCH [9], training loss: 3.3197560244136386, val loss: 3.2512736285312425, test_loss: 3.3181492104150334
+###################### Training ################
+EPOCH [10], training loss: 3.299306360601682, val loss: 3.2103727823126746, test_loss: 3.2535845903646194
+###################### Training ################
+EPOCH [11], training loss: 3.2835830331545823, val loss: 3.2319820778535377, test_loss: 3.267103654020942
+###################### Training ################
+EPOCH [12], training loss: 3.2672445965789216, val loss: 3.200455258708463, test_loss: 3.2770674739366505
+###################### Training ################
+EPOCH [13], training loss: 3.254481187689374, val loss: 3.202405399302503, test_loss: 3.2726559807872118
+###################### Training ################
+EPOCH [14], training loss: 3.252219650480482, val loss: 3.1883256263177486, test_loss: 3.262758620513001
+###################### Training ################
+EPOCH [15], training loss: 3.2416172543464348, val loss: 3.1768279038900897, test_loss: 3.248984641330599
+###################### Training ################
+EPOCH [16], training loss: 3.2410286152571963, val loss: 3.179552504512162, test_loss: 3.2428355556002852
+###################### Training ################
+EPOCH [17], training loss: 3.229788453606834, val loss: 3.1593916123977683, test_loss: 3.2228636256942744
+###################### Training ################
+EPOCH [18], training loss: 3.2247161690951787, val loss: 3.1874328309650233, test_loss: 3.248153160234148
+###################### Training ################
+EPOCH [19], training loss: 3.2207400492060256, val loss: 3.1642082059639156, test_loss: 3.2262187773209505
+###################### Training ################
+EPOCH [20], training loss: 3.215633858017057, val loss: 3.1661082852747766, test_loss: 3.228037443022748
+###################### Training ################
+EPOCH [21], training loss: 3.2120761501858808, val loss: 3.105418353799736, test_loss: 3.219927236298632
+###################### Training ################
+EPOCH [22], training loss: 3.2053720665256877, val loss: 3.147087626766362, test_loss: 3.249285463685098
+###################### Training ################
+EPOCH [23], training loss: 3.201862767425894, val loss: 3.1397628946720535, test_loss: 3.2259824899114284
+###################### Training ################
+EPOCH [24], training loss: 3.2016756911026802, val loss: 3.1564439101267356, test_loss: 3.261695967001864
+###################### Training ################
+EPOCH [25], training loss: 3.201869043690419, val loss: 3.1399177270393364, test_loss: 3.219145921383389
+###################### Training ################
+EPOCH [26], training loss: 3.195670756331661, val loss: 3.1053457929454984, test_loss: 3.222461337222004
+###################### Training ################
+EPOCH [27], training loss: 3.1914580073970105, val loss: 3.087945563731819, test_loss: 3.1825806117452364
+###################### Training ################
+EPOCH [28], training loss: 3.1872768646095233, val loss: 3.1218255217949595, test_loss: 3.2407518591254734
+###################### Training ################
+EPOCH [29], training loss: 3.1815960013378435, val loss: 3.1114662043015873, test_loss: 3.2017237120778956
+###################### Training ################
+EPOCH [30], training loss: 3.1766553911549305, val loss: 3.1166187205957914, test_loss: 3.2223581685809006
+###################### Training ################
+EPOCH [31], training loss: 3.1734141832903813, val loss: 3.1276629039591533, test_loss: 3.235217882891781
+###################### Training ################
+EPOCH [32], training loss: 3.1667377596710162, val loss: 3.126683785092301, test_loss: 3.211483462660744
+###################### Training ################
+EPOCH [33], training loss: 3.164837578583879, val loss: 3.1008554621238225, test_loss: 3.201580228766823
+###################### Training ################
+EPOCH [34], training loss: 3.159293346586283, val loss: 3.1082979431024893, test_loss: 3.173340275062042
+###################### Training ################
+EPOCH [35], training loss: 3.1576602319527787, val loss: 3.107633641105368, test_loss: 3.2011625304710196
+###################### Training ################
+EPOCH [36], training loss: 3.154874631187372, val loss: 3.125528836519458, test_loss: 3.196051734940975
+###################### Training ################
+EPOCH [37], training loss: 3.1519325508011713, val loss: 3.1088139860400723, test_loss: 3.193493535715428
+###################### Training ################
+EPOCH [38], training loss: 3.1508977545632257, val loss: 3.088749016461025, test_loss: 3.172846750954592
+###################### Training ################
+EPOCH [39], training loss: 3.1483742092785083, val loss: 3.1072343396261695, test_loss: 3.1902558664577936
+###################### Training ################
+EPOCH [40], training loss: 3.1465905591061243, val loss: 3.090027398862393, test_loss: 3.1958867542676654
+###################### Training ################
+EPOCH [41], training loss: 3.143844593686667, val loss: 3.0723263437697943, test_loss: 3.200353620688059
+###################### Training ################
+EPOCH [42], training loss: 3.139095063446558, val loss: 3.0641145078516736, test_loss: 3.1614877519779165
+###################### Training ################
+EPOCH [43], training loss: 3.1347387785102887, val loss: 3.0621178557745616, test_loss: 3.1663058562911535
+###################### Training ################
+EPOCH [44], training loss: 3.136685434140657, val loss: 3.0617146362124847, test_loss: 3.1243453359418005
+###################### Training ################
+EPOCH [45], training loss: 3.1322424903250576, val loss: 3.078624343187856, test_loss: 3.1534976177132927
+###################### Training ################
+EPOCH [46], training loss: 3.1268170793154084, val loss: 3.0867868773116514, test_loss: 3.171052505802242
+###################### Training ################
+EPOCH [47], training loss: 3.1263376979799995, val loss: 3.0438175047456504, test_loss: 3.127744250261616
+###################### Training ################
+EPOCH [48], training loss: 3.1225285807199645, val loss: 3.064248741426694, test_loss: 3.1504209673388397
+Run Description: LOS task
+Directory: mimic/los/0817-15-16-35
+Model Arch: 
+ MIMICGRUDLosModel(
+  (grud): GRUD(
+    (gamma_x_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gamma_h_l): CustomLinear(in_features=104, out_features=104, bias=True)
+    (gru_cell): CustomGRUCell()
+  )
+  (linear): Linear(in_features=120, out_features=1, bias=True)
+)
+
+ Training, Validating, and Testing: GRUD model with GRU cell 
+###################### Training ################
+EPOCH [1], training loss: 5.134857654920098, val loss: 3.5673000336284146, test_loss: 3.7623271903919804
+###################### Training ################
+EPOCH [2], training loss: 3.606849372038367, val loss: 3.3844231606023087, test_loss: 3.4787249914051777
+###################### Training ################
+EPOCH [3], training loss: 3.4332709716774565, val loss: 3.2842813849245696, test_loss: 3.3638818032136624
+###################### Training ################
+EPOCH [4], training loss: 3.347248639628204, val loss: 3.237604619427529, test_loss: 3.278094784969971
+###################### Training ################
+EPOCH [5], training loss: 3.297966564259334, val loss: 3.213408575756552, test_loss: 3.245452926396364
+###################### Training ################
+EPOCH [6], training loss: 3.2624179686022083, val loss: 3.1798936206085022, test_loss: 3.206546552788348
+###################### Training ################
+EPOCH [7], training loss: 3.236332590817011, val loss: 3.1652591126854426, test_loss: 3.1863401747159243
+###################### Training ################
+EPOCH [8], training loss: 3.2144435550037183, val loss: 3.139440724162173, test_loss: 3.176769273383491
+###################### Training ################
+EPOCH [9], training loss: 3.196875234096371, val loss: 3.122494365152503, test_loss: 3.1637990107786553
+###################### Training ################
+EPOCH [10], training loss: 3.1805124847512496, val loss: 3.136934887820639, test_loss: 3.1248489719702337
+###################### Training ################
+EPOCH [11], training loss: 3.1675124628502025, val loss: 3.1172885811386237, test_loss: 3.10455210745441
+###################### Training ################
+EPOCH [12], training loss: 3.157183273493895, val loss: 3.0944573614594475, test_loss: 3.1199592008132293
+###################### Training ################
+EPOCH [13], training loss: 3.1465147482721427, val loss: 3.1123762615810837, test_loss: 3.1349986266110093
+###################### Training ################
+EPOCH [14], training loss: 3.138302978019268, val loss: 3.0884634918179237, test_loss: 3.1040416431446567
+###################### Training ################
+EPOCH [15], training loss: 3.128099004427592, val loss: 3.068808976617587, test_loss: 3.1060313825391597
+###################### Training ################
+EPOCH [16], training loss: 3.1215619580787526, val loss: 3.051146945977355, test_loss: 3.126097065191388
+###################### Training ################
+EPOCH [17], training loss: 3.1146236058564214, val loss: 3.0738547203959183, test_loss: 3.1174916317829258
+###################### Training ################
+EPOCH [18], training loss: 3.1088666535957517, val loss: 3.0707951589584987, test_loss: 3.1080934763938215
+###################### Training ################
+EPOCH [19], training loss: 3.1044010885974815, val loss: 3.0526144500349193, test_loss: 3.127605487541699
+###################### Training ################
+EPOCH [20], training loss: 3.097515977614107, val loss: 3.061788031105284, test_loss: 3.0942354936070693
+###################### Training ################
+EPOCH [21], training loss: 3.0908234081073114, val loss: 3.030833458079593, test_loss: 3.1378828699925188
+###################### Training ################
+EPOCH [22], training loss: 3.086284139700103, val loss: 3.03817142804924, test_loss: 3.0916832372757
+###################### Training ################
+EPOCH [23], training loss: 3.0808150698566994, val loss: 3.0691277683079092, test_loss: 3.1344391392814943
+###################### Training ################
+EPOCH [24], training loss: 3.076083166906011, val loss: 3.043057060287838, test_loss: 3.1058524892233246
+###################### Training ################
+EPOCH [25], training loss: 3.07136278961137, val loss: 3.003148210354681, test_loss: 3.079515058326772
+###################### Training ################
+EPOCH [26], training loss: 3.0694209755512705, val loss: 3.0621717624294083, test_loss: 3.105977789768585
+###################### Training ################
+EPOCH [27], training loss: 3.062721691633526, val loss: 3.0436541242651987, test_loss: 3.1098729622836276
+###################### Training ################
+EPOCH [28], training loss: 3.057622219386854, val loss: 3.0257594376091723, test_loss: 3.1012843224305455
+###################### Training ################
+EPOCH [29], training loss: 3.0545164405951026, val loss: 3.0275171778192025, test_loss: 3.1329728127006717
+###################### Training ################
+EPOCH [30], training loss: 3.049068181486855, val loss: 3.0358795252484407, test_loss: 3.1021092543981283
+###################### Training ################
+EPOCH [31], training loss: 3.046327711545933, val loss: 3.050002955948021, test_loss: 3.1199527896060575
+###################### Training ################
+EPOCH [32], training loss: 3.040815370124683, val loss: 3.0266007910260866, test_loss: 3.092734573126957
+###################### Training ################
+EPOCH [33], training loss: 3.037881498448333, val loss: 3.006368273053681, test_loss: 3.0998911500955506
+###################### Training ################
+EPOCH [34], training loss: 3.0341356828895925, val loss: 3.0305408407716388, test_loss: 3.0759283898765863
+###################### Training ################
+EPOCH [35], training loss: 3.028657310887387, val loss: 3.0400309984173766, test_loss: 3.0767988091744094
+###################### Training ################
+EPOCH [36], training loss: 3.0233443626883436, val loss: 3.029326909608021, test_loss: 3.095915404831571
+###################### Training ################
+EPOCH [37], training loss: 3.0195667287062484, val loss: 2.999498289184978, test_loss: 3.0987905096146036
+###################### Training ################
+EPOCH [38], training loss: 3.016767370770549, val loss: 2.9830251166183652, test_loss: 3.0893142653471415
+###################### Training ################
+EPOCH [39], training loss: 3.0125332052944698, val loss: 3.0276136995194567, test_loss: 3.0961741419264093
+###################### Training ################
+EPOCH [40], training loss: 3.0073667956374543, val loss: 3.007165140504574, test_loss: 3.1043592411354037
+###################### Training ################
+EPOCH [41], training loss: 3.0044572809983414, val loss: 2.9846338080180663, test_loss: 3.0700199042857017
+###################### Training ################
+EPOCH [42], training loss: 2.9989127140296135, val loss: 2.9943788467503545, test_loss: 3.0739927017186996
+###################### Training ################
+EPOCH [43], training loss: 2.995320537285498, val loss: 2.9948941662104622, test_loss: 3.10241001698703
+###################### Training ################
+EPOCH [44], training loss: 2.994690630171034, val loss: 3.0055716407029713, test_loss: 3.105618657116431
+###################### Training ################
+EPOCH [45], training loss: 2.990027417913515, val loss: 2.9970132156344573, test_loss: 3.1114553744847315
+###################### Training ################
+EPOCH [46], training loss: 2.98522604906071, val loss: 3.0018643699143337, test_loss: 3.110436540296087
+###################### Training ################
+EPOCH [47], training loss: 2.980417563029897, val loss: 2.9950113644049488, test_loss: 3.09527701044504
+###################### Training ################
+EPOCH [48], training loss: 2.9773589229723165, val loss: 2.9974654472646294, test_loss: 3.058404340379641
+Run Description: LOS task
+Directory: mimic/los/0817-15-39-24
+Model Arch: 
+ MIMICLSTMLosModel(
+  (lstm): CustomLSTMCell()
+  (linear): Linear(in_features=120, out_features=1, bias=True)
+)
+
+ Training, Validating, and Testing: LSTM model with GRU cell 
+###################### Training ################
+EPOCH [1], training loss: 6.868011283247094, val loss: 4.004429454283082, test_loss: 4.199330214513194
+###################### Training ################
+EPOCH [2], training loss: 4.018462475628881, val loss: 3.7259410221742955, test_loss: 3.9712522152782688
+###################### Training ################
+EPOCH [3], training loss: 3.858588659275345, val loss: 3.6511552767684567, test_loss: 3.804037447046565
+###################### Training ################
+EPOCH [4], training loss: 3.751259754624283, val loss: 3.5549963836245246, test_loss: 3.7408572478977815
+###################### Training ################
+EPOCH [5], training loss: 3.6607137036602397, val loss: 3.479829145141286, test_loss: 3.6578126263183997
+###################### Training ################
+EPOCH [6], training loss: 3.5855023738933585, val loss: 3.389777444548236, test_loss: 3.5925133756605825
+###################### Training ################
+EPOCH [7], training loss: 3.5251001374066226, val loss: 3.3752836766762053, test_loss: 3.554278191337462
+###################### Training ################
+EPOCH [8], training loss: 3.4775919987444293, val loss: 3.3407517298947678, test_loss: 3.4864128008922006
+###################### Training ################
+EPOCH [9], training loss: 3.4427769856843335, val loss: 3.3207783297502567, test_loss: 3.4392325722360444
+###################### Training ################
+EPOCH [10], training loss: 3.415821407622064, val loss: 3.2893678218199085, test_loss: 3.4586400769700756
+###################### Training ################
+EPOCH [11], training loss: 3.397000826241677, val loss: 3.2905821056659272, test_loss: 3.442856115602369
+###################### Training ################
+EPOCH [12], training loss: 3.3823826002795796, val loss: 3.288976036736859, test_loss: 3.4005446590025565
+###################### Training ################
+EPOCH [13], training loss: 3.3706432476378323, val loss: 3.2625566738210985, test_loss: 3.416754976818346
+###################### Training ################
+EPOCH [14], training loss: 3.3604678100312664, val loss: 3.2330824246408656, test_loss: 3.4071472759034584
+###################### Training ################
+EPOCH [15], training loss: 3.3509652729620014, val loss: 3.2583183416675787, test_loss: 3.3954540491738125
+###################### Training ################
+EPOCH [16], training loss: 3.3444480125667058, val loss: 3.2598714746075323, test_loss: 3.4095346414388064
+###################### Training ################
+EPOCH [17], training loss: 3.336138717960893, val loss: 3.2402722886765876, test_loss: 3.3938215074150757
+###################### Training ################
+EPOCH [18], training loss: 3.3312503632746244, val loss: 3.2288288105086513, test_loss: 3.3573726143749902
+###################### Training ################
+EPOCH [19], training loss: 3.3253791684295697, val loss: 3.2223057331687777, test_loss: 3.361022459829348
+###################### Training ################
+EPOCH [20], training loss: 3.3196788963518644, val loss: 3.236889869838759, test_loss: 3.383070923796796
+###################### Training ################
+EPOCH [21], training loss: 3.3144192137913397, val loss: 3.2298584473530374, test_loss: 3.387718347061215
+###################### Training ################
+EPOCH [22], training loss: 3.3096163614451535, val loss: 3.2182930055772934, test_loss: 3.3612782408912394
+###################### Training ################
+EPOCH [23], training loss: 3.3043104870277538, val loss: 3.2214174051424243, test_loss: 3.3683925225242826
+###################### Training ################
+EPOCH [24], training loss: 3.2998418658100372, val loss: 3.2113736554600325, test_loss: 3.373311482689169
+###################### Training ################
+EPOCH [25], training loss: 3.2942999277198526, val loss: 3.207971814542285, test_loss: 3.335504699652703
+###################### Training ################
+EPOCH [26], training loss: 3.290025543748287, val loss: 3.2232928514354535, test_loss: 3.3359107644386747
+###################### Training ################
+EPOCH [27], training loss: 3.285426476894066, val loss: 3.2141768408023537, test_loss: 3.348002462473341
+###################### Training ################
+EPOCH [28], training loss: 3.2814780229713483, val loss: 3.215882045094215, test_loss: 3.36006030051455
+###################### Training ################
+EPOCH [29], training loss: 3.2748960814280816, val loss: 3.2409113426858402, test_loss: 3.3313760685140066
+###################### Training ################
+EPOCH [30], training loss: 3.2727691918088677, val loss: 3.212460628277618, test_loss: 3.329330251543404
+###################### Training ################
+EPOCH [31], training loss: 3.2688399162905957, val loss: 3.198372775998392, test_loss: 3.303228135665519
+###################### Training ################
+EPOCH [32], training loss: 3.263842293044977, val loss: 3.1880309852169852, test_loss: 3.313013945211677
+###################### Training ################
+EPOCH [33], training loss: 3.260245206063254, val loss: 3.2303745984686234, test_loss: 3.3375757182399157
+###################### Training ################
+EPOCH [34], training loss: 3.2546718089204085, val loss: 3.1822637580153255, test_loss: 3.33400919227127
+###################### Training ################
+EPOCH [35], training loss: 3.25146502360963, val loss: 3.2136340162515262, test_loss: 3.34376649612964
+###################### Training ################
+EPOCH [36], training loss: 3.246747607376143, val loss: 3.1866202524153797, test_loss: 3.3096314644756433
+###################### Training ################
+EPOCH [37], training loss: 3.2430273778954444, val loss: 3.194192844793122, test_loss: 3.3300748623320944
+###################### Training ################
+EPOCH [38], training loss: 3.2386311369332654, val loss: 3.1983265859495127, test_loss: 3.3033355674553984
+###################### Training ################
+EPOCH [39], training loss: 3.23399984069735, val loss: 3.19748609580922, test_loss: 3.308106678311294
+###################### Training ################
+EPOCH [40], training loss: 3.230500464550933, val loss: 3.186684625602518, test_loss: 3.316152395271907
+###################### Training ################
+EPOCH [41], training loss: 3.2258484339156346, val loss: 3.2081364807020845, test_loss: 3.3316164895082787
+###################### Training ################
+EPOCH [42], training loss: 3.2202201395006904, val loss: 3.1942100788371643, test_loss: 3.3228641484339274
+###################### Training ################
+EPOCH [43], training loss: 3.2164279591967486, val loss: 3.1932239495665056, test_loss: 3.2973274517435676
+###################### Training ################
+EPOCH [44], training loss: 3.2114972848641243, val loss: 3.1914758314930936, test_loss: 3.3063357384863252
+###################### Training ################
+EPOCH [45], training loss: 3.2072018196708276, val loss: 3.2023288380547217, test_loss: 3.301164182386104
+###################### Training ################
+EPOCH [46], training loss: 3.2025884107539526, val loss: 3.1839963152814654, test_loss: 3.3311453304104184
+###################### Training ################
+EPOCH [47], training loss: 3.197741094737025, val loss: 3.1677360440831084, test_loss: 3.3190125197272047
+###################### Training ################
+EPOCH [48], training loss: 3.1941062421129462, val loss: 3.1777839863367023, test_loss: 3.3004995182797097
+Run Description: LOS task
+Directory: mimic/los/0817-15-49-35
+Model Arch: 
+ MIMICGRULosModel(
+  (gru): CustomGRUCell()
+  (linear): Linear(in_features=120, out_features=1, bias=True)
+)
+
+ Training, Validating, and Testing: GRU model with GRU cell 
+###################### Training ################
+EPOCH [1], training loss: 6.249867478657884, val loss: 3.6969383682220816, test_loss: 3.9054709287520732
+###################### Training ################
+EPOCH [2], training loss: 3.7296285217965557, val loss: 3.4334961335483647, test_loss: 3.649477795026585
+###################### Training ################
+EPOCH [3], training loss: 3.5461456702466596, val loss: 3.382277999926409, test_loss: 3.518340380994458
+###################### Training ################
+EPOCH [4], training loss: 3.4728201282651803, val loss: 3.3419024742419596, test_loss: 3.472590116555745
+###################### Training ################
+EPOCH [5], training loss: 3.437788274204522, val loss: 3.3034703283925517, test_loss: 3.466897003407531
+###################### Training ################
+EPOCH [6], training loss: 3.4177466543794375, val loss: 3.2937106329007535, test_loss: 3.4619020726532805
+###################### Training ################
+EPOCH [7], training loss: 3.4019960008169474, val loss: 3.3120823710306824, test_loss: 3.4484316710169574
+###################### Training ################
+EPOCH [8], training loss: 3.3915235089976887, val loss: 3.2888812795876663, test_loss: 3.4290018880817597
+###################### Training ################
+EPOCH [9], training loss: 3.3835774642682215, val loss: 3.2942374162748846, test_loss: 3.429621064422936
+###################### Training ################
+EPOCH [10], training loss: 3.37615797707909, val loss: 3.2888382956633886, test_loss: 3.424232071659893
+###################### Training ################
+EPOCH [11], training loss: 3.3682488178649144, val loss: 3.2569928224727054, test_loss: 3.420290661470226
+###################### Training ################
+EPOCH [12], training loss: 3.362321876294432, val loss: 3.246654622405979, test_loss: 3.379330637346079
+###################### Training ################
+EPOCH [13], training loss: 3.3589794580002277, val loss: 3.21314108160732, test_loss: 3.389261195295611
+###################### Training ################
+EPOCH [14], training loss: 3.3549120182182355, val loss: 3.2300511803067797, test_loss: 3.3968196040724825
+###################### Training ################
+EPOCH [15], training loss: 3.3511662326361003, val loss: 3.231836023770985, test_loss: 3.3684424846922343
+###################### Training ################
+EPOCH [16], training loss: 3.348485371174171, val loss: 3.2684020308794524, test_loss: 3.398961569083019
+###################### Training ################
+EPOCH [17], training loss: 3.3443895414558766, val loss: 3.260182909301684, test_loss: 3.396393332674388
+###################### Training ################
+EPOCH [18], training loss: 3.3405417723265307, val loss: 3.2388982794692573, test_loss: 3.357583714652016
+###################### Training ################
+EPOCH [19], training loss: 3.3390281859197115, val loss: 3.2686892785066255, test_loss: 3.3775516669362817
+###################### Training ################
+EPOCH [20], training loss: 3.334265813144327, val loss: 3.2361013857669625, test_loss: 3.381658894949271
+###################### Training ################
+EPOCH [21], training loss: 3.332151418889475, val loss: 3.233344379533917, test_loss: 3.3600022980025455
+###################### Training ################
+EPOCH [22], training loss: 3.3291984106365002, val loss: 3.2508204161427416, test_loss: 3.3818906650219223
+###################### Training ################
+EPOCH [23], training loss: 3.326548296457146, val loss: 3.1915443621554505, test_loss: 3.3743620941959427
+###################### Training ################
+EPOCH [24], training loss: 3.3232906715214603, val loss: 3.2397777796195806, test_loss: 3.376721045282176
+###################### Training ################
+EPOCH [25], training loss: 3.3225471143834073, val loss: 3.245858824875287, test_loss: 3.3820188575438923
+###################### Training ################
+EPOCH [26], training loss: 3.319115355697989, val loss: 3.2145379146686035, test_loss: 3.372178146140956
+###################### Training ################
+EPOCH [27], training loss: 3.3163561082025717, val loss: 3.195663569385703, test_loss: 3.3559257651327385
+###################### Training ################
+EPOCH [28], training loss: 3.3136522982552736, val loss: 3.2279764614101265, test_loss: 3.3838495911747026
+###################### Training ################
+EPOCH [29], training loss: 3.3117461546122677, val loss: 3.2305139883999394, test_loss: 3.368876369410793
+###################### Training ################
+EPOCH [30], training loss: 3.3090639428088537, val loss: 3.1659901259469927, test_loss: 3.346146833347035
+###################### Training ################
+EPOCH [31], training loss: 3.3050902552074857, val loss: 3.1968630473192317, test_loss: 3.3767868818062703
+###################### Training ################
+EPOCH [32], training loss: 3.3040876116668967, val loss: 3.224700151294541, test_loss: 3.353980935495434
+###################### Training ################
+EPOCH [33], training loss: 3.301859477110076, val loss: 3.2143216725043415, test_loss: 3.3540932735935822
+###################### Training ################
+EPOCH [34], training loss: 3.2983850195393924, val loss: 3.2052927333530246, test_loss: 3.3609902765444595
+###################### Training ################
+EPOCH [35], training loss: 3.295744346596344, val loss: 3.207164102059193, test_loss: 3.3445195288457095
+###################### Training ################
+EPOCH [36], training loss: 3.2947156962595487, val loss: 3.2207803863968976, test_loss: 3.3136023442905764
+###################### Training ################
+EPOCH [37], training loss: 3.2891468412694875, val loss: 3.201584633717259, test_loss: 3.321595934093684
+###################### Training ################
+EPOCH [38], training loss: 3.2890586218638727, val loss: 3.2101748570563484, test_loss: 3.3840373864770847
+###################### Training ################
+EPOCH [39], training loss: 3.2864564172705713, val loss: 3.1851349814739303, test_loss: 3.342668164848302
+###################### Training ################
+EPOCH [40], training loss: 3.28332787787008, val loss: 3.2150799872606743, test_loss: 3.311033370234959
+###################### Training ################
+EPOCH [41], training loss: 3.281929065958101, val loss: 3.2098439406778865, test_loss: 3.3576873228502
+###################### Training ################
+EPOCH [42], training loss: 3.2781672550920855, val loss: 3.1959679441264024, test_loss: 3.335692351328863
+###################### Training ################
+EPOCH [43], training loss: 3.276916503557685, val loss: 3.171955132811937, test_loss: 3.355105571006808
+###################### Training ################
+EPOCH [44], training loss: 3.271749372370759, val loss: 3.21620237474981, test_loss: 3.370324985241581
+###################### Training ################
+EPOCH [45], training loss: 3.2713278179977374, val loss: 3.18161165179742, test_loss: 3.3369684327377227
+###################### Training ################
+EPOCH [46], training loss: 3.2684927157491273, val loss: 3.1959308053593998, test_loss: 3.363062131730186
+###################### Training ################
+EPOCH [47], training loss: 3.26464238187723, val loss: 3.180650100835995, test_loss: 3.36545920109286
+###################### Training ################
+EPOCH [48], training loss: 3.259831817178001, val loss: 3.1978668404819306, test_loss: 3.3572289739758427

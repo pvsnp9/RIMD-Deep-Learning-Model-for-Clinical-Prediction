@@ -1,3 +1,4 @@
+from pickle import TRUE
 from numpy.core.defchararray import count
 import torch
 import numpy as np 
@@ -146,18 +147,18 @@ class TestNonIid:
             self.model_name = f"{self.args['model_type']}_{self.args['rnn_cell']}"
 
 
-if __name__ =='__main__':
-    data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz')
-    trainer = TestNonIid('./mimic/old_models/LSTM_LSTM_model.pt', data_object)
+# if __name__ =='__main__':
+    # data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz')
+    # trainer = TestNonIid('./mimic/old_models/GRUD_GRU_model.pt', data_object)
     # results= trainer.test_general_model()
     # print("############ Result #####################")
     # print(results)
 
-    results= trainer.test_general_model()
+    # results= trainer.test_normal()
     # print("############ Result #####################")
     # print(results)
     
-    
-    # t = torch.tensor([2,2,2,3,5])
-    # c = torch.unique(t, return_counts=True )[1]
-    # print(c[0].item())
+    if not (TRUE and False):
+        print('-')
+    else:
+        print('+')

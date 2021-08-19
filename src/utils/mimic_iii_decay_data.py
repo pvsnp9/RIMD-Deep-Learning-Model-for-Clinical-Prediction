@@ -166,9 +166,9 @@ class MIMICNonIidData:
     
     def __prepare_data(self, hour_data, hour):
         x,y,statics, x_mean, x_mask, delta, last_ob = hour_data 
+        del hour_data
         x= np.reshape(x, (y.shape[0], hour, -1))
         y = np.squeeze(y, axis=1)
-        del hour_data
         # class balanced data
 
         zero_index = np.squeeze(np.where(y == 0) )

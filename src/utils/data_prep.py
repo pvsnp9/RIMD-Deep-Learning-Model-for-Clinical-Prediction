@@ -1,6 +1,6 @@
 from pickle import NONE
-import pandas as pd 
 import numpy as np
+import pandas as pd 
 import torch 
 from .simple_imputer import SimpleImputer
 
@@ -34,6 +34,7 @@ class MortalityDataPrep:
 
         hourly_data = {}
         for hour in self.non_iid:
+            print(f'--------------- preprocessing @ {hour} hour ------------------------')
             targets = self.statics[self.statics.max_hours > hour + self.gap_time][['mort_hosp', 'mort_icu','los_icu']]
             targets.astype(float)
 
@@ -280,8 +281,8 @@ class MortalityDataPrep:
         
 # if __name__ == "__main__":
 #     # MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data_10hr.pkl', type='los_icu')
-#    d = MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data.pkl', type='los_icu')
+#    d = MortalityDataPrep('data/mimic_iii/test_dump/all_hourly_data.pkl', type='in_hospital')
 #    print('Reading and prepprocessing data .....')
-#    x = d.preprocess_decay(destination_dir='data/mimic_iii/test_dump')
-# #    x = d.prepare_non_iid('data/mimic_iii/test_dump','data/mimic_iii/test_dump/all_hourly_data.pkl' )
+# #    x = d.preprocess_decay(destination_dir='data/mimic_iii/test_dump')
+#    x = d.prepare_non_iid('data/mimic_iii/test_dump','data/mimic_iii/test_dump/all_hourly_data.pkl' )
 #    print(f'Preprocessing Done, and saved .npz files @ {x}')
