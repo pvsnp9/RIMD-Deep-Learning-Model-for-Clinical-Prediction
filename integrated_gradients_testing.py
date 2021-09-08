@@ -68,6 +68,6 @@ class IntegratedGradientsCheck():
         return self.data_object.get_data(hour)
 
 if __name__ == "__main__":
-    data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz')
+    data_object = MIMICNonIidData('./data/mimic_iii/non_iid_in_hospital.npz')
     ig_test_object = IntegratedGradientsCheck('./mimic/old_models/RIMDecay_LSTM_cbloss_model.pt', data_object)
     ig_test_object.run_integrated_gradients()

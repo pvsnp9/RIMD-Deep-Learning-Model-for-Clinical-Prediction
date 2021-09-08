@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICDecayData:
-    def __init__(self, batch_size, window_size, file_path, train_frac=0.8, dev_frac= 0.1, test_frac=0.1, balance=False):
+    def __init__(self, batch_size, window_size, file_path, train_frac=0.8, dev_frac= 0.1, test_frac=0.1 , balance=False):
         self.batch_size = batch_size
         self.window_size = window_size
         self.train_frac = train_frac
@@ -100,20 +100,21 @@ class MIMICDecayData:
         self.valid_x_mean = self.x_mean[self.train_instances: self.train_instances +self.dev_instances]
         self.test_x_mean = self.x_mean[-self.test_instances:]
 
+        self.prepare_dataloader()
+
+
     def get_test_data(self):
         test_data, test_label =torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
         test_static = torch.from_numpy(self.test_static)
         test_x_mean = torch.from_numpy(self.test_x_mean)
 
         return (test_data, test_static, test_x_mean, test_label)
-    
-    def data_loader(self):
-        train_data,train_label = torch.from_numpy(self.train_data), torch.from_numpy(self.train_label)
 
+    def prepare_dataloader(self):
+        train_data, train_label = torch.from_numpy(self.train_data), torch.from_numpy(self.train_label)
 
-
-        valid_data,valid_label = torch.from_numpy(self.valid_data), torch.from_numpy(self.valid_label)
-        test_data,test_label = torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
+        valid_data, valid_label = torch.from_numpy(self.valid_data), torch.from_numpy(self.valid_label)
+        test_data, test_label = torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
 
         train_static = torch.from_numpy(self.train_static)
         valid_static = torch.from_numpy(self.valid_static)
@@ -127,14 +128,15 @@ class MIMICDecayData:
         val_dataset = TensorDataset(valid_data, valid_static, valid_x_mean, valid_label)
         test_dataset = TensorDataset(test_data, test_static, test_x_mean, test_label)
 
-        
-        
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True, drop_last=True)
+        self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        self.val_loader   = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        self.test_loader  = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
-        return train_loader, val_loader, test_loader
+    def data_loader(self):
+        return self.train_loader, self.val_loader, self.test_loader
 
+    def set_batch_size(self,batch_size):
+        self.batch_size = batch_size
 
 '''
 non-iid data loader class

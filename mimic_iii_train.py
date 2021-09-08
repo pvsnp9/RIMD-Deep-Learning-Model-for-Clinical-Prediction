@@ -53,6 +53,7 @@ class TrainModels:
                 self.set_default_params()
             self.set_model_name()
 
+            self.logger.info(f" Model is  {self.args['model_type']}")
             self.logger.info(args)
         else:
             self.logger.info('-------------- Model initiated for prediction ---------------------')

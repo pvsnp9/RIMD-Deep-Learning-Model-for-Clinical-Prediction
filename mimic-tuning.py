@@ -88,7 +88,7 @@ def save_best_parameters():
 if __name__ == '__main__':
     out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
     args['rnn_cell'] = 'LSTM'
-    args['model_type'] = 'RIMDecay'
+    args['model_type'] = 'RIM'
     study = optuna.create_study(direction="maximize")
     study.optimize(tuning_model, n_trials=100)
 

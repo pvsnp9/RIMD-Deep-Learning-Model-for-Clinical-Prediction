@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICIIIData:
-    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.7, dev_frac= 0.15, test_frac=0.15, balance=False):
+    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.8, dev_frac= 0.10, test_frac=0.1, balance=False):
         self.batch_size = batch_size
         self.window_size = window_size
         self.apply_mask = mask
@@ -68,30 +68,34 @@ class MIMICIIIData:
         self.train_statics = self.statics[:self.train_instances]
         self.dev_statics = self.statics[self.train_instances:self.train_instances + self.dev_instances]
         self.test_statics = self.statics[-self.test_instances:]
+        self.prepare_loaders()
 
     def get_test_data(self):
         test_data, test_label =torch.from_numpy(self.test_x), torch.from_numpy(self.test_ys)
         test_static = torch.from_numpy(self.test_statics)
         return (test_data, test_static, test_label)
 
-
-    def data_loader(self):
+    def prepare_loaders(self):
         train_data, train_label = torch.from_numpy(self.train_x), torch.from_numpy(self.train_ys)
         val_data, val_label = torch.from_numpy(self.dev_x), torch.from_numpy(self.dev_ys)
         test_data, test_label = torch.from_numpy(self.test_x), torch.from_numpy(self.test_ys)
 
-        train_static, val_static= torch.from_numpy(self.train_statics), torch.from_numpy(self.dev_statics)
+        train_static, val_static = torch.from_numpy(self.train_statics), torch.from_numpy(self.dev_statics)
         test_static = torch.from_numpy(self.test_statics)
 
         train_dataset = TensorDataset(train_data, train_static, train_label)
         val_dataset = TensorDataset(val_data, val_static, val_label)
         test_dataset = TensorDataset(test_data, test_static, test_label)
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        test_loader = DataLoader(test_dataset, batch_size = self.batch_size, shuffle=True, drop_last=True)
+        self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        self.val_loader  = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
-        return train_loader, val_loader, test_loader
+    def data_loader(self):
+        return self.train_loader, self.val_loader, self.test_loader
+
+    def set_batch_size(self, batch_size):
+        self.batch_size = batch_size
 
     def train_len(self):
         return len(self.train_ys)
