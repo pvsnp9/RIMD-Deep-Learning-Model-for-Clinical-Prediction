@@ -56,11 +56,11 @@ class MIMICReport():
         precision, recall, threashold = precision_recall_curve(self.y_true, self.y_score)
         auc_p_r = roc_auc_score(y_true=self.y_true, y_score=self.y_score, average="weighted")
         # Since the possitive class is more important, and the data is imbalanced, this mettic may fits better to our need
-        if not self.is_cbloss:
-            prauc = average_precision_score(self.y_true, self.y_score )
-        else:
-            precision, recall, _ = precision_recall_curve(self.y_true, self.y_score)
-            prauc = auc(recall, precision)
+        # if not self.is_cbloss:
+        #     prauc = average_precision_score(self.y_true, self.y_score )
+        # else:
+        precision, recall, _ = precision_recall_curve(self.y_true, self.y_score)
+        prauc = auc(recall, precision)
         return {'AUROC': auc_p_r, 'PRAUC': prauc}
 
     def get_geo_mean(self):

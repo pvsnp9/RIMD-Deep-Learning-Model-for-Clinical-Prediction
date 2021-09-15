@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICDecayData:
-    def __init__(self, batch_size, window_size, file_path, train_frac=0.8, dev_frac= 0.1, test_frac=0.1 , balance=False):
+    def __init__(self, batch_size, window_size, file_path, train_frac=0.7, dev_frac= 0.15, test_frac=0.15 , balance=False):
         self.batch_size = batch_size
         self.window_size = window_size
         self.train_frac = train_frac
@@ -104,7 +104,7 @@ class MIMICDecayData:
 
 
     def get_test_data(self):
-        test_data, test_label =torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
+        test_data, test_label = torch.from_numpy(self.test_data), torch.from_numpy(self.test_label)
         test_static = torch.from_numpy(self.test_static)
         test_x_mean = torch.from_numpy(self.test_x_mean)
 

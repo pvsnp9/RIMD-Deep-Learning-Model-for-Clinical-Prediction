@@ -4,7 +4,7 @@ from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, average_precision_score, precision_recall_curve, auc
 from sklearn.metrics import roc_auc_score
 from matplotlib import pyplot
 # generate 2 class dataset
@@ -35,14 +35,20 @@ lr_auc = roc_auc_score(testy, lr_probs)
 print('No Skill: ROC AUC=%.3f' % (ns_auc))
 print('Logistic: ROC AUC=%.3f' % (lr_auc))
 
-# calculate roc curves
-ns_fpr, ns_tpr, _ = prc(testy, ns_probs)
-lr_fpr, lr_tpr, _ = roc_curve(testy, lr_probs)
-# plot the roc curve for the model
-pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
-pyplot.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
+prauc_1 = average_precision_score(testy,  ns_probs)
 
-pyplot.plot(lr_fpr+0.1, lr_tpr, marker='.', label='Logistic 12')
+precision, recall, _ = precision_recall_curve(testy, ns_probs)
+prauc_2 = auc(recall, precision)
+
+print (f'prauc1 {prauc_1} :: pruc2 {prauc_2}')
+# calculate roc curves
+# ns_fpr, ns_tpr, _ = prc(testy, ns_probs)
+# lr_fpr, lr_tpr, _ = roc_curve(testy, lr_probs)
+# plot the roc curve for the model
+# pyplot.plot(ns_fpr, ns_tpr, linestyle='--', label='No Skill')
+# pyplot.plot(lr_fpr, lr_tpr, marker='.', label='Logistic')
+#
+# pyplot.plot(lr_fpr+0.1, lr_tpr, marker='.', label='Logistic 12')
 
 # axis labels
 pyplot.xlabel('False Positive Rate')
@@ -51,3 +57,5 @@ pyplot.ylabel('True Positive Rate')
 pyplot.legend()
 # show the plot
 pyplot.show()
+
+

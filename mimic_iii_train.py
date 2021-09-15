@@ -35,13 +35,14 @@ Input arguments like model_type and cell type are crucial.
 class TrainModels:
     def __init__(self, args=None, data_object=None, logger=None):
 
-        self.save_dir = MimicSave.get_instance().get_model_directory()
-        self.log_dir = MimicSave.get_instance().get_log_directory()
+
 
         self.reports = {}
         self.logger = logger
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         if args is not None:
+            self.save_dir = MimicSave.get_instance().get_model_directory()
+            self.log_dir = MimicSave.get_instance().get_log_directory()
             self.args = args
             self.data_object = None
             self.model = None
@@ -306,16 +307,17 @@ class TrainModels:
         # right after training do the test step
 
         self.reports.update({self.model_name:
-                                 self.test(self.model_saved_fname, self.data_object.get_test_data())})
+                                 self.test(self.model_saved_fname, test_loader)})
         return self.reports
 
 
 
-    def eval(self, data_loader):
+    def eval(self, data_loader, is_for_test = False):
         accuracy = 0
         self.model.eval()
         y_truth = []
         y_pred = []
+        y_score = []
         with torch.no_grad():
             if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
                 # TODO there is a bug in number of samples for test and val data sets
@@ -336,7 +338,7 @@ class TrainModels:
                     # add them to a list to calculate f1 score later on
                     y_truth.extend(y.cpu().detach().numpy())
                     y_pred.extend(probs.view(-1).cpu().detach().numpy())
-
+                    y_score.extend(torch.sigmoid(predictions).view(-1).cpu().detach().numpy())
 
             else:
                 for x, statics, y in data_loader:
@@ -353,6 +355,7 @@ class TrainModels:
                     # add them to a list to calculate f1 score later on
                     y_truth.extend(y.cpu().detach().numpy())
                     y_pred.extend(probs.view(-1).cpu().detach().numpy())
+                    y_score.extend(torch.sigmoid(predictions).view(-1).cpu().detach().numpy())
 
         # compute the f-1 measure
         report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
@@ -367,7 +370,11 @@ class TrainModels:
             pass
         geo = geometric_mean_score(y_truth, y_pred)
         accuracy /= len(data_loader.dataset)
-        return accuracy, f1_score, geo
+
+        if not is_for_test:
+            return accuracy, f1_score, geo
+        else:
+            return y_truth, y_pred, y_score
 
     def test(self, model_path, test_data):
         checkpoint = torch.load(model_path)
@@ -390,31 +397,10 @@ class TrainModels:
 
         model.load_state_dict(checkpoint['net'])
         self.logger.info(f'Loaded model arch: \n {model}')
+        self.model = model
 
-        if args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
-            x, static, x_mean, y = test_data
-            static = static.to(self.device)
-            x_mask = x[:, 1, :, :].to(self.device)
-            delta = x[:, 2, :, :].to(self.device)
-            x_mean = x_mean.to(self.device)
-            x_last_ob = x[:, 3, :, :].to(self.device)
-            x = x[:, 0, :, :].to(self.device)
-            y = y.to(self.device)
-            predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
-            probs = torch.round(torch.sigmoid(predictions))
-        else:
-            x, statics, y = test_data
-            x = x.to(self.device)
-            statics = statics.to(self.device)
-            y = y.to(self.device)
-            predictions = model(x, statics)
-            probs = torch.round(torch.sigmoid(predictions))
+        return  self.eval(test_data, is_for_test=True)
 
-        gt = y.cpu().detach().numpy()
-        pt = probs.view(-1).cpu().detach().numpy()
-        y_score = torch.sigmoid(predictions).view(-1).cpu().detach().numpy()
-
-        return gt, pt, y_score
 
     def train_cb_loss(self):
 
@@ -655,11 +641,12 @@ class TrainModels:
 
         return  y_truth, y_pred, y_score
 
-    def eval_cb_loss(self, data_loader):
+    def eval_cb_loss(self, data_loader, is_for_test=False):
         accuracy = 0
         self.model.eval()
         y_truth = []
         y_pred = []
+        y_score = []
         with torch.no_grad():
             if self.args['model_type'] == 'RIMDecay':
                 # TODO there is a bug in number of samples for test and val data sets
@@ -680,6 +667,8 @@ class TrainModels:
                     # add them to a list to calculate f1 score later on
                     y_truth.extend(y.cpu().detach().numpy())
                     y_pred.extend(output.cpu().detach().numpy())
+                    softmaxed = torch.softmax(predictions, dim=-1)[:,1]
+                    y_score.extend(softmaxed.view(-1).cpu().detach().numpy())
 
 
             else:
@@ -697,7 +686,8 @@ class TrainModels:
                     # add them to a list to calculate f1 score later on
                     y_truth.extend(y.cpu().detach().numpy())
                     y_pred.extend(output.cpu().detach().numpy())
-
+                    softmaxed = torch.softmax(predictions, dim=-1)[:, 1]
+                    y_score.extend(softmaxed.view(-1).cpu().detach().numpy())
         # compute the f-1 measure
         report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
         try:
@@ -712,8 +702,10 @@ class TrainModels:
 
         accuracy /= len(data_loader.dataset)
         geo = geometric_mean_score(y_truth, y_pred)
-
-        return accuracy, f1_score, geo
+        if not is_for_test:
+            return accuracy, f1_score, geo
+        else:
+            return y_truth, y_pred, y_score
 
 
     def test_cb_loss(self, model_path, test_data):
@@ -729,7 +721,7 @@ class TrainModels:
             model = MIMICGRUModel(args).to(self.device)
         else:
             raise Exception('No model type found: {}'.format(model_path))
-
+        self.model = model
         self.args = args
         self.set_model_name()
 
@@ -737,33 +729,7 @@ class TrainModels:
         self.logger.info(f'Testing with CB-Loss function model')
         self.logger.info(f'Loaded model arch: \n {model}')
 
-        if args['model_type'] == 'RIMDecay':
-            x, static, x_mean, y = test_data
-            static = static.to(self.device)
-            x_mask = x[:, 1, :, :].to(self.device)
-            delta = x[:, 2, :, :].to(self.device)
-            x_mean = x_mean.to(self.device)
-            x_last_ob = x[:, 3, :, :].to(self.device)
-            x = x[:, 0, :, :].to(self.device)
-            y = y.to(self.device)
-            predictions = model(x, static, x_mask, delta, x_last_ob, x_mean)
-            probs = torch.argmax(predictions, dim=1)
-        else:
-            x, statics, y = test_data
-            x = x.to(self.device)
-            statics = statics.to(self.device)
-            y = y.to(self.device)
-            predictions = model(x, statics)
-            probs = torch.argmax(predictions,dim=1)
-
-        start  =  time.time()
-        gt = y.cpu().detach().numpy()
-        pt = probs.cpu().detach().numpy()
-
-        y_score  = torch.softmax(predictions, dim=1)
-        y_score =  y_score.cpu().detach().numpy()
-        print(f"time to detach arrays { time.time() - start }")
-        return gt, pt, y_score[:,1]
+        return self.eval_cb_loss(data_loader=test_data, is_for_test=True)
 
     # def test_cb_loss_new(self, model_path, data_loader):
     #     checkpoint = torch.load(model_path)

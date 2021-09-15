@@ -35,7 +35,7 @@ N_HYPER_PARAM_SET = 10
 SAVE_DIR = 'mimic/'
 
 
-def mimic_main(run_type, run_description):
+def mimic_main(run_type, run_description, out_dir):
     # Data preprocessing
     if (common_args['need_data_preprocessing']):
         prep_data = MortalityDataPrep(common_args['raw_data_file_path'])
@@ -48,9 +48,10 @@ def mimic_main(run_type, run_description):
     # https://github.com/manashty/lifemodel/blob/master/LifeModelForecasting/FallDetection.ipynb
     #
     ## Craet a directory for saving the results
-
-    out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
-
+    if run_type =="train":
+        out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
+    else:
+        out_dir  = MimicSave.get_instance().create_get_output_dir(out_dir, is_test=True)
     # Save the args used in this experiment
     with open(f'{out_dir}/_experiment_args.txt', 'w') as f:
         json.dump(common_args, f)
@@ -82,19 +83,19 @@ def mimic_main(run_type, run_description):
         ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir, logging, N_HYPER_PARAM_SET)
         # ml_trainer.run()
         # model_reports.update(ml_trainer.get_reports())
-        # beta = [  0.59, 0.62, 0.65, 0.7, 0.73, 0.78, 0.85, 0.9, 0.93, 0.95, 0.98]
+        # beta = [  0.59, 0.62, 0.65, 0.7, 0.73, 0.78,.79, 0.8, .83, 0.85, 0.9, 0.93, 0.95, 0.98]
         beta = [0.95]
         # DL Models
         for b in beta:
 
-            model_type =['RIMDCB']  #['LSTM', 'GRU', 'RIM','RIMDecay','GRUD', 'RIMDCB']#
+            model_type =['LSTM', 'GRU', 'RIM','RIMDecay','GRUD', 'RIMDCB']#['RIMDCB']  #
             for model in model_type:
                 args = get_args(model)
                 data_object.set_batch_size(args['batch_size'])
                 decay_data_object.set_batch_size(args['batch_size'])
                 args['cb_beta'] = b
                 if model.startswith('RIM'):
-                    cell_type = ['GRU','LSTM']
+                    cell_type = ['LSTM','GRU']
 
                 elif model == 'LSTM':
                     cell_type = ['LSTM']
@@ -109,7 +110,7 @@ def mimic_main(run_type, run_description):
                 for cell in cell_type:
                     # TODO calculate execution time and log it
                     if args['is_cbloss']:
-                        args['cb_beta'] = 0.9 if cell == 'GRU' else 0.78
+                        args['cb_beta'] = 0.93 if cell == 'GRU' else 0.95
                     args['rnn_cell'] = cell
                     args['model_type'] = model
                     if args['model_type'] == 'RIMDecay' or args['model_type'] == 'GRUD':
@@ -124,53 +125,33 @@ def mimic_main(run_type, run_description):
                         model_reports.update({model_1: report})
 
 
-    elif (run_type == 'train_with_cb_loss'):
-        logging.info("Training initiated with custom loss function")
-        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir, logging, N_HYPER_PARAM_SET)
-        model_type = ['LSTM']  # , 'RIM' ]
-        for model in model_type:
-            args = get_args(model)
-            if model.startswith('RIM'):
-                cell_type = ['GRU', 'LSTM']
-            elif model == 'LSTM':
-                cell_type = ['LSTM']
-            else:
-                cell_type = ['GRU']
-
-            for cell in cell_type:
-                # TODO calculate execution time and log it
-                args['rnn_cell'] = cell
-                args['model_type'] = model
-                if args['model_type'] == 'RIMDecay':
-                    dl_trainer = TrainModels(args, decay_data_object, logging)
-                else:
-                    dl_trainer = TrainModels(args, data_object, logging)
-
-                train_res = dl_trainer.train_cb_loss()
-                for model_1, res_sets in train_res.items():
-                    y_truth, y_pred, y_score = res_sets
-                    report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures')
-                    model_reports.update({model_1: report})
     else:
         # ML Test
-        ml_trainer = MimicMlTrain(data_object, './mimic/0727-10-55-06/model', out_dir, logging)
-        model_reports.update(ml_trainer.test())
+        # ml_trainer = MimicMlTrain(data_object, './test_models/model', out_dir, logging)
+        # model_reports.update(ml_trainer.test())
 
         # DL Test
-        # model_type = ['RIM_GRU', 'RIMDecay_GRU','RIM_LSTM', 'RIMDecay_LSTM','LSTM_GRU', 'GRU_LSTM']
-        model_type = ['RIMDecay_GRU', 'RIMDecay_LSTM', "LSTM", "GRU"]
-        cell_type = ['LSTM', 'GRU']
+
+        model_type = ['RIMDecay_GRU', 'RIMDecay_LSTM', "LSTM_LSTM", "GRU_GRU", 'RIM_GRU',
+                      'RIM_LSTM','GRUD_GRU','RIMDecay_LSTM_cbloss', 'RIMDecay_GRU_cbloss']
+
+
 
         for model in model_type:
-            args = get_args(model)
-            if model.startswith('RIMDecay'):
-                test_data = decay_data_object.get_test_data()
+            if model.startswith('RIMDecay') or model.startswith('GRUD'):
+                _,_, test_data = decay_data_object.data_loader()
             else:
-                test_data = data_object.get_test_data()
+                _,_,test_data = data_object.data_loader()
             trainer = TrainModels(logger=logging)
-            model_path = f"{SAVE_DIR}/{model}_model.pt"
-            y_truth, y_pred, y_score = trainer.test(model_path, test_data)
-            report = MIMICReport(model, y_truth, y_pred, y_score, './figures', args['is_cbloss'])
+            model_path = f"./test_models/model/{model}_model.pt"
+            cbloss = False
+            if model.endswith('loss'):
+                cbloss =True
+            if not cbloss:
+                y_truth, y_pred, y_score = trainer.test(model_path, test_data)
+            else:
+                y_truth, y_pred, y_score = trainer.test_cb_loss(model_path, test_data)
+            report = MIMICReport(model, y_truth, y_pred, y_score, './figures', cbloss)
             model_reports.update({model: report})
 
     results = {}
@@ -308,7 +289,9 @@ def plot_confusion_matrixes(out_dir, reports):
 MimicSave.get_instance()
 
 description = "Experiment # 2:   tuned models "
-mimic_main("train", description)
+out_dir = './test_models/results/'
+mimic_main("train", description, out_dir)
+
 plo_training_stats()
-plot_roc()
-plot_prauc()
+plot_roc(out_dir)
+plot_prauc(out_dir)

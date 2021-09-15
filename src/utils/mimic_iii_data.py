@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 class MIMICIIIData:
-    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.8, dev_frac= 0.10, test_frac=0.1, balance=False):
+    def __init__(self, batch_size, window_size, file_path, mask=False, train_frac=0.7, dev_frac= 0.15, test_frac=0.15, balance=False):
         self.batch_size = batch_size
         self.window_size = window_size
         self.apply_mask = mask
