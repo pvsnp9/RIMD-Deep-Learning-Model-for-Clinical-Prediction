@@ -55,7 +55,7 @@ class MIMICIIIData:
         self.train_instances = int(self.x.shape[0] *  train_frac)
         self.dev_instances = int(self.x.shape[0] * dev_frac)
         self.test_instances = int(self.x.shape[0] * test_frac)
-
+        print(f'#### Test instances for data #{self.test_instances} with batch {self.batch_size}')
 
         self.train_x = self.x[:self.train_instances]
         self.dev_x = self.x[self.train_instances:self.train_instances + self.dev_instances]
@@ -89,7 +89,7 @@ class MIMICIIIData:
 
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
         self.val_loader  = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        self.test_loader = DataLoader(test_dataset, batch_size=self.batch_size,  drop_last=True)
 
     def data_loader(self):
         return self.train_loader, self.val_loader, self.test_loader

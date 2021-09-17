@@ -48,10 +48,10 @@ def mimic_main(run_type, run_description, out_dir):
     # https://github.com/manashty/lifemodel/blob/master/LifeModelForecasting/FallDetection.ipynb
     #
     ## Craet a directory for saving the results
-    if run_type =="train":
+    if run_type == "train":
         out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
     else:
-        out_dir  = MimicSave.get_instance().create_get_output_dir(out_dir, is_test=True)
+        out_dir = MimicSave.get_instance().create_get_output_dir(out_dir, is_test=True)
     # Save the args used in this experiment
     with open(f'{out_dir}/_experiment_args.txt', 'w') as f:
         json.dump(common_args, f)
@@ -67,7 +67,7 @@ def mimic_main(run_type, run_description, out_dir):
     logging.info("Run Description: " + run_description)
     logging.info("Log file created at " + datetime.now().strftime("%Y/%m/%d  %H:%M:%S"))
     logging.info("Directory: {0}".format(out_dir))
-    logging.info(f"out put directoru is { out_dir}")
+    logging.info(f"out put directoru is {out_dir}")
 
     startTime = datetime.now()
     logging.info('Start time: ' + str(startTime))
@@ -88,14 +88,14 @@ def mimic_main(run_type, run_description, out_dir):
         # DL Models
         for b in beta:
 
-            model_type =['LSTM', 'GRU', 'RIM','RIMDecay','GRUD', 'RIMDCB']#['RIMDCB']  #
+            model_type = ['LSTM', 'GRU', 'RIM', 'RIMDecay', 'GRUD', 'RIMDCB']  # ['RIMDCB']  #
             for model in model_type:
                 args = get_args(model)
                 data_object.set_batch_size(args['batch_size'])
                 decay_data_object.set_batch_size(args['batch_size'])
                 args['cb_beta'] = b
                 if model.startswith('RIM'):
-                    cell_type = ['LSTM','GRU']
+                    cell_type = ['LSTM', 'GRU']
 
                 elif model == 'LSTM':
                     cell_type = ['LSTM']
@@ -133,20 +133,19 @@ def mimic_main(run_type, run_description, out_dir):
         # DL Test
 
         model_type = ['RIMDecay_GRU', 'RIMDecay_LSTM', "LSTM_LSTM", "GRU_GRU", 'RIM_GRU',
-                      'RIM_LSTM','GRUD_GRU','RIMDecay_LSTM_cbloss', 'RIMDecay_GRU_cbloss']
-
-
+                      'RIM_LSTM', 'GRUD_GRU', 'RIMDecay_LSTM_cbloss', 'RIMDecay_GRU_cbloss']
 
         for model in model_type:
             if model.startswith('RIMDecay') or model.startswith('GRUD'):
-                _,_, test_data = decay_data_object.data_loader()
+                _, _, test_data = decay_data_object.data_loader()
             else:
-                _,_,test_data = data_object.data_loader()
+                _, _, test_data = data_object.data_loader()
             trainer = TrainModels(logger=logging)
             model_path = f"./test_models/model/{model}_model.pt"
             cbloss = False
             if model.endswith('loss'):
-                cbloss =True
+                cbloss = True
+            print(len(test_data))
             if not cbloss:
                 y_truth, y_pred, y_score = trainer.test(model_path, test_data)
             else:
@@ -180,7 +179,7 @@ def mimic_main(run_type, run_description, out_dir):
 
 
 def plot_prauc(experiment_address=None):
-    if experiment_address != None:
+    if experiment_address is not None:
         folder_address = experiment_address
     else:
         folder_address = MimicSave.get_instance().get_directory()
@@ -200,7 +199,7 @@ def plot_prauc(experiment_address=None):
 
 
 def plot_roc(experiment_address=None):
-    if experiment_address != None:
+    if experiment_address is not None:
         folder_address = experiment_address
     else:
         folder_address = MimicSave.get_instance().get_directory()
@@ -288,9 +287,14 @@ def plot_confusion_matrixes(out_dir, reports):
 
 MimicSave.get_instance()
 
+# *****************************************
+run_type = 'test'  #'test'
+out_dir = './test_models/results/' if run_type != 'train' else ''
 description = "Experiment # 2:   tuned models "
-out_dir = './test_models/results/'
-mimic_main("train", description, out_dir)
+# ******************************************
+
+
+mimic_main(run_type, description, out_dir)
 
 plo_training_stats()
 plot_roc(out_dir)

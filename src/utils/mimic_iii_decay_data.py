@@ -87,6 +87,7 @@ class MIMICDecayData:
         self.train_instances = int(self.x.shape[0] *  self.train_frac)
         self.dev_instances = int(self.x.shape[0] * self.dev_frac)
         self.test_instances = int(self.x.shape[0] * self.test_frac)
+        print(f'#### Test instances for decay data #{self.test_instances} with batch {self.batch_size}')
 
         self.train_data, self.train_label = self.data_agg[:self.train_instances], self.y[:self.train_instances]
         self.valid_data, self.valid_label = self.data_agg[self.train_instances:self.train_instances + self.dev_instances], self.y[self.train_instances:self.train_instances + self.dev_instances]
@@ -130,7 +131,7 @@ class MIMICDecayData:
 
         self.train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
         self.val_loader   = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
-        self.test_loader  = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        self.test_loader  = DataLoader(test_dataset, batch_size=self.batch_size, drop_last=True)
 
     def data_loader(self):
         return self.train_loader, self.val_loader, self.test_loader
