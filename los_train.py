@@ -15,9 +15,9 @@ from src.utils.save_utils import MimicSave
 from src.utils.mimic_args import args
 
 
-np.random.seed(1048)
-torch.manual_seed(1048)
-torch.cuda.manual_seed(1048)
+np.random.seed(24)
+torch.manual_seed(24)
+torch.cuda.manual_seed(24)
 
 SAVE_DIR = 'mimic/los'
 
