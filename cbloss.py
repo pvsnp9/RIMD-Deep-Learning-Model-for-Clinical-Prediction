@@ -9,9 +9,9 @@ from sklearn.metrics import classification_report, confusion_matrix
 from src.utils.class_balanceloss import CBLoss
 import seaborn as sns
 
-torch.manual_seed(1048)
-torch.cuda.manual_seed(1048)
-np.random.seed(1048)
+torch.manual_seed(24)
+torch.cuda.manual_seed(24)
+np.random.seed(24)
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 

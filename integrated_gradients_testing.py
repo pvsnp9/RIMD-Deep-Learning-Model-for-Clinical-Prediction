@@ -1,4 +1,4 @@
-import torch
+import torch, gc
 import numpy as np 
 from src.model.mimic_decay_with_cb_loss import MIMICDecayCBLossModel
 from src.utils.mimic_iii_decay_data import MIMICNonIidData
@@ -10,6 +10,8 @@ from captum.attr import NeuronConductance
 from scipy import stats
 import pandas as pd
 
+gc.collect()
+torch.cuda.empty_cache()
 
 class IntegratedGradientsCheck():
     def __init__(self, model_path, data_object):
@@ -24,8 +26,9 @@ class IntegratedGradientsCheck():
     
     def run_integrated_gradients(self, hour = 18):
         # feature_list = self.get_feature_list()
+        # print(f'Feature list: {feature_list}')
         x, statics, x_mean, _ = self.get_data(hour)
-
+        print(x.shape)
         print(f"Model Description: \n {self.model}")
         ig = IntegratedGradients(self.model)
         
@@ -36,9 +39,11 @@ class IntegratedGradientsCheck():
         statics = statics.float().requires_grad_().to(self.device)
         x_mean = x_mean.requires_grad_().to(self.device)
 
-        attr, delta = ig.attribute((x, statics, x_mask, delta, x_last_ob, x_mean),target=1, return_convergence_delta=True)
-        attr = attr.detach().numpy()
-        print(attr)
+        attr, delta = ig.attribute(x, additional_forward_args=(statics, x_mask, delta, x_last_ob, x_mean),target=1, return_convergence_delta=True)
+        # attr = attr.detach().numpy()
+        x_imp = attr[0]
+        print(x_imp)
+        print(len(attr))
 
 
     def get_feature_list(self, file_path='./data/mimic_iii/test_dump/all_hourly_data.pkl'):

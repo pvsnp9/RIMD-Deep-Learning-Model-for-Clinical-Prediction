@@ -143,7 +143,7 @@ class MIMICDecayData:
 non-iid data loader class
 '''
 class MIMICNonIidData:
-    def __init__(self, file_path, number_of_instances=1000 ):
+    def __init__(self, file_path, number_of_instances=100 ):
         self.file_path = file_path
         self.number_of_instances = number_of_instances
         self.data = None

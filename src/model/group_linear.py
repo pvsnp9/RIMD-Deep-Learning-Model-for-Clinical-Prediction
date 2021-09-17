@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn 
 import math
 
+
 class GroupLinear(nn.Module):
     def __init__(self, input_size, output_size, num_blocks, bias=True):
         super().__init__()
