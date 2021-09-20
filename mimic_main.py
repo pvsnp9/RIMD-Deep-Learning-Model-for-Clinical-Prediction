@@ -14,6 +14,7 @@ from src.utils.mimic_args import get_args
 from src.utils.mimic_args import common_args
 from src.model.mimic_ml_models import MimicMlTrain
 from src.utils.data_prep import MortalityDataPrep
+from src.utils.mimic_data_loader import MIMICDataLoader
 from src.utils.mimic_evaluation import MIMICReport
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
@@ -30,7 +31,7 @@ np.random.seed(24)
 torch.manual_seed(24)
 torch.cuda.manual_seed(24)
 
-N_HYPER_PARAM_SET = 10
+N_HYPER_PARAM_SET = 15
 
 SAVE_DIR = 'mimic/'
 
@@ -73,16 +74,21 @@ def mimic_main(run_type, run_description, out_dir):
     logging.info('Start time: ' + str(startTime))
 
     # load datasets
-    decay_data_object = MIMICDecayData(common_args['batch_size'], 24, common_args['decay_input_file_path'])
-    data_object = MIMICIIIData(common_args['batch_size'], 24, common_args['input_file_path'], common_args['mask'])
+    mimic_data_object =  MIMICDataLoader(84, 24,common_args['decay_input_file_path'])
+
+
+    # decay_data_object = MIMICDecayData(common_args['batch_size'], 24, common_args['decay_input_file_path'])
+    # data_object = MIMICIIIData(common_args['batch_size'], 24, common_args['input_file_path'], common_args['mask'])
 
     model_reports = {}
 
     if run_type == "train":
         # ML models first
-        ml_trainer = MimicMlTrain(data_object, './mimic/models', out_dir, logging, N_HYPER_PARAM_SET)
-        # ml_trainer.run()
-        # model_reports.update(ml_trainer.get_reports())
+        #TODO ML type of dataset is needed!
+        ml_trainer = MimicMlTrain(mimic_data_object, out_dir, out_dir, logging, N_HYPER_PARAM_SET)
+        ml_trainer.run()
+        model_reports.update(ml_trainer.get_reports())
+
         # beta = [  0.59, 0.62, 0.65, 0.7, 0.73, 0.78,.79, 0.8, .83, 0.85, 0.9, 0.93, 0.95, 0.98]
         beta = [0.95]
         # DL Models
@@ -90,13 +96,14 @@ def mimic_main(run_type, run_description, out_dir):
 
             model_type = ['LSTM', 'GRU', 'RIM', 'RIMDecay', 'GRUD', 'RIMDCB']  # ['RIMDCB']  #
             for model in model_type:
+                #
                 args = get_args(model)
-                data_object.set_batch_size(args['batch_size'])
-                decay_data_object.set_batch_size(args['batch_size'])
+
+                mimic_data_object = MIMICDataLoader(args['batch_size'], 24, common_args['decay_input_file_path'])
+
                 args['cb_beta'] = b
                 if model.startswith('RIM'):
                     cell_type = ['LSTM', 'GRU']
-
                 elif model == 'LSTM':
                     cell_type = ['LSTM']
                 elif model == 'GRUD':
@@ -113,10 +120,8 @@ def mimic_main(run_type, run_description, out_dir):
                         args['cb_beta'] = 0.93 if cell == 'GRU' else 0.95
                     args['rnn_cell'] = cell
                     args['model_type'] = model
-                    if args['model_type'] == 'RIMDecay' or args['model_type'] == 'GRUD':
-                        dl_trainer = TrainModels(args, decay_data_object, logging)
-                    else:
-                        dl_trainer = TrainModels(args, data_object, logging)
+
+                    dl_trainer = TrainModels(args, mimic_data_object, logging)
 
                     train_res = dl_trainer.train()
                     for model_1, res_sets in train_res.items():
@@ -126,6 +131,8 @@ def mimic_main(run_type, run_description, out_dir):
 
 
     else:
+        # load datasets
+        mimic_data_object = MIMICDataLoader(84, 24, common_args['decay_input_file_path'])
         # ML Test
         # ml_trainer = MimicMlTrain(data_object, './test_models/model', out_dir, logging)
         # model_reports.update(ml_trainer.test())
@@ -137,9 +144,9 @@ def mimic_main(run_type, run_description, out_dir):
 
         for model in model_type:
             if model.startswith('RIMDecay') or model.startswith('GRUD'):
-                _, _, test_data = decay_data_object.data_loader()
+                _, _, test_data = mimic_data_object.decay_data_loader()
             else:
-                _, _, test_data = data_object.data_loader()
+                _, _, test_data = mimic_data_object.normal_data_loader()
             trainer = TrainModels(logger=logging)
             model_path = f"./test_models/model/{model}_model.pt"
             cbloss = False
@@ -283,12 +290,14 @@ def plot_confusion_matrixes(out_dir, reports):
         axs[i, count % 3] = report.plot_cm(f'{out_dir}/CM_{model_name}.png').plot()
         count += 1
     fig.tight_layout()
+    plt.plot()
+    plt.show()
 
 
 MimicSave.get_instance()
 
 # *****************************************
-run_type = 'test'  #'test'
+run_type = 'train'  #'test'
 out_dir = './test_models/results/' if run_type != 'train' else ''
 description = "Experiment # 2:   tuned models "
 # ******************************************

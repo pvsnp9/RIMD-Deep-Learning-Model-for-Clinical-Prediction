@@ -130,7 +130,15 @@ class TrainModels:
         max_test_f1 = 0
 
         # for cell in self.cell_types:
-        train_loader, val_loader, test_loader = self.data_object.data_loader()
+        if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
+            train_loader, val_loader, test_loader = self.data_object.decay_data_loader()
+        else:
+            train_loader, val_loader, test_loader = self.data_object.normal_data_loader()
+
+
+
+
+
         # self.args['rnn_cell'] = cell
         if self.args['model_type'] == 'RIMDecay':
             self.model = MIMICDecayModel(self.args).to(self.device)
@@ -249,7 +257,7 @@ class TrainModels:
 
             loss_stats.append((ctr, epoch_loss / iter_ctr))
             acc.append((epoch, (validation_accuracy)))
-            train_acc.append((epoch, (t_accuracy / self.data_object.train_instances)))
+            train_acc.append((epoch, (t_accuracy / len(train_loader.dataset))))
             # test_acc.append((epoch, (test_accuracy)))
             # TODO  Sensetive loss function
             # early stopping code
@@ -419,8 +427,14 @@ class TrainModels:
         max_no_improvement = self.args['max_no_improvement']
         improvement_threshold = self.args['improvement_threshold']
         max_val_f1= 0
+
         # for cell in self.cell_types:
-        train_loader, val_loader, test_loader = self.data_object.data_loader()
+        if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
+            train_loader, val_loader, test_loader = self.data_object.decay_data_loader()
+        else:
+            train_loader, val_loader, test_loader = self.data_object.normal_data_loader()
+
+
         # self.args['rnn_cell'] = cell
         if self.args['model_type'] == 'RIMDecay':
 
@@ -530,7 +544,7 @@ class TrainModels:
 
             loss_stats.append((ctr, epoch_loss / iter_ctr))
             acc.append((epoch, (validation_accuracy)))
-            train_acc.append((epoch, (t_accuracy / self.data_object.train_instances)))
+            train_acc.append((epoch, (t_accuracy / len(train_loader.dataset))))
             test_acc.append((epoch, (test_accuracy)))
             # TODO  Sensetive loss function
             # early stopping code
