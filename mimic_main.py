@@ -31,7 +31,7 @@ np.random.seed(24)
 torch.manual_seed(24)
 torch.cuda.manual_seed(24)
 
-N_HYPER_PARAM_SET = 15
+N_HYPER_PARAM_SET = 1
 
 SAVE_DIR = 'mimic/'
 
@@ -74,7 +74,7 @@ def mimic_main(run_type, run_description, out_dir):
     logging.info('Start time: ' + str(startTime))
 
     # load datasets
-    mimic_data_object =  MIMICDataLoader(84, 24,common_args['decay_input_file_path'])
+    mimic_data_object =  MIMICDataLoader( 24,common_args['decay_input_file_path'])
 
 
     # decay_data_object = MIMICDecayData(common_args['batch_size'], 24, common_args['decay_input_file_path'])
@@ -85,6 +85,7 @@ def mimic_main(run_type, run_description, out_dir):
     if run_type == "train":
         # ML models first
         #TODO ML type of dataset is needed!
+
         ml_trainer = MimicMlTrain(mimic_data_object, out_dir, out_dir, logging, N_HYPER_PARAM_SET)
         ml_trainer.run()
         model_reports.update(ml_trainer.get_reports())
@@ -94,16 +95,16 @@ def mimic_main(run_type, run_description, out_dir):
         # DL Models
         for b in beta:
 
-            model_type = ['LSTM', 'GRU', 'RIM', 'RIMDecay', 'GRUD', 'RIMDCB']  # ['RIMDCB']  #
+            model_type = ['RIMDecay']  #['LSTM', 'GRU', 'RIM', 'RIMDecay', 'GRUD', 'RIMDCB']  #
             for model in model_type:
                 #
                 args = get_args(model)
 
-                mimic_data_object = MIMICDataLoader(args['batch_size'], 24, common_args['decay_input_file_path'])
-
+                # mimic_data_object = MIMICDataLoader(args['batch_size'], 24, common_args['decay_input_file_path'])
+                mimic_data_object.prepare_data_loader(model,args['batch_size'])
                 args['cb_beta'] = b
                 if model.startswith('RIM'):
-                    cell_type = ['LSTM', 'GRU']
+                    cell_type = ['GRU']
                 elif model == 'LSTM':
                     cell_type = ['LSTM']
                 elif model == 'GRUD':
@@ -116,8 +117,8 @@ def mimic_main(run_type, run_description, out_dir):
                     model = 'RIMDecay'
                 for cell in cell_type:
                     # TODO calculate execution time and log it
-                    if args['is_cbloss']:
-                        args['cb_beta'] = 0.93 if cell == 'GRU' else 0.95
+                    # if args['is_cbloss']:
+                    #     args['cb_beta'] = 0.93 if cell == 'GRU' else 0.95
                     args['rnn_cell'] = cell
                     args['model_type'] = model
 
@@ -131,24 +132,28 @@ def mimic_main(run_type, run_description, out_dir):
 
 
     else:
-        # load datasets
-        mimic_data_object = MIMICDataLoader(84, 24, common_args['decay_input_file_path'])
+        # model_path = f"./mimic/0922-11-51-57/"
         # ML Test
-        # ml_trainer = MimicMlTrain(data_object, './test_models/model', out_dir, logging)
-        # model_reports.update(ml_trainer.test())
-
+        try:
+            ml_trainer = MimicMlTrain(mimic_data_object, out_dir, out_dir, logging)
+            model_reports.update(ml_trainer.test())
+        except:
+            print('no ml models ')
         # DL Test
 
         model_type = ['RIMDecay_GRU', 'RIMDecay_LSTM', "LSTM_LSTM", "GRU_GRU", 'RIM_GRU',
                       'RIM_LSTM', 'GRUD_GRU', 'RIMDecay_LSTM_cbloss', 'RIMDecay_GRU_cbloss']
-
+        # model_type = ['RIMDecay_GRU']
         for model in model_type:
+            mimic_data_object.prepare_data_loader(model, 80)
             if model.startswith('RIMDecay') or model.startswith('GRUD'):
                 _, _, test_data = mimic_data_object.decay_data_loader()
             else:
                 _, _, test_data = mimic_data_object.normal_data_loader()
+
+
             trainer = TrainModels(logger=logging)
-            model_path = f"./test_models/model/{model}_model.pt"
+            model_path = f"{out_dir}/model/{model}_model.pt"
             cbloss = False
             if model.endswith('loss'):
                 cbloss = True
@@ -169,20 +174,21 @@ def mimic_main(run_type, run_description, out_dir):
     # plot CMs and AUROC, AUPRC and...
     # Save the results to excel or latex
     # plot the training curve for DL models 
-
+    result_dir  = MimicSave.get_instance().get_results_directory()
     df_results = pd.DataFrame(results)
     df_results = df_results.T
     # save to excel file
     print(df_results.to_markdown())
-    plot_confusion_matrixes(out_dir, model_reports)
+    plot_confusion_matrixes(result_dir, model_reports)
 
     """
     Saving the results
     """
-    df_results.to_excel(f'{out_dir}/report.xlsx')
-    df_results.to_latex(f'{out_dir}/report.tex')
-    with open(f'{out_dir}/reports.pickle', 'wb') as f:
+    df_results.to_excel(f'{result_dir}/report.xlsx')
+    df_results.to_latex(f'{result_dir}/report.tex')
+    with open(f'{result_dir}/reports.pickle', 'wb') as f:
         pickle.dump(model_reports, f)
+    return out_dir
 
 
 def plot_prauc(experiment_address=None):
@@ -278,16 +284,16 @@ def plot_stats(key, stats):
 
 def plot_confusion_matrixes(out_dir, reports):
     fig = plt.figure()
-    gs = fig.add_gridspec(3, 3, hspace=10, wspace=10)
+    gs = fig.add_gridspec(3, 4, hspace=10, wspace=10)
     axs = gs.subplots(sharex='col', sharey='row')
     fig.suptitle('Confusion matrix !')
     i = 0
     count = 0
     for model_name, report in reports.items():
-        if count > 2:
+        if count > 3:
             i += 1
             count = 0
-        axs[i, count % 3] = report.plot_cm(f'{out_dir}/CM_{model_name}.png').plot()
+        axs[i, count % 4] = report.plot_cm(f'{out_dir}/CM_{model_name}.png').plot()
         count += 1
     fig.tight_layout()
     plt.plot()
@@ -297,14 +303,14 @@ def plot_confusion_matrixes(out_dir, reports):
 MimicSave.get_instance()
 
 # *****************************************
-run_type = 'train'  #'test'
-out_dir = './test_models/results/' if run_type != 'train' else ''
+run_type = 'test'  #'test'
+out_dir = './mimic/0921-17-04-39' if run_type != 'train' else ''
 description = "Experiment # 2:   tuned models "
 # ******************************************
 
 
-mimic_main(run_type, description, out_dir)
-
+out_train = mimic_main(run_type, description, out_dir)
 plo_training_stats()
 plot_roc(out_dir)
 plot_prauc(out_dir)
+

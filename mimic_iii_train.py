@@ -130,7 +130,7 @@ class TrainModels:
         max_test_f1 = 0
 
         # for cell in self.cell_types:
-        if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
+        if self.args['model_type'] == 'RIMD' or self.args['model_type'] == 'GRUD':
             train_loader, val_loader, test_loader = self.data_object.decay_data_loader()
         else:
             train_loader, val_loader, test_loader = self.data_object.normal_data_loader()
@@ -429,14 +429,14 @@ class TrainModels:
         max_val_f1= 0
 
         # for cell in self.cell_types:
-        if self.args['model_type'] == 'RIMDecay' or self.args['model_type'] == 'GRUD':
+        if self.args['model_type'].startswith('RIMD') or self.args['model_type'] == 'GRUD':
             train_loader, val_loader, test_loader = self.data_object.decay_data_loader()
         else:
             train_loader, val_loader, test_loader = self.data_object.normal_data_loader()
 
 
         # self.args['rnn_cell'] = cell
-        if self.args['model_type'] == 'RIMDecay':
+        if self.args['model_type'].startswith('RIMD'):
 
             self.model = MIMICDecayCBLossModel(self.args).to(self.device)
         elif self.args['model_type'] == 'RIM':
@@ -466,7 +466,7 @@ class TrainModels:
             # y_pred = []
             # y_truth = []
             self.model.train()
-            if self.args['model_type'] == 'RIMDecay':
+            if self.args['model_type'].startswith('RIMD'):
                 for x, static, x_mean, y in train_loader:
                     iter_ctr += 1
 
@@ -530,10 +530,7 @@ class TrainModels:
                 f'Val-F1-score: {format(val_f1 * 100, ".2f")}, Test-F1 : {format(t_f1 * 100 , ".2f")}, ')
             self.logger.info(f"Val_Geo_Mean : {format(val_geo * 100,'.2f' )  } , test_geo: {format(test_geo * 100,'.2f') }")
             # TODO - Warning!!! the below code has been added to stop bad parameters which cause large loss and continuing
-            # Training is not desired !
-            if epoch_loss > 1000:
-                self.logger.warn("Un acceptable loss")
-                return 0
+
             # append f1 score
             # try:
             #     train_f1.append((epoch, train_f1_report['1']['f1-score']))
@@ -611,7 +608,7 @@ class TrainModels:
         y_pred = []
         y_score = []
         with torch.no_grad():
-            if self.args['model_type'] == 'RIMDecay':
+            if self.args['model_type'].startswith( 'RIMD'):
                 # TODO there is a bug in number of samples for test and val data sets
                 for x, static, x_mean, y in data_loader:
                     static = static.to(self.device)
@@ -662,7 +659,7 @@ class TrainModels:
         y_pred = []
         y_score = []
         with torch.no_grad():
-            if self.args['model_type'] == 'RIMDecay':
+            if self.args['model_type'].startswith( 'RIMD'):
                 # TODO there is a bug in number of samples for test and val data sets
                 for x, static, x_mean, y in data_loader:
                     static = static.to(self.device)
@@ -743,7 +740,7 @@ class TrainModels:
         self.logger.info(f'Testing with CB-Loss function model')
         self.logger.info(f'Loaded model arch: \n {model}')
 
-        return self.eval_cb_loss(data_loader=test_data, is_for_test=True)
+        return self.eval_best_model_cb(data_loader=test_data)
 
     # def test_cb_loss_new(self, model_path, data_loader):
     #     checkpoint = torch.load(model_path)

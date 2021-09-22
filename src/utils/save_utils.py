@@ -24,15 +24,17 @@ class MimicSave :
             directory = save_dir
             self.log_dir = directory + "/log"
             self.model_dir = directory + "/model"
+            self.results_dir = directory + '/results'
         else:
             time_str= time.strftime("%m%d-%H-%M-%S")
 
             directory = save_dir + "/" + time_str
             self.log_dir =  directory + "/log"
             self.model_dir =  directory + "/model"
+            self.results_dir = directory + '/results'
 
 
-            dir_list = [directory, self.log_dir, self.model_dir ]
+            dir_list = [directory, self.log_dir, self.model_dir, self.results_dir ]
             self.output_directory = directory
             for dir in dir_list:
                 try:
@@ -49,3 +51,6 @@ class MimicSave :
 
     def get_model_directory(self):
         return self.model_dir
+
+    def get_results_directory(self):
+        return self.results_dir

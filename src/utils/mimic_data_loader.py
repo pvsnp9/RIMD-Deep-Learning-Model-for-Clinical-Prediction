@@ -6,9 +6,8 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 class MIMICDataLoader:
-    def __init__(self, batch_size, window_size, file_path, train_frac=0.7, dev_frac=0.15, test_frac=0.15,
+    def __init__(self, window_size, file_path, train_frac=0.7, dev_frac=0.15, test_frac=0.15,
                  balance=False):
-        self.batch_size = batch_size
         self.window_size = window_size
         self.train_frac = train_frac
         self.dev_frac = dev_frac
@@ -44,10 +43,15 @@ class MIMICDataLoader:
         print('Seeding and creating shuffle')
         self.index_ = np.arange(self.x.shape[0], dtype=int)
         np.random.shuffle(self.index_)
-        print('Preparing regular data')
-        self.prepare_normal_loader()
-        print('Preparing Decay data')
-        self.prepare_decay_loader()
+
+    def prepare_data_loader(self, model, batch_size):
+        self.batch_size = batch_size
+        if model.startswith('RIMD') or model.startswith('GRUD'):
+            print('Preparing Decay data')
+            self.prepare_decay_loader()
+        else:
+            print('Preparing regular data')
+            self.prepare_normal_loader()
 
         print('Done ')
 
@@ -159,7 +163,7 @@ class MIMICDataLoader:
         train_instances = int(x.shape[0] * self.train_frac)
         dev_instances = int(self.x.shape[0] * self.dev_frac)
         test_instances = int(self.x.shape[0] * self.test_frac)
-        print(f'#### Test instances for data #{test_instances} with batch {self.batch_size}')
+        # print(f'#### Test instances for data #{test_instances} with batch {self.batch_size}')
 
         train_x = x[:train_instances]
         dev_x = x[train_instances:train_instances + dev_instances]
@@ -191,10 +195,19 @@ class MIMICDataLoader:
 
 
 # if __name__ == '__main__':
-#     d = MIMICDataLoader(84, 24,
-#                         'C:\\Users\\sirva\\PycharmProjects\\RIMs_for_clinical_ML\\data\\mimic_iii\\test_dump'
-#                         '\\decay_data_20926.npz')
-#     train_x,dev_x,test_x, train_ys,dev_ys, test_ys = d.get_ml_dataset()
+#     # d = MIMICDataLoader(84, 24,
+#     #                     'C:\\Users\\sirva\\PycharmProjects\\RIMs_for_clinical_ML\\data\\mimic_iii\\test_dump'
+#     #                     '\\decay_data_20926.npz')
+#
+#     torch.manual_seed(1048)
+#     torch.cuda.manual_seed(1048)
+#     np.random.seed(1048)
+#
+#     data = np.arange(10)
+#     for i in range(3):
+#         np.random.shuffle(data)
+#         print(data)
+    # train_x,dev_x,test_x, train_ys,dev_ys, test_ys = d.get_ml_dataset()
 #     print(train_x.shape)
 #     # for x, static, y in tr:
 #     #     print(f'x:{x.size()},s:{static.size()}, y:{y.size()}')

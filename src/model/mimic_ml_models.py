@@ -79,7 +79,7 @@ class MimicMlTrain():
 
         report = MIMICReport(model_name, y_true, y_pred, y_score, output_dir=self.output_dir)
 
-        save_name = f'{self.save_dir}/{model_name}-model.joblib'
+        save_name = f'{self.save_dir}/model/{model_name}-model.joblib'
         dump(best_M, save_name)
         return report
 
@@ -87,7 +87,7 @@ class MimicMlTrain():
     def test(self):
         test_x, test_y =  self.data_object.get_ml_test()
         for model_name, _,_ in self.ml_models:
-            save_name = f'{self.save_dir}/{model_name}-model.joblib'
+            save_name = f'{self.save_dir}/model/{model_name}-model.joblib'
             model =  load(save_name)
             y_pred = model.predict(test_x)
             y_score = model.predict_proba(test_x)[:, 1]

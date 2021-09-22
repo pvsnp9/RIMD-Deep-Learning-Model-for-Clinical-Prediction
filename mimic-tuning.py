@@ -7,6 +7,7 @@ from mimic_iii_train import TrainModels
 from src.utils.mimic_args import args
 import logging
 #load datasets
+from src.utils.mimic_data_loader import MIMICDataLoader
 from src.utils.mimic_iii_data import MIMICIIIData
 from src.utils.mimic_iii_decay_data import MIMICDecayData
 from src.utils.save_utils import MimicSave
@@ -33,8 +34,8 @@ def draw_args(trial):
     """
     args['batch_size'] = trial.suggest_int('batch_size',low=32,high=96,step=16)
 
-    args['hidden_size'] =  trial.suggest_int('hidden_size', low=30,high=128,step=10)
-    args['comm_value_size'] = args['hidden_size']
+    # args['hidden_size'] =  trial.suggest_int('hidden_size', low=30,high=128,step=10)
+    # args['comm_value_size'] = args['hidden_size']
 
 
     args['num_rims'] =  trial.suggest_int('num_rims', low=2,high=6,step=1)
@@ -58,6 +59,7 @@ def draw_args(trial):
     args['comm_dropout'] =  trial.suggest_float('comm_dropout', low=0.1 ,high= 0.15)
     args['is_tuning'] = True
     args['balance'] = False
+    args['is_cbloss'] = True
 
 
 def tuning_model(trial):
@@ -67,11 +69,10 @@ def tuning_model(trial):
     draw_args( trial)
     print(f'Random Args for Tuning:{args}')
     model_type = args['model_type']
-    if model_type.startswith('RIMD') or model_type.startswith("GRUD"):
-         data_object = MIMICDecayData(args['batch_size'], 24, args['decay_input_file_path'])
-    else:
-        data_object = MIMICIIIData(args['batch_size'], 24, args['input_file_path'], args['mask'])
-    dl_trainer = TrainModels(args,  data_object, logging)
+    mimic_data_object =  MIMICDataLoader( 24,args['decay_input_file_path'])
+    mimic_data_object.prepare_data_loader(model_type,args['batch_size'])
+
+    dl_trainer = TrainModels(args,  mimic_data_object, logging)
 
 
     train_res = dl_trainer.tune_train()
@@ -88,9 +89,9 @@ def save_best_parameters():
 if __name__ == '__main__':
     out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
     args['rnn_cell'] = 'LSTM'
-    args['model_type'] = 'RIM'
+    args['model_type'] = 'RIMDCB'
     study = optuna.create_study(direction="maximize")
-    study.optimize(tuning_model, n_trials=100)
+    study.optimize(tuning_model, n_trials=2)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
