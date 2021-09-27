@@ -143,7 +143,7 @@ class MIMICDecayData:
 non-iid data loader class
 '''
 class MIMICNonIidData:
-    def __init__(self, file_path, number_of_instances=100 ):
+    def __init__(self, file_path, number_of_instances=1000 ):
         self.file_path = file_path
         self.number_of_instances = number_of_instances
         self.data = None
@@ -177,8 +177,8 @@ class MIMICNonIidData:
         zero_index = np.squeeze(np.where(y == 0) )
         np.random.shuffle(zero_index)
         ones_index = np.squeeze(np.where(y == 1) )
-        zero_index = zero_index[:math.floor(0.6 * self.number_of_instances)]
-        ones_index = ones_index[-math.ceil(0.4 * self.number_of_instances):]
+        zero_index = zero_index[:math.floor(0.7 * self.number_of_instances)]
+        ones_index = ones_index[-math.ceil(0.3 * self.number_of_instances):]
         new_index = np.concatenate((ones_index,zero_index))
         
 

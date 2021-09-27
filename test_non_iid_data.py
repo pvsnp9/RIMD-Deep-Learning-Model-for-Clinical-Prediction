@@ -13,13 +13,14 @@ from src.model.mimic_decay_model import MIMICDecayModel
 from src.model.mimic_grud_model import MIMICGRUDModel
 from sklearn.metrics import roc_auc_score, average_precision_score, classification_report, precision_recall_curve
 from src.utils.save_utils import MimicSave
+import os 
 
 
-np.random.seed(1048)
-torch.manual_seed(1048)
-torch.cuda.manual_seed(1048)
+np.random.seed(24)
+torch.manual_seed(24)
+torch.cuda.manual_seed(24)
 
-SAVE_DIR = 'mimic/non_iid_test'
+SAVE_DIR = 'test_models/non_iid_test/results'
 
 
 class TestNonIid:
@@ -46,12 +47,11 @@ class TestNonIid:
         self.set_model_name()
         self.model.load_state_dict(checkpoint['net'])
     
-    def test_normal(self):
+    def test_decay_model(self):
         all_data = self.get_all_non_iid_data()
         print(f"------- Initiating non-iid test with {self.args['model_type']} with {self.args['rnn_cell']}---------")
         stats = {}
         for hour,hour_data in all_data.items():
-            print(f'--------- Testing @{hour}-hour data')
             x, static, x_mean, y = hour_data
             counts = torch.unique(y, return_counts=True)[1]
             # print(f'counts: [class 0]: {counts[0].item()}, [class 1]:{counts[1].item()}')
@@ -70,7 +70,7 @@ class TestNonIid:
 
             report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
             stats[f'{hour}'] = report
-            print(report)
+            # print(report)
 
         del all_data
         return stats
@@ -80,7 +80,6 @@ class TestNonIid:
         print(f"------- Initiating non-iid test with {self.args['model_type']} with {self.args['rnn_cell']}, and CB-Loss custom function---------")
         stats = {}
         for hour,hour_data in all_data.items():
-            print(f'--------- Testing @{hour}-hour data')
             x, static, x_mean, y = hour_data
             counts = torch.unique(y, return_counts=True)[1]
             # print(f'counts: [class 0]: {counts[0].item()}, [class 1]:{counts[1].item()}')
@@ -99,8 +98,7 @@ class TestNonIid:
 
             report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
             stats[f'{hour}'] = report
-            print(report)
-            stats[f'{hour}'] = report
+            # print(report)
         
         del all_data
         return stats
@@ -110,7 +108,6 @@ class TestNonIid:
         print(f"------- Initiating non-iid test with {self.args['model_type']} with {self.args['rnn_cell']}---------")
         stats = {}
         for hour,hour_data in all_data.items():
-            print(f'--------- Testing @{hour}-hour data')
             x, static, _, y = hour_data
             counts = torch.unique(y, return_counts=True)[1]
             # print(f'counts: [class 0]: {counts[0].item()}, [class 1]:{counts[1].item()}')
@@ -125,8 +122,7 @@ class TestNonIid:
 
             report = classification_report(y_truth, y_pred, output_dict=True, zero_division=0)
             stats[f'{hour}'] = report
-            print(report)
-            stats[f'{hour}'] = report
+            # print(report)
         
         del all_data
         return stats
@@ -147,18 +143,44 @@ class TestNonIid:
             self.model_name = f"{self.args['model_type']}_{self.args['rnn_cell']}"
 
 
-# if __name__ =='__main__':
-    # data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz')
-    # trainer = TestNonIid('./mimic/old_models/GRUD_GRU_model.pt', data_object)
-    # results= trainer.test_general_model()
+if __name__ =='__main__':
+    saved_model_directory = './test_models/model'
+    data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz', 1000)
+    
+    models = os.listdir(saved_model_directory)
+    for model in models:
+        if model.startswith('GRUD') or (model.startswith('RIMDecay') and not model.endswith('cbloss_model.pt')):
+            print(model)
+            tester = TestNonIid(f'{saved_model_directory}/{model}', data_object)
+            results= tester.test_decay_model()
+            print("############ Result #####################")
+            print(results)
+            del tester
+
+        elif model.endswith('cbloss_model.pt'):
+            print(model)
+            tester = TestNonIid(f'{saved_model_directory}/{model}', data_object)
+            results= tester.test_cb_model()
+            print("############ Result #####################")
+            print(results)
+            del tester
+
+        elif model.startswith('RandomForest') or model.startswith('LogisticRegression'):
+            print("ML Models detected")
+        else:
+            print(model)
+            tester = TestNonIid(f'{saved_model_directory}/{model}', data_object)
+            results= tester.test_general_model()
+            print("############ Result #####################")
+            print(results)
+            del tester
+        
+
+    # trainer = TestNonIid('./test_models/model/RIMDecay_LSTM_model.pt', data_object)
+    # results= trainer.test_decay_model()
     # print("############ Result #####################")
     # print(results)
 
     # results= trainer.test_normal()
     # print("############ Result #####################")
     # print(results)
-    
-    if not (TRUE and False):
-        print('-')
-    else:
-        print('+')
