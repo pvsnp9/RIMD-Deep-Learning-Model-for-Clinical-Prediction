@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 class MIMICDataLoader:
-    def __init__(self, window_size, file_path, train_frac=0.7, dev_frac=0.15, test_frac=0.15,
+    def __init__(self, window_size, file_path, train_frac=0.8, dev_frac=0.10, test_frac=0.10,
                  balance=False):
         self.window_size = window_size
         self.train_frac = train_frac

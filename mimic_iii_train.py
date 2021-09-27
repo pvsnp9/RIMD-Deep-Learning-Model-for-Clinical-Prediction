@@ -86,8 +86,8 @@ class TrainModels:
         res = self.train()
         if res == 0:
             return 0
-
-        y_truth, y_pred, y_score = res[self.model_name]
+        print(res.keys())
+        y_truth, y_pred, y_score = res[f'{self.model_name}_{self.args["cb_beta"]}']
         report = MIMICReport(self.model_name, y_truth, y_pred, y_score, './figures')
 
         return report.get_roc_metrics()['PRAUC']
@@ -130,7 +130,7 @@ class TrainModels:
         max_test_f1 = 0
 
         # for cell in self.cell_types:
-        if self.args['model_type'] == 'RIMD' or self.args['model_type'] == 'GRUD':
+        if self.args['model_type'].startswith( 'RIMD') or self.args['model_type'] == 'GRUD':
             train_loader, val_loader, test_loader = self.data_object.decay_data_loader()
         else:
             train_loader, val_loader, test_loader = self.data_object.normal_data_loader()
@@ -437,10 +437,7 @@ class TrainModels:
 
         # self.args['rnn_cell'] = cell
         if self.args['model_type'].startswith('RIMD'):
-
             self.model = MIMICDecayCBLossModel(self.args).to(self.device)
-        elif self.args['model_type'] == 'RIM':
-            self.model = MIMICModel(self.args).to(self.device)
         else:
             raise Exception(f"No models found for {self.args['model_type']}")
         # elif self.args['model_type'] == 'LSTM':
@@ -831,6 +828,13 @@ class TrainModels:
     #     y_score = y_score.cpu().detach().numpy()
     #     print(f"time to detach arrays {time.time() - start}")
     #     return gt, pt, y_score[:, 1]
+    def set_savedir(self, out_dir):
+        self.save_dir = out_dir
+
+    def set_logdir(self, log_dir):
+        self.log_dir = log_dir
+        pass
+
 # def make_report(model):
 #     # data = MIMICIIIData(64, 24, args['input_file_path'])  # MIMICDecayData(64, 24, args['input_file_path'])
 #     test_data = data_object.get_test_data()

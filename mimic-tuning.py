@@ -4,7 +4,7 @@ from optuna.trial import TrialState
 import math
 
 from mimic_iii_train import TrainModels
-from src.utils.mimic_args import args
+from src.utils.mimic_args import  get_args
 import logging
 #load datasets
 from src.utils.mimic_data_loader import MIMICDataLoader
@@ -18,7 +18,7 @@ np.random.seed(24)
 torch.manual_seed(24)
 torch.cuda.manual_seed(24)
 
-
+args = get_args('RIMDCB')
 SAVE_DIR = 'mimic/tuning/'
 out_dir = 'mimic/logs'
 # config logging
@@ -32,6 +32,8 @@ def draw_args(trial):
     """
     Here we will randomly generate args values before each model training
     """
+
+
     args['batch_size'] = trial.suggest_int('batch_size',low=32,high=96,step=16)
 
     # args['hidden_size'] =  trial.suggest_int('hidden_size', low=30,high=128,step=10)
@@ -57,6 +59,7 @@ def draw_args(trial):
 
     args['input_dropout'] =  trial.suggest_float('input_dropout', low=0.2 ,high= 0.4)
     args['comm_dropout'] =  trial.suggest_float('comm_dropout', low=0.1 ,high= 0.15)
+    args['cb_beta'] =  trial.suggest_float('cb_beta', low=0.7 ,high= 0.98)
     args['is_tuning'] = True
     args['balance'] = False
     args['is_cbloss'] = True
@@ -88,10 +91,10 @@ def save_best_parameters():
 
 if __name__ == '__main__':
     out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
-    args['rnn_cell'] = 'LSTM'
+    args['rnn_cell'] = 'GRU'
     args['model_type'] = 'RIMDCB'
     study = optuna.create_study(direction="maximize")
-    study.optimize(tuning_model, n_trials=2)
+    study.optimize(tuning_model, n_trials=30)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

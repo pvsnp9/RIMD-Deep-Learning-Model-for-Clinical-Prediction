@@ -2,6 +2,7 @@
 !!!! Important !!!!!!!
 Input arguments like model_type and cell type are crucial.
 """
+import copy
 from datetime import datetime
 
 import pandas as pd
@@ -21,6 +22,8 @@ from src.utils.mimic_iii_decay_data import MIMICDecayData
 from sklearn.metrics import roc_curve
 import matplotlib.pyplot as plt
 import json
+
+from src.utils.mimic_kfold_data import Mimic_Kfold_Data
 from src.utils.save_utils import MimicSave
 import logging
 import numpy as np
@@ -33,9 +36,10 @@ torch.cuda.manual_seed(24)
 
 N_HYPER_PARAM_SET = 1
 
-SAVE_DIR = 'mimic/'
+SAVE_DIR = 'mimic'
 
-
+# K should be defined here
+K_FOLD = 5
 def mimic_main(run_type, run_description, out_dir):
     # Data preprocessing
     if (common_args['need_data_preprocessing']):
@@ -50,12 +54,14 @@ def mimic_main(run_type, run_description, out_dir):
     #
     ## Craet a directory for saving the results
     if run_type == "train":
-        out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR)
+        out_dir = MimicSave.get_instance().create_get_output_dir(SAVE_DIR, k_fold=K_FOLD)
     else:
         out_dir = MimicSave.get_instance().create_get_output_dir(out_dir, is_test=True)
     # Save the args used in this experiment
     with open(f'{out_dir}/_experiment_args.txt', 'w') as f:
         json.dump(common_args, f)
+
+
 
     # config logging
     logging.basicConfig(filename=out_dir + '/' + 'log.txt', format='%(message)s', level=logging.DEBUG)
@@ -74,68 +80,76 @@ def mimic_main(run_type, run_description, out_dir):
     logging.info('Start time: ' + str(startTime))
 
     # load datasets
-    mimic_data_object =  MIMICDataLoader( 24,common_args['decay_input_file_path'])
 
 
     # decay_data_object = MIMICDecayData(common_args['batch_size'], 24, common_args['decay_input_file_path'])
     # data_object = MIMICIIIData(common_args['batch_size'], 24, common_args['input_file_path'], common_args['mask'])
+    kfold_reports = []
 
-    model_reports = {}
-
+    kfold_data_object = Mimic_Kfold_Data(24, common_args['decay_input_file_path'])
     if run_type == "train":
 
         # K-Fold starts here :
-        # for fold in get_kfold():
-        #
-        # ML models first
-        #TODO ML type of dataset is needed!
+        for fold in range(K_FOLD):
+            model_reports = {}
+            kfold_data_object.set_fold(fold)
 
-        ml_trainer = MimicMlTrain(mimic_data_object, out_dir, out_dir, logging, N_HYPER_PARAM_SET)
-        ml_trainer.run()
-        model_reports.update(ml_trainer.get_reports())
+            # ML models first
+            #TODO ML type of dataset is needed!
+            out_dir = MimicSave.get_instance().get_directory()
+            out_dir = f'{out_dir}/{fold}'
+            ml_trainer = MimicMlTrain(kfold_data_object, out_dir, out_dir, logging, N_HYPER_PARAM_SET)
+            ml_trainer.run()
+            model_reports.update(ml_trainer.get_reports())
 
-        # beta = [  0.59, 0.62, 0.65, 0.7, 0.73, 0.78,.79, 0.8, .83, 0.85, 0.9, 0.93, 0.95, 0.98]
-        beta = [0.9574429070469261]
-        # DL Models
-        for b in beta:
+            # beta = [  0.59, 0.62, 0.65, 0.7, 0.73, 0.78,.79, 0.8, .83, 0.85, 0.9, 0.93, 0.95, 0.98]
+            beta = [0.9574429070469261]
+            # DL Models
+            for b in beta:
 
-            model_type = ['RIMDCB']  #['LSTM', 'GRU', 'RIM', 'RIMDecay', 'GRUD', 'RIMDCB']  #
-            for model in model_type:
-                #
-                args = get_args(model)
-                # args = {'epochs': 100, 'batch_size': 80, 'input_size': 104, 'model_type': 'RIMDCB', 'hidden_size': 104, 'num_rims': 2, 'lr': 0.00040492882291415314, 'rnn_cell': 'LSTM', 'input_key_size': 32, 'input_value_size': 64, 'input_query_size': 32, 'num_input_heads': 2, 'input_dropout': 0.3417778897146123, 'comm_key_size': 128, 'comm_value_size': 104, 'comm_query_size': 128, 'num_comm_heads': 2, 'comm_dropout': 0.13618568364566647, 'active_rims': 2, 'mask': True, 'mask_size': 104, 'delta_size': 104, 'static_features': 16, 'need_data_preprocessing': False, 'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl', 'processed_data_path': 'data/50_percent/', 'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'max_no_improvement': 25, 'improvement_threshold': 0.0001, 'is_tuning': True, 'balance': False, 'is_cbloss': True, 'cb_beta': 0.1}
-                # mimic_data_object = MIMICDataLoader(args['batch_size'], 24, common_args['decay_input_file_path'])
-                mimic_data_object.prepare_data_loader(model,args['batch_size'])
-                args['cb_beta'] = b
-                if model.startswith('RIM'):
-                    cell_type = ['LSTM']
-                elif model == 'LSTM':
-                    cell_type = ['LSTM']
-                elif model == 'GRUD':
-                    cell_type = ['GRU']
-                else:
-                    cell_type = ['GRU']
+                model_type = ['LSTM', 'GRU', 'RIM', 'RIMDecay', 'GRUD', 'RIMDCB']  #['LSTM']  #
+                for model in model_type:
+                    #
+                    args = get_args(model)
+                    # args = {'epochs': 100, 'batch_size': 80, 'input_size': 104, 'model_type': 'RIMDCB', 'hidden_size': 104, 'num_rims': 2, 'lr': 0.00040492882291415314, 'rnn_cell': 'LSTM', 'input_key_size': 32, 'input_value_size': 64, 'input_query_size': 32, 'num_input_heads': 2, 'input_dropout': 0.3417778897146123, 'comm_key_size': 128, 'comm_value_size': 104, 'comm_query_size': 128, 'num_comm_heads': 2, 'comm_dropout': 0.13618568364566647, 'active_rims': 2, 'mask': True, 'mask_size': 104, 'delta_size': 104, 'static_features': 16, 'need_data_preprocessing': False, 'raw_data_file_path': 'data/10_percent/all_hourly_data.pkl', 'processed_data_path': 'data/50_percent/', 'input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'decay_input_file_path': 'data/mimic_iii/test_dump/decay_data_20926.npz', 'max_no_improvement': 25, 'improvement_threshold': 0.0001, 'is_tuning': True, 'balance': False, 'is_cbloss': True, 'cb_beta': 0.1}
+                    # mimic_data_object = MIMICDataLoader(args['batch_size'], 24, common_args['decay_input_file_path'])
+                    kfold_data_object.prepare_data_loader(model,args['batch_size'])
+                    args['cb_beta'] = b
+                    if model.startswith('RIM'):
+                        cell_type = ['LSTM']
+                    elif model == 'LSTM':
+                        cell_type = ['LSTM']
+                    elif model == 'GRUD':
+                        cell_type = ['GRU']
+                    else:
+                        cell_type = ['GRU']
+                    if model.endswith('CB'):
+                        args['is_cbloss'] = True
+                        model = 'RIMDecay'
+                    for cell in cell_type:
+                        # TODO calculate execution time and log it
+                        # if args['is_cbloss']:
+                        #     args['cb_beta'] = 0.93 if cell == 'GRU' else 0.95
+                        args['rnn_cell'] = cell
+                        args['model_type'] = model
 
-                if model.endswith('CB'):
-                    args['is_cbloss'] = True
-                    model = 'RIMDecay'
-                for cell in cell_type:
-                    # TODO calculate execution time and log it
-                    # if args['is_cbloss']:
-                    #     args['cb_beta'] = 0.93 if cell == 'GRU' else 0.95
-                    args['rnn_cell'] = cell
-                    args['model_type'] = model
+                        dl_trainer = TrainModels(args, kfold_data_object, logging)
+                        dl_trainer.set_savedir(MimicSave.get_instance().get_model_directory(fold))
+                        dl_trainer.set_logdir(MimicSave.get_instance().get_log_directory(fold))
 
-                    dl_trainer = TrainModels(args, mimic_data_object, logging)
 
-                    train_res = dl_trainer.train()
-                    for model_1, res_sets in train_res.items():
-                        y_truth, y_pred, y_score = res_sets
-                        report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures', args['is_cbloss'])
-                        model_reports.update({model_1: report})
+                        train_res = dl_trainer.train()
+                        for model_1, res_sets in train_res.items():
+                            y_truth, y_pred, y_score = res_sets
+                            report = MIMICReport(model_1, y_truth, y_pred, y_score, './figures', args['is_cbloss'])
+                            model_reports.update({model_1: report})
+            kfold_reports.append(copy.deepcopy(model_reports))
 
 
     else:
+        model_reports={}
+        mimic_data_object =  MIMICDataLoader( 24,common_args['decay_input_file_path'])
+
         # model_path = f"./mimic/0922-11-51-57/"
         # ML Test
         try:
@@ -169,29 +183,50 @@ def mimic_main(run_type, run_description, out_dir):
             report = MIMICReport(model, y_truth, y_pred, y_score, './figures', cbloss)
             model_reports.update({model: report})
 
+    #Save results for all the folds
+    fold_results = {}
     results = {}
     cms = {}
-    for model, report in model_reports.items():
-        results.update(report.get_all_metrics())
-        cms.update({model: report.get_confusion_matrix()})
+    fold_index = 0
+    for fold_report in kfold_reports:
+        for model, report in fold_report.items():
+            results.update({model:report.get_all_metrics()})
+            cms.update({model: report.get_confusion_matrix()})
+        fold_results.update({fold_index:copy.deepcopy(results)})
+        fold_index += 1
 
     # plot CMs and AUROC, AUPRC and...
     # Save the results to excel or latex
-    # plot the training curve for DL models 
-    result_dir  = MimicSave.get_instance().get_results_directory()
-    df_results = pd.DataFrame(results)
-    df_results = df_results.T
-    # save to excel file
-    print(df_results.to_markdown())
-    plot_confusion_matrixes(result_dir, model_reports)
+    # plot the training curve for DL models
 
-    """
-    Saving the results
-    """
-    df_results.to_excel(f'{result_dir}/report.xlsx')
-    df_results.to_latex(f'{result_dir}/report.tex')
-    with open(f'{result_dir}/reports.pickle', 'wb') as f:
-        pickle.dump(model_reports, f)
+    #save everything together :
+    out_put = MimicSave.get_instance().get_directory()
+    with open(out_put+'/fold_results.json','w') as f:
+        json.dump(fold_results,f)
+
+    fdf = pd.DataFrame(fold_results)
+    fdf = fdf.T
+
+    #save individual results in their related fold directory
+    for fold_index in range(K_FOLD):
+        result_dir  = MimicSave.get_instance().get_results_directory(fold_index)
+        df_results = pd.DataFrame(fold_results[fold_index])
+        #Todo There is a bug here we need to fix it, check the above fold_results and df_results,
+        # Although we have stored the whole results in the json so later we can process them to
+        # calculate the mean and std of the methods
+        df_results = df_results.T
+        # save to excel file
+        logging.info("*************** Results for fold numbr {} is: ".format(fold_index))
+        logging.info(df_results.to_markdown())
+        plot_confusion_matrixes(result_dir, kfold_reports[fold_index])
+
+        """
+        Saving the results
+        """
+        df_results.to_excel(f'{result_dir}/report.xlsx')
+        df_results.to_latex(f'{result_dir}/report.tex')
+        with open(f'{result_dir}/reports.pickle', 'wb') as f:
+            pickle.dump(model_reports, f)
     return MimicSave.get_instance()
 
 
@@ -244,13 +279,13 @@ def no_skil(y_true):
     return ns_fpr, ns_tpr
 
 
-def plo_training_stats():
+def plo_training_stats(log_dir, save_dir):
     from os import walk
     epocs = range(1, 3)
     f = []
     losstats = []
     all_logs = {}
-    for (_, _, filenames) in walk(MimicSave.get_instance().get_log_directory()):
+    for (_, _, filenames) in walk(log_dir):
         f.extend(filenames)
 
     for file in f:
@@ -263,10 +298,10 @@ def plo_training_stats():
             all_logs[key].append(file)
 
     for key in all_logs.keys():
-        plot_stats(key.split("_"), all_logs[key])
+        plot_stats(save_dir, key.split("_"), all_logs[key])
 
 
-def plot_stats(key, stats):
+def plot_stats(save_dir, key, stats):
     plt.figure()
     for file in stats:
         with open(f'{MimicSave.get_instance().get_log_directory()}/{file}', 'rb') as pickle_file:
@@ -281,7 +316,7 @@ def plot_stats(key, stats):
             plt.title(f'{key[1]} stats for {key[0]}')
     plt.legend()
     # plt.show()
-    plt.savefig(f'{MimicSave.get_instance().get_directory()}/{file.split("_")[0]}_{key[0]}_{key[1]}', dpi=300)
+    plt.savefig(f'{save_dir}/{file.split("_")[0]}_{key[0]}_{key[1]}', dpi=300)
     plt.plot()
     plt.show()
 
@@ -314,7 +349,8 @@ description = "Experiment # 2:   tuned models "
 
 
 mimic_save = mimic_main(run_type, description, out_dir)
-plo_training_stats()
-plot_roc(mimic_save.get_results_directory())
-plot_prauc(mimic_save.get_results_directory())
+for fold_index in range(K_FOLD):
+    plo_training_stats(mimic_save.get_log_directory(fold_index), mimic_save.get_directory(fold_index))
+    plot_roc(mimic_save.get_results_directory(fold_index=fold_index))
+    plot_prauc(mimic_save.get_results_directory(fold_index=fold_index))
 
