@@ -143,6 +143,7 @@ class TestNonIid:
             self.model_name = f"{self.args['model_type']}_{self.args['rnn_cell']}"
 
 
+# Recheck model placement before performing this test 
 if __name__ =='__main__':
     saved_model_directory = './test_models/model'
     data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz', 1000)

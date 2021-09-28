@@ -1,3 +1,5 @@
+import pickle
+from captum import attr
 import torch, gc
 import numpy as np 
 from src.model.mimic_decay_with_cb_loss import MIMICDecayCBLossModel
@@ -5,10 +7,8 @@ from src.utils.mimic_iii_decay_data import MIMICNonIidData
 from src.utils.data_prep import MortalityDataPrep
 import matplotlib.pyplot as plt 
 from captum.attr import IntegratedGradients
-from captum.attr import LayerConductance
-from captum.attr import NeuronConductance
-from scipy import stats
 import pandas as pd
+import pickle
 
 gc.collect()
 torch.cuda.empty_cache()
@@ -24,11 +24,10 @@ class IntegratedGradientsCheck():
         
 
     
-    def run_integrated_gradients(self, hour = 18):
+    def run_integrated_gradients(self, hour = 30):
         # feature_list = self.get_feature_list()
         # print(f'Feature list: {feature_list}')
         x, statics, x_mean, _ = self.get_data(hour)
-        print(x.shape)
         print(f"Model Description: \n {self.model}")
         ig = IntegratedGradients(self.model)
         
@@ -40,10 +39,10 @@ class IntegratedGradientsCheck():
         x_mean = x_mean.requires_grad_().to(self.device)
 
         attr, delta = ig.attribute(x, additional_forward_args=(statics, x_mask, delta, x_last_ob, x_mean),target=1, return_convergence_delta=True)
-        # attr = attr.detach().numpy()
-        x_imp = attr[0]
-        print(x_imp)
-        print(len(attr))
+        attr = attr.cpu().detach().numpy()
+        delta = delta.cpu().detach().numpy()
+
+        return attr, delta
 
 
     def get_feature_list(self, file_path='./data/mimic_iii/test_dump/all_hourly_data.pkl'):
@@ -57,15 +56,14 @@ class IntegratedGradientsCheck():
         main_static_feat = ['gender', 'age', 'ethnicity', 'first_careunit']
         static_feat = md.static_variables(main_static_feat, statics)
         del statics
-        static_feat = static_feat.columns.tolist()
+        static_features = static_feat.columns.tolist()
 
         #temporal feature
         temporal_feat_list = vital_labs.columns.tolist()
         del vital_labs
-        all_feature_list = sorted(set([x for x,y in temporal_feat_list]))
+        temporal_features = sorted(set([x for x,y in temporal_feat_list]))
 
-        all_feature_list.extend(static_feat)
-        return all_feature_list
+        return temporal_features, static_features, [*temporal_features, * static_features]
 
 
 
@@ -73,6 +71,32 @@ class IntegratedGradientsCheck():
         return self.data_object.get_data(hour)
 
 if __name__ == "__main__":
-    data_object = MIMICNonIidData('./data/mimic_iii/non_iid_in_hospital.npz')
-    ig_test_object = IntegratedGradientsCheck('./mimic/old_models/RIMDecay_LSTM_cbloss_model.pt', data_object)
-    ig_test_object.run_integrated_gradients()
+    saved_model_directory = './test_models/model'
+    save_directory = './test_models/ig_testing'
+    # we are going to perform integrated testing only for our bets models [RIMDecay_LSTM, RIMDecay_GRU]
+    data_object = MIMICNonIidData('./data/mimic_iii/test_dump/non_iid_in_hospital.npz', 100)
+    models = ['RIMDecay_LSTM', 'RIMDecay_GRU']
+
+    ig_data = {}
+    for model in models:
+        ig_test_object = IntegratedGradientsCheck(f'{saved_model_directory}/{model}_cbloss_model.pt', data_object)
+        attr, delta = ig_test_object.run_integrated_gradients()
+        del ig_test_object
+        ig_data[f'{model}_cbloss_model'] = {
+            'attr': attr, 
+            'delta': delta
+        }
+
+    with open(f'{save_directory}/ig_testing.pickle', 'wb') as handle:
+        pickle.dump(ig_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    print(f'Gradient extract and saved ad {save_directory}')
+
+    # data checking
+    # with open(f'{save_directory}/ig_testing.pickle', 'rb') as handle:
+    #     ig_grad_data = pickle.load(handle)
+
+    # print(ig_grad_data['RIMDecay_LSTM_cbloss_model'])
+    # ig_grad_data = np.load(f'{save_directory}/ig_testing.npz', allow_pickle=True)
+    # data = ig_grad_data['RIMDecay_LSTM_cbloss_model']
+    # print(data['attr'])
