@@ -1,3 +1,5 @@
+# RIM and cell codes are taken from user with modification
+
 from src.model.group_gru_cell import GroupGRUCell
 import torch
 import torch.nn as nn
