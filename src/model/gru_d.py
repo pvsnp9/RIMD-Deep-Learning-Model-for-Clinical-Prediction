@@ -1,3 +1,4 @@
+# GRU-D codes are taken from fteufel with few modification
 import torch
 import torch.nn as nn 
 import math
