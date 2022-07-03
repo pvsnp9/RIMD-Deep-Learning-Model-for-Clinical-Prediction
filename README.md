@@ -5,5 +5,5 @@ networks, and a custom loss function that learns minor classes in EHR. The decay
 is responsible for learning minor classes based on samples provided during training. This novel model is used to evaluate predictions for early mortality identification, length of stay, and acute respiratory failure on MIMIC-III dataset. Experiment results indicate that the proposed models outperform similar
 models in F1-Score, AUROC, and PRAUC scores.
 
-
-[embed]https://www.dropbox.com/s/6jgddfxpn7xite3/RIMD-Deep-Learning-Model-for-Clinical-Prediction.pdf[/embed]
+##### Paper link:
+https://www.dropbox.com/s/6jgddfxpn7xite3/RIMD-Deep-Learning-Model-for-Clinical-Prediction.pdf
