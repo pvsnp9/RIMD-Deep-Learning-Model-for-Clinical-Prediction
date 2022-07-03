@@ -6,4 +6,4 @@ is responsible for learning minor classes based on samples provided during train
 models in F1-Score, AUROC, and PRAUC scores.
 
 
-[embed]https://app.luminpdf.com/viewer/62c21c5ea9bb3177877142b6[/embed]
+[embed]https://www.dropbox.com/s/6jgddfxpn7xite3/RIMD-Deep-Learning-Model-for-Clinical-Prediction.pdf[/embed]
